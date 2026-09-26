@@ -15,11 +15,13 @@
  */
 
 import { common } from '@kit.AbilityKit';
+import { DateTimeValue } from 'common_shared';
 import { ClassTableViewModel } from '../viewmodel/ClassTableViewModel';
 import { ScheduleEditorViewModel } from '../viewmodel/ScheduleEditorViewModel';
 import { AppClock, SystemClock } from './AppClock';
 import { ProfileRepository } from '../data/ProfileRepository';
 import { FormWidgetService } from '../widget/FormWidgetService';
+import { ReminderSyncResult, syncReminders } from '../reminder/ReminderSyncService';
 import { ServiceContainer, ServiceKeys } from './ServiceContainer';
 
 let instance: ClassTableViewModel | undefined = undefined;
@@ -85,8 +87,30 @@ export function resolveScheduleEditorViewModel(
   // 握有「档案已落盘」和「UIAbilityContext」的地方，通知由它发出。
   editorInstance.onProfileSaved((): void => {
     FormWidgetService.reloadAllQuietly(context);
+    // 课前提醒同样有自己的运行时（平台侧的周期提醒），改了课表不知道。
+    // 提前触发不 await：保存这件事不该因为提醒同步慢而被拖住，
+    // 而同步失败也不该让「保存」看起来失败。
+    void syncClassReminders(context);
   });
   return editorInstance;
+}
+
+/**
+ * 同步课前提醒。
+ *
+ * 触发点有三个：进入前台、保存课表、改提醒设置。前两个不够 ——
+ * 只靠「进入前台」的话，用户改了课表却一直没切前台过（平板上很常见），
+ * 提醒就还停在旧课表上；而只靠「保存课表」的话，设备关机一整周之后
+ * 平台上首次触发日已经落在过去，而课表可能是被别的设备同步进来的、
+ * 本机从没打开过。
+ *
+ * 不做定时轮询：平台的周期重复挂在 daysOfWeek 上，不依赖应用运行，
+ * 「一整周没开应用」期间提醒照常响。轮询只会耗电，且没有新信息可同步 ——
+ * 编排是纯函数，同一份档案同一份设置，同一天算出来的结果完全一样。
+ */
+export async function syncClassReminders(
+  context: common.UIAbilityContext): Promise<ReminderSyncResult> {
+  return syncReminders(context, new ProfileRepository(context.filesDir), DateTimeValue.now());
 }
 
 /** 丢掉编辑页 ViewModel，下次 resolve 重新装配（草稿随之丢弃）。 */

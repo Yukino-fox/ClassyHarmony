@@ -20,3 +20,5 @@ export const ROUTE_PLANS: string = 'plans';
 export const ROUTE_GROUPS: string = 'groups';
 /** 临时课表 / 叠加 / 预定。 */
 export const ROUTE_TEMP: string = 'temp';
+/** 课前提醒设置。 */
+export const ROUTE_REMINDER: string = 'reminder';

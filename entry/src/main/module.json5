@@ -12,6 +12,15 @@
     "deliveryWithInstall": true,
     "installationFree": false,
     "pages": "$profile:main_pages",
+    // 课前提醒走 reminderAgentManager 的周期提醒。没有这一条，
+    // publishReminder 直接被系统拒绝（1600004 权限不足），而界面上看不出
+    // 任何原因 —— 表现为「怎么改设置都不出提醒」。
+    // requestEnableNotification 弹的那个系统弹窗是另一回事，它在运行时申请。
+    "requestPermissions": [
+      {
+        "name": "ohos.permission.PUBLISH_AGENT_REMINDER"
+      }
+    ],
     "abilities": [
       {
         "name": "EntryAbility",

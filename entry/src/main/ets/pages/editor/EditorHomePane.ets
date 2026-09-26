@@ -24,6 +24,7 @@ import {
   ROUTE_GROUPS,
   ROUTE_LAYOUTS,
   ROUTE_PLANS,
+  ROUTE_REMINDER,
   ROUTE_SUBJECTS,
   ROUTE_TEMP
 } from '../../common/EditorRoutes';
@@ -96,6 +97,11 @@ export struct EditorHomePane {
               this.summary(this.vm)
               this.entries(this.vm)
 
+              // 分界：上面五个改的是课表草稿，下面两个改的是应用设置与文件。
+              // 混在一列里，用户会以为改提醒也要点保存。
+              Divider().color($r('app.color.ch_outline')).margin({ top: 8, bottom: 8 })
+
+              this.operations(this.vm)
               Divider().color($r('app.color.ch_outline')).margin({ top: 8, bottom: 8 })
 
               this.fileOps(this.vm)
@@ -185,6 +191,25 @@ export struct EditorHomePane {
         title: '临时课表与叠加',
         hint: '临时切换、叠加调课、预定某天',
         onTap: () => { this.go(ROUTE_TEMP); }
+      })
+    }
+    .width('100%')
+  }
+
+  /**
+   * 提醒设置。
+   *
+   * 放在编辑页而不是课表页顶栏：它是「偶尔做一次」的事，而顶栏刻意只留了
+   * 标题与「编辑」两个位置（见 Index.ets 的头注），加第三个入口会开始跟
+   * 课表本身抢注意力。
+   */
+  @Builder
+  private operations(vm: ScheduleEditorViewModel) {
+    Column() {
+      EntryRow({
+        title: '课前提醒',
+        hint: '开关、提前多少分钟、合并还是逐条',
+        onTap: () => { this.go(ROUTE_REMINDER); }
       })
     }
     .width('100%')

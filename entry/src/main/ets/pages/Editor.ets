@@ -29,6 +29,7 @@ import {
   ROUTE_GROUPS,
   ROUTE_LAYOUTS,
   ROUTE_PLANS,
+  ROUTE_REMINDER,
   ROUTE_SUBJECTS,
   ROUTE_TEMP
 } from '../common/EditorRoutes';
@@ -39,6 +40,7 @@ import { TimeLayoutPane } from './editor/TimeLayoutPane';
 import { ClassPlanPane } from './editor/ClassPlanPane';
 import { ClassPlanGroupPane } from './editor/ClassPlanGroupPane';
 import { TempOverlayPane } from './editor/TempOverlayPane';
+import { ReminderPane } from './editor/ReminderPane';
 
 @Entry
 @ComponentV2
@@ -81,6 +83,9 @@ struct Editor {
       ClassPlanGroupPane({ vm: this.vm })
     } else if (name === ROUTE_TEMP) {
       TempOverlayPane({ vm: this.vm })
+    } else if (name === ROUTE_REMINDER) {
+      // 不传 vm：提醒设置不在草稿里，它自己读自己写。见 ReminderPane 的头注。
+      ReminderPane({ stack: this.stack })
     } else {
       NavDestination() {
         Text(`未知页面：${name}`)

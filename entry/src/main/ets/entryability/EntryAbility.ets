@@ -20,7 +20,7 @@
 import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
-import { resolveClassTableViewModel } from '../common/AppServices';
+import { resolveClassTableViewModel, syncClassReminders } from '../common/AppServices';
 import { ClassTableViewModel } from '../viewmodel/ClassTableViewModel';
 
 const DOMAIN: number = 0x0000;
@@ -63,6 +63,30 @@ export default class EntryAbility extends UIAbility {
     // start() 幂等：定时器已在跑时不会叠加，只多一次重读档案。
     this.vm?.start();
     hilog.info(DOMAIN, TAG, 'onForeground: polling resumed');
+    // 课前提醒的周期重复挂在平台侧，不依赖本进程；这里同步是为了修正首次
+    // 触发日（跨天之后它落在过去）与课表变更（可能来自设备间同步）。
+    // 差异同步，绝大多数情况下这里一条都不会重发。
+    void this.syncRemindersQuietly();
+  }
+
+  /**
+   * 同步提醒，失败只记日志。
+   *
+   * 不给用户弹提示：进入前台是一个被动动作，在这里弹「提醒同步失败」会
+   * 打断正在做的事，而同步是后台自愈的 —— 下次保存或下次进前台会自动重试。
+   * 真正需要用户处理的两类问题（通知权限没开、额度不够）由设置页在用户
+   * 主动去看的时候显示。
+   */
+  private async syncRemindersQuietly(): Promise<void> {
+    try {
+      const result = await syncClassReminders(this.context);
+      if (result.failedCount > 0) {
+        hilog.warn(DOMAIN, TAG, 'reminder sync partial: %{public}d failed',
+          result.failedCount);
+      }
+    } catch (err) {
+      hilog.error(DOMAIN, TAG, 'reminder sync failed: %{public}s', `${err}`);
+    }
   }
 
   onBackground(): void {
