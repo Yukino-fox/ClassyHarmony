@@ -155,6 +155,29 @@ export class ModelCodec {
     return JsonNumber.ofInt(value);
   }
 
+  /**
+   * double 字段读出。
+   *
+   * 与 int 的区别在于不截断：C# 那边是 double，文件里写 `1` 还是 `1.0` 都合法，
+   * 截断会把 0.5 变成 0。JsonNumber 同时保留原始字面量与数值，读的时候按
+   * 数值走，写回去仍用原始字面量，所以往返不会有格式漂移。
+   */
+  static number(parent: JsonObject, fieldName: string, fallback: number): number {
+    return JsonValue.asNumber(parent.tryGet(fieldName), fallback);
+  }
+
+  /**
+   * double 字段写出节点。
+   *
+   * 走 JsonNumber.of 而不是 ofInt：整数值要落成 `14` 而不是 `14.0`，
+   * 这与 System.Text.Json 写 double 14.0 的结果一致（见 JsonWriterFormat.number）。
+   * 单独开一个入口是为了让调用点读起来能看出「这里是 double 而不是 int」，
+   * 免得有人图省事换成 ofInt，把 0.5 写成 0。
+   */
+  static doubleNode(value: number): JsonNode {
+    return JsonNumber.of(value);
+  }
+
   static guid(parent: JsonObject, fieldName: string): Guid {
     return JsonValue.asGuid(parent.tryGet(fieldName));
   }

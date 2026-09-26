@@ -17,6 +17,7 @@ export { ActionSetStatus, ActionSetStatusCodec } from './src/main/ets/enums/Acti
 export { Guid } from './src/main/ets/json/Guid';
 export { TimeSpanValue } from './src/main/ets/json/TimeSpanValue';
 export { DateTimeValue } from './src/main/ets/json/DateTimeValue';
+export { ColorValue } from './src/main/ets/json/ColorValue';
 export {
   JsonNode,
   JsonMember,
@@ -54,3 +55,15 @@ export { ClassPlan } from './src/main/ets/models/ClassPlan';
 export { ClassPlanGroup } from './src/main/ets/models/ClassPlanGroup';
 export { OrderedSchedule } from './src/main/ets/models/OrderedSchedule';
 export { Profile } from './src/main/ets/models/Profile';
+export {
+  ComponentProfile,
+  ComponentSettings,
+  MainWindowLineSettings,
+  HORIZONTAL_STRETCH,
+  HORIZONTAL_CENTER,
+  HORIZONTAL_LEFT,
+  HORIZONTAL_RIGHT,
+  ISLAND_SEPARATION_DEFAULT,
+  DATE_COMPONENT_ID,
+  SCHEDULE_COMPONENT_ID
+} from './src/main/ets/models/ComponentProfile';

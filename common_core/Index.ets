@@ -82,3 +82,35 @@ export {
   ReminderDiff,
   ReminderPlanner
 } from './src/main/ets/reminder/ReminderPlan';
+
+/* ---- 主界面组件布局 ---- */
+export {
+  ComponentDescriptor,
+  ComponentCatalog,
+  COMPONENT_CLOCK,
+  COMPONENT_COUNTDOWN,
+  COMPONENT_DATE,
+  COMPONENT_GROUP,
+  COMPONENT_ROLLING,
+  COMPONENT_SCHEDULE,
+  COMPONENT_SEPARATOR,
+  COMPONENT_SLIDE,
+  COMPONENT_STACK,
+  COMPONENT_TEXT,
+  COMPONENT_WEATHER
+} from './src/main/ets/components/ComponentCatalog';
+export {
+  ComponentPayload,
+  ContainerPayload,
+  ClockPayload,
+  CountDownPayload,
+  TextPayload,
+  WeatherPayload,
+  SchedulePayload,
+  RollingPayload,
+  SlidePayload
+} from './src/main/ets/components/ComponentPayloads';
+export {
+  ComponentLayoutMutations,
+  ComponentLocation
+} from './src/main/ets/components/ComponentLayoutMutations';
