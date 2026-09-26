@@ -11,6 +11,8 @@ import { Guid } from '../json/Guid';
 import { JsonBoolean, JsonNode, JsonObject } from '../json/JsonNode';
 import { KeyedMap } from '../collections/KeyedMap';
 import { ModelCodec } from './ModelCodec';
+import { TimeLayout } from './TimeLayout';
+import { TimeLayoutItem } from './TimeLayoutItem';
 
 export class ClassInfo {
   /** 学科 ID。 */
@@ -54,5 +56,20 @@ export class ClassInfo {
   /** 是否为空课（无学科）。运行期判定，不落盘。 */
   isEmpty(): boolean {
     return this.subjectId.isEmpty();
+  }
+
+  /**
+   * 本节课对应的时间点（对应 C# ClassInfo.CurrentTimeLayoutItem）。
+   *
+   * 桌面版把 TimeLayout 引用挂在 ClassInfo 上（[JsonIgnore]），这里改为由调用方
+   * 传入——让 ClassInfo 保持纯数据，不持有可变共享引用，符合可重入约束。
+   * 越界返回 TimeLayoutItem.empty()。
+   */
+  currentTimeLayoutItem(layout: TimeLayout): TimeLayoutItem {
+    const points: TimeLayoutItem[] = layout.classTimePoints();
+    if (this.index < 0 || this.index >= points.length) {
+      return TimeLayoutItem.empty();
+    }
+    return points[this.index];
   }
 }

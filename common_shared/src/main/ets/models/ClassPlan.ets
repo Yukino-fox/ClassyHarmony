@@ -81,23 +81,157 @@ export class ClassPlan {
   }
 
   /**
-   * 课间时间点被过滤后的列表（对应 C# ValidTimeLayoutItems）。
-   * 课程 Classes[i] 对应 validLayouts()[i]。
+   * 需要显示的时间点（对应 C# ValidTimeLayoutItems）。
+   *
+   * 算法照搬桌面版的双遍扫描，语义是「课程被停用时，连带它前后的
+   * 课间与分割线一起消失」：
+   * - 正向扫：非课程时间点继承它**前面**最近一个课程时间点的启用状态
+   * - 反向扫：非课程时间点继承它**后面**最近一个课程时间点的启用状态
+   * 任一遍判定为停用即移除。
+   *
+   * 两遍的初始状态都是「启用」，所以排在所有课程之前/之后的课间与分割线
+   * 不会被误删——这与桌面版一致。
+   *
+   * 与 classTimePoints() 是两个不同的列表：前者含课间/分割线且已按启用状态
+   * 过滤，后者只有课程时段且不过滤。Classes[i] 始终对应 classTimePoints()[i]，
+   * 不是本列表。
    */
   validTimeLayoutItems(): TimeLayoutItem[] {
-    if (this.timeLayout === undefined) {
+    const layout: TimeLayout | undefined = this.timeLayout;
+    if (layout === undefined) {
       return [];
     }
-    return this.timeLayout.validLayouts();
+    const slots: number[] = layout.classSlotIndexes();
+    const display: TimeLayoutItem[] = [];
+    const displaySlot: number[] = [];
+    for (let i: number = 0; i < layout.layouts.length; i++) {
+      const item: TimeLayoutItem = layout.layouts[i];
+      if (item.isDisplayable()) {
+        display.push(item);
+        displaySlot.push(slots[i]);
+      }
+    }
+
+    const keep: boolean[] = [];
+    for (let i: number = 0; i < display.length; i++) {
+      keep.push(true);
+    }
+    const classCount: number = this.classes.length;
+    const enabledAt = (slot: number): boolean => {
+      if (slot < 0 || slot >= classCount) {
+        return false;
+      }
+      return this.classes[slot].isEnabled;
+    };
+
+    let carried: boolean = true;
+    for (let i: number = 0; i < display.length; i++) {
+      const slot: number = displaySlot[i];
+      if (slot >= 0) {
+        carried = enabledAt(slot);
+      }
+      if (!carried) {
+        keep[i] = false;
+      }
+    }
+    carried = true;
+    for (let i: number = display.length - 1; i >= 0; i--) {
+      const slot: number = displaySlot[i];
+      if (slot >= 0) {
+        carried = enabledAt(slot);
+      }
+      if (!carried) {
+        keep[i] = false;
+      }
+    }
+
+    const out: TimeLayoutItem[] = [];
+    for (let i: number = 0; i < display.length; i++) {
+      if (keep[i]) {
+        out.push(display[i]);
+      }
+    }
+    return out;
   }
 
-  /** 取第 index 节课对应的时间点；越界返回 TimeLayoutItem.empty()。 */
+  /**
+   * 第 index 节课对应的时间点；越界返回 TimeLayoutItem.empty()。
+   * 对应 ClassInfo.CurrentTimeLayoutItem。
+   */
   currentTimeLayoutItem(index: number): TimeLayoutItem {
-    const valid: TimeLayoutItem[] = this.validTimeLayoutItems();
-    if (index < 0 || index >= valid.length) {
+    const layout: TimeLayout | undefined = this.timeLayout;
+    if (layout === undefined) {
       return TimeLayoutItem.empty();
     }
-    return valid[index];
+    const points: TimeLayoutItem[] = layout.classTimePoints();
+    if (index < 0 || index >= points.length) {
+      return TimeLayoutItem.empty();
+    }
+    return points[index];
+  }
+
+  /**
+   * layouts 下标 -> 课程时段下标；越界或非课程时段返回 -1。
+   * 对应 LessonsService.GetClassIndex / TimeLayout.GetClassIndex。
+   */
+  getClassIndex(layoutIndex: number): number {
+    const layout: TimeLayout | undefined = this.timeLayout;
+    if (layout === undefined) {
+      return -1;
+    }
+    return layout.classIndexOf(layoutIndex);
+  }
+
+  /**
+   * 使 Classes 的长度与课程时段数对齐，并回填下标与默认科目。
+   * 对应 ClassPlan.RefreshClassesList。
+   *
+   * 桌面版靠一串 PropertyChanged 事件维持此不变量，ArkTS 侧改为显式调用——
+   * 纯函数式推导比维持事件订阅更不容易失配，也更符合「无跨实例可变单例」
+   * 的可重入约束。调用时机：档案装载后、时间点增删改后。
+   */
+  refreshClassesList(): void {
+    const layout: TimeLayout | undefined = this.timeLayout;
+    if (layout === undefined) {
+      return;
+    }
+    const points: TimeLayoutItem[] = layout.classTimePoints();
+    while (this.classes.length < points.length) {
+      this.classes.push(new ClassInfo());
+    }
+    while (this.classes.length > points.length) {
+      this.classes.pop();
+    }
+    for (let i: number = 0; i < this.classes.length; i++) {
+      const info: ClassInfo = this.classes[i];
+      info.index = i;
+      const fallback: Guid = points[i].defaultClassId;
+      if (info.subjectId.isEmpty() && !fallback.isEmpty()) {
+        info.subjectId = fallback;
+      }
+    }
+    this.lastTimeLayoutCount = layout.layouts.length;
+  }
+
+  /**
+   * 标记与叠加来源课表不同的课程（换课标记）。
+   * 对应 ClassPlan.RefreshIsChangedClass，source 由调用方从档案中解析。
+   */
+  refreshIsChangedClass(source: ClassPlan | undefined): void {
+    if (source === undefined || this.classes.length !== source.classes.length) {
+      for (const info of this.classes) {
+        info.isChangedClass = false;
+      }
+      return;
+    }
+    for (let i: number = 0; i < this.classes.length; i++) {
+      const info: ClassInfo = this.classes[i];
+      if (i >= source.classes.length) {
+        info.isChangedClass = false;
+      } else {
+        info.isChangedClass = !info.subjectId.equals(source.classes[i].subjectId);
+      }
+    }
   }
 
   toJson(): JsonObject {

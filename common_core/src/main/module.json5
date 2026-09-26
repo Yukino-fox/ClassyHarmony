@@ -1,14 +1,12 @@
 {
   "module": {
     "name": "common_core",
-    "type": "shared",
-    "description": "$string:module_desc",
+    "type": "har",
+    "description": "$string:common_core_desc",
     "deviceTypes": [
       "phone",
       "tablet",
       "2in1"
-    ],
-    "deliveryWithInstall": true,
-    "installationFree": false
+    ]
   }
 }

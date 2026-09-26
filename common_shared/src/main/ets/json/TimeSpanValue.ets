@@ -63,6 +63,26 @@ export class TimeSpanValue {
     return new TimeSpanValue(Math.round(minutes * TICKS_PER_MINUTE));
   }
 
+  /**
+   * 由秒构造。
+   *
+   * 引擎做时间点比较时全程用秒（当天已过秒数），缺这个换算就只能一路
+   * 手工乘 TICKS_PER_SECOND，散落处越多越容易漏掉取整。
+   */
+  static fromSeconds(seconds: number): TimeSpanValue {
+    return new TimeSpanValue(Math.round(seconds * TICKS_PER_SECOND));
+  }
+
+  /**
+   * 折算为秒（向下取整）。用于与「当天已过秒数」这类整数量比较。
+   *
+   * 取整而非保留小数：引擎的输入是整秒，输出也按整秒消费，
+   * 小数部分只会引入 ±1 的边界抖动。
+   */
+  toSeconds(): number {
+    return Math.floor(this.ticks / TICKS_PER_SECOND);
+  }
+
   /** 由「时:分」构造，分钟可超出 60。 */
   static fromHoursMinutes(hours: number, minutes: number): TimeSpanValue {
     return new TimeSpanValue(hours * TICKS_PER_HOUR + minutes * TICKS_PER_MINUTE);

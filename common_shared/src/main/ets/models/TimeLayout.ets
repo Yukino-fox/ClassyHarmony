@@ -13,7 +13,7 @@ import { JsonBoolean, JsonNode, JsonNull, JsonObject, JsonString } from '../json
 import { JsonValue } from '../json/JsonValue';
 import { KeyedMap } from '../collections/KeyedMap';
 import { ModelCodec } from './ModelCodec';
-import { TIME_TYPE_BREAK, TimeLayoutItem } from './TimeLayoutItem';
+import { TIME_TYPE_CLASS, TimeLayoutItem } from './TimeLayoutItem';
 
 export class TimeLayout {
   /** 是否为叠加时间表。 */
@@ -43,17 +43,67 @@ export class TimeLayout {
   }
 
   /**
-   * 课间时间点被过滤后的列表，即所有 TimeType != 0 的时间点。
-   * 课程与时间点的对应靠下标，ClassInfo.CurrentTimeLayoutItem 依赖它。
+   * 课程时段（TimeType==0）列表。
+   *
+   * ClassPlan.Classes[i] 与 classTimePoints()[i] 一一对应，这个下标映射是
+   * 课表引擎的地基：GetClassIndex、ValidTimeLayoutItems、OverwriteAllClassPlanSubject
+   * 全部建立在它之上。
    */
-  validLayouts(): TimeLayoutItem[] {
+  classTimePoints(): TimeLayoutItem[] {
     const out: TimeLayoutItem[] = [];
     for (const item of this.layouts) {
-      if (item.timeType !== TIME_TYPE_BREAK) {
+      if (item.timeType === TIME_TYPE_CLASS) {
         out.push(item);
       }
     }
     return out;
+  }
+
+  /**
+   * 会显示在课表网格里的时间点（上课 / 课间 / 分割线），保持原顺序。
+   *
+   * 行动（TimeType==3）不在其中——它只在自动化与提醒链路里生效。
+   */
+  displayTimePoints(): TimeLayoutItem[] {
+    const out: TimeLayoutItem[] = [];
+    for (const item of this.layouts) {
+      if (item.isDisplayable()) {
+        out.push(item);
+      }
+    }
+    return out;
+  }
+
+  /**
+   * 课程时段下标表：长度与 layouts 相同，每项是该位置在
+   * classTimePoints() 中的下标，非课程时段为 -1。
+   *
+   * 一次遍历同时得到 classTimePoints / displayTimePoints / classIndexOf
+   * 所需的信息，避免在 50ms 一次的课表轮询里反复线性扫描。
+   */
+  classSlotIndexes(): number[] {
+    const out: number[] = [];
+    let slot: number = 0;
+    for (const item of this.layouts) {
+      if (item.timeType === TIME_TYPE_CLASS) {
+        out.push(slot);
+        slot++;
+      } else {
+        out.push(-1);
+      }
+    }
+    return out;
+  }
+
+  /**
+   * layouts 下标 -> 课程时段下标。越界或非课程时段返回 -1。
+   * 对应 LessonsService.GetClassIndex。
+   */
+  classIndexOf(layoutIndex: number): number {
+    if (layoutIndex < 0 || layoutIndex >= this.layouts.length) {
+      return -1;
+    }
+    return this.classSlotIndexes()[layoutIndex];
   }
 
   toJson(): JsonObject {

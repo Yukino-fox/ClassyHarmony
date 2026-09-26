@@ -71,7 +71,11 @@ export class ModelCodec {
 
   /**
    * DateTime 键字典（OrderedSchedules）。
-   * 键以 ISO 字面量承载，保留原始文本形式，避免重排。
+   *
+   * 键在读入时即规范化：桌面版的键类型是 DateTime，查找一律用 `someDate.Date`
+   * （即当天 00:00:00），所以手写的 "2026-9-8"、"2026-09-08T00:00:00.0000000"
+   * 在桌面版都能命中，统一成规范 ISO 字面量后才能在本实现里同样命中。
+   * 解析不了的键原样保留。
    */
   static readDateKeyMap<V>(parent: JsonObject, fieldName: string,
     readValue: (node: JsonNode) => V): KeyedMap<V> {
@@ -81,8 +85,29 @@ export class ModelCodec {
       return out;
     }
     for (const member of node.entries()) {
-      out.set(member.name, readValue(member.value));
+      const parsed: DateTimeValue | undefined = DateTimeValue.tryParse(member.name);
+      out.set(parsed === undefined ? member.name : parsed.toString(), readValue(member.value));
     }
+    return out;
+  }
+
+  /**
+   * DateTime 键字典写出。
+   *
+   * 桌面版此处是 Dictionary<DateTime, _>，System.Text.Json 会把键规范化成
+   * ISO 字面量，所以手写的 "2026-9-8T00:00:00" 存盘后会变成
+   * "2026-09-08T00:00:00"。这里对能解析的键做同样规范化。
+   *
+   * 解析不了的键原样写出：桌面版在反序列化阶段就会直接抛异常，而档案是
+   * 纯数据，宁可保留原文也不要静默把它改写成 0001-01-01。
+   */
+  static writeDateKeyMap<V>(source: KeyedMap<V>,
+    writeValue: (value: V) => JsonNode): JsonObject {
+    const out: JsonObject = new JsonObject();
+    source.forEach((value: V, key: string) => {
+      const parsed: DateTimeValue | undefined = DateTimeValue.tryParse(key);
+      out.set(parsed === undefined ? key : parsed.toString(), writeValue(value));
+    });
     return out;
   }
 

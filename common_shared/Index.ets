@@ -36,11 +36,18 @@ export { KeyedMap, KeyedMapEntry } from './src/main/ets/collections/KeyedMap';
 
 /* ---- 数据模型 ---- */
 export { ModelCodec } from './src/main/ets/models/ModelCodec';
+export { ModelCloner } from './src/main/ets/models/ModelCloner';
 export { ActionItem } from './src/main/ets/models/Automation/ActionItem';
 export { ActionSet } from './src/main/ets/models/Automation/ActionSet';
 export { Subject } from './src/main/ets/models/Subject';
 export { TimeRule } from './src/main/ets/models/TimeRule';
-export { TimeLayoutItem, TIME_TYPE_BREAK } from './src/main/ets/models/TimeLayoutItem';
+export {
+  TimeLayoutItem,
+  TIME_TYPE_CLASS,
+  TIME_TYPE_BREAK,
+  TIME_TYPE_SEPARATOR,
+  TIME_TYPE_ACTION
+} from './src/main/ets/models/TimeLayoutItem';
 export { TimeLayout } from './src/main/ets/models/TimeLayout';
 export { ClassInfo } from './src/main/ets/models/ClassInfo';
 export { ClassPlan } from './src/main/ets/models/ClassPlan';

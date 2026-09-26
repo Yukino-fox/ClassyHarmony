@@ -34,6 +34,7 @@ import { ClassPlanGroup } from './ClassPlanGroup';
 import { OrderedSchedule } from './OrderedSchedule';
 import { Subject } from './Subject';
 import { TimeLayout } from './TimeLayout';
+import { TimeLayoutItem } from './TimeLayoutItem';
 
 export class Profile {
   name: string = '';
@@ -95,6 +96,98 @@ export class Profile {
     });
   }
 
+  /**
+   * 档案装载 / 时间点增删改之后，把全部运行期派生量重算一遍。
+   *
+   * 对应桌面版「设置 TimeLayouts 属性 -> 触发 TimeLayout 变化 -> RefreshClassesList」
+   * 这条事件链。桌面版靠 PropertyChanged 事件维持 Classes 与课程时段数对齐，
+   * 这里改为显式调用：纯推导比维持订阅更难失配。
+   */
+  refreshDerivedState(): void {
+    this.bindReferences();
+    this.classPlans.forEach((plan: ClassPlan) => {
+      plan.refreshClassesList();
+    });
+  }
+
+  /**
+   * 重写指定时间表在所有课表中，某个时间点对应课程的科目。
+   * 对应 Profile.OverwriteAllClassPlanSubject。
+   *
+   * timePoint 以对象身份比对（桌面版用 List.IndexOf，对引用类型即身份比对）。
+   * 传入的时间点若不属于该时间表，则该课表不受影响。
+   */
+  overwriteAllClassPlanSubject(timeLayoutId: Guid, timePoint: TimeLayoutItem,
+    subjectId: Guid): void {
+    const layoutKey: string = timeLayoutId.toString();
+    this.classPlans.forEach((plan: ClassPlan) => {
+      if (plan.timeLayoutId.toString() !== layoutKey) {
+        return;
+      }
+      plan.refreshClassesList();
+      const owner: TimeLayout | undefined = plan.resolveTimeLayout();
+      if (owner === undefined) {
+        return;
+      }
+      const points: TimeLayoutItem[] = owner.classTimePoints();
+      for (let slot: number = 0; slot < points.length && slot < plan.classes.length; slot++) {
+        if (points[slot] === timePoint) {
+          plan.classes[slot].subjectId = subjectId;
+        }
+      }
+    });
+  }
+
+  /**
+   * 解散课表群，群内课表移到默认课表群。
+   * 对应 Profile.DisbandClassPlanGroup。全局群与默认群不可解散，返回 false。
+   */
+  disbandClassPlanGroup(id: Guid): boolean {
+    if (id.equals(ClassPlanGroup.globalGroupGuid()) || id.equals(ClassPlanGroup.defaultGroupGuid())) {
+      return false;
+    }
+    const key: string = id.toString();
+    this.classPlans.forEach((plan: ClassPlan) => {
+      if (plan.associatedGroup.toString() === key) {
+        plan.associatedGroup = ClassPlanGroup.defaultGroupGuid();
+      }
+    });
+    this.classPlanGroups.delete(key);
+    return true;
+  }
+
+  /**
+   * 删除课表群，群内课表一并删除。
+   * 对应 Profile.DeleteClassPlanGroup。全局群与默认群不可删除，返回 false。
+   */
+  deleteClassPlanGroup(id: Guid): boolean {
+    if (id.equals(ClassPlanGroup.globalGroupGuid()) || id.equals(ClassPlanGroup.defaultGroupGuid())) {
+      return false;
+    }
+    const key: string = id.toString();
+    const doomed: string[] = [];
+    this.classPlans.forEach((plan: ClassPlan, planKey: string) => {
+      if (plan.associatedGroup.toString() === key) {
+        doomed.push(planKey);
+      }
+    });
+    for (const planKey of doomed) {
+      this.classPlans.delete(planKey);
+    }
+    this.classPlanGroups.delete(key);
+    return true;
+  }
+
+  /**
+   * 取指定日期的预定课表。
+   *
+   * 对应桌面版的 `OrderedSchedules.TryGetValue(date.Date, ...)`：DateTime 相等
+   * 只比刻度，所以查询键是当天 00:00:00。带时刻的键不会命中，与桌面版一致。
+   */
+  orderedScheduleFor(date: DateTimeValue): OrderedSchedule | undefined {
+    return this.orderedSchedules.tryGet(date.dateOnly().toString());
+  }
+
   // ---- 便捷查询 ----
 
   tryGetClassPlan(guid: Guid): ClassPlan | undefined {
@@ -126,7 +219,8 @@ export class Profile {
     out.set('IsTempClassPlanGroupEnabled', new JsonBoolean(this.isTempClassPlanGroupEnabled));
     out.set('TempClassPlanGroupType', ModelCodec.intNode(this.tempClassPlanGroupType));
     out.set('Id', ModelCodec.guidNode(this.id));
-    out.set('OrderedSchedules', ModelCodec.writeGuidMap(this.orderedSchedules, (v: OrderedSchedule) => v.toJson()));
+    out.set('OrderedSchedules', ModelCodec.writeDateKeyMap(this.orderedSchedules,
+      (v: OrderedSchedule) => v.toJson()));
     out.set('IsActive', new JsonBoolean(this.isActive));
     return out;
   }
@@ -161,7 +255,7 @@ export class Profile {
       return OrderedSchedule.fromJson(JsonValue.asObject(item) ?? new JsonObject());
     });
     out.isActive = ModelCodec.bool(node, 'IsActive', false);
-    out.bindReferences();
+    out.refreshDerivedState();
     return out;
   }
 

@@ -75,6 +75,35 @@ export class DateTimeValue {
       this.localTimezoneOffsetMillis(this.year, this.month - 1, this.day);
   }
 
+  /**
+   * 距 1970-01-01 的整天数（时刻部分不参与）。
+   *
+   * 用公历换算直接算，不经 Date / 时区。原因：本类型存的是墙上时钟分量，
+   * 而 Date 会按设备时区解释它。DST 切换日那天只有 23 或 25 小时，
+   * 拿 toLocalMillis() 做日期差会算出 23 小时——再向下取整成「周」就可能整整
+   * 差一周，单双周判定随之错位。C# 的 DateTime 相减是纯刻度算术，
+   * 这里必须同样与时区无关。
+   *
+   * 算法为 Howard Hinnant 的 days_from_civil，对全部年份精确（含 0–99 年）。
+   */
+  epochDay(): number {
+    let y: number = this.year;
+    const m: number = this.month;
+    // 以 3 月为岁首，把闰日挪到年末，公元前的年份也能用同一套公式。
+    if (m <= 2) {
+      y--;
+    }
+    const era: number = Math.floor(y / 400);
+    const yearOfEra: number = y - era * 400; // [0, 399]
+    const shiftedMonth: number = m > 2 ? m - 3 : m + 9; // 3..11
+    const dayOfYear: number = Math.floor((153 * shiftedMonth + 2) / 5) + this.day - 1; // [0, 365]
+    const dayOfEra: number = yearOfEra * 365 +
+      Math.floor(yearOfEra / 4) -
+      Math.floor(yearOfEra / 100) +
+      dayOfYear; // [0, 146096]
+    return era * 146097 + dayOfEra - 719468;
+  }
+
   private localTimezoneOffsetMillis(y: number, m: number, d: number): number {
     const probe: Date = new Date(y, m, d, 12, 0, 0, 0);
     return -probe.getTimezoneOffset() * MS_PER_MINUTE;
@@ -98,9 +127,32 @@ export class DateTimeValue {
     return `${DateTimeValue.pad(this.year, 4)}-${DateTimeValue.pad(this.month, 2)}-${DateTimeValue.pad(this.day, 2)}`;
   }
 
-  /** 星期几：0=周日 … 6=周六。 */
+  /**
+   * 星期几：0=周日 … 6=周六，与 C# DayOfWeek 数值一致。
+   *
+   * 用 Zeller 判据而非 `new Date(y, m-1, d).getDay()`：后者对 0–99 年会
+   * 按 1900–1999 解释，0001-01-01（DateTime.MinValue，字段缺失时的回退值）
+   * 的星期会算错。
+   */
   dayOfWeek(): number {
-    return new Date(this.year, this.month - 1, this.day).getDay();
+    // Zeller 判据：1、2 月视作上一年的 13、14 月
+    let m: number = this.month;
+    let y: number = this.year;
+    if (m < 3) {
+      y--;
+      m += 12;
+    }
+    const century: number = Math.trunc(y / 100);
+    const yearOfCentury: number = y - century * 100;
+    const h: number = (
+      this.day +
+      Math.trunc(13 * (m + 1) / 5) +
+      yearOfCentury +
+      Math.trunc(yearOfCentury / 4) +
+      Math.trunc(century / 4) +
+      5 * century) % 7;
+    // Zeller 的 h: 0=周六 1=周日 2=周一 … 翻成 C# DayOfWeek 的 0=周日
+    return (h + 6) % 7;
   }
 
   /**
@@ -115,8 +167,38 @@ export class DateTimeValue {
     return DateTimeValue.fromLocalMillis(this.toLocalMillis() + seconds * MS_PER_SECOND);
   }
 
+  /**
+   * 加减整天。走日历分量而非纪元毫秒加法。
+   *
+   * 加 86400000 毫秒在 DST 切换日不等于「加一天」——可能落到当天的 01:00，
+   * 也可能跳过一天。本类型是墙上时钟，日期加减必须按公历走。
+   */
   addDays(days: number): DateTimeValue {
-    return DateTimeValue.fromLocalMillis(this.toLocalMillis() + days * MS_PER_DAY);
+    const out: DateTimeValue = this.dateOnly();
+    if (days !== 0) {
+      const ymd: number[] = DateTimeValue.civilFromEpochDay(out.epochDay() + days);
+      out.year = ymd[0];
+      out.month = ymd[1];
+      out.day = ymd[2];
+    }
+    return out;
+  }
+
+  /** 历日 -> [年, 月, 日]，days_from_civil 的逆运算。 */
+  private static civilFromEpochDay(epochDay: number): number[] {
+    const z: number = epochDay + 719468;
+    const era: number = Math.floor(z / 146097);
+    const dayOfEra: number = z - era * 146097; // [0, 146096]
+    const yearOfEra: number = Math.floor(
+      (dayOfEra - Math.floor(dayOfEra / 1460) + Math.floor(dayOfEra / 36524) -
+        Math.floor(dayOfEra / 146096)) / 365); // [0, 399]
+    const dayOfYear: number = dayOfEra -
+      (365 * yearOfEra + Math.floor(yearOfEra / 4) - Math.floor(yearOfEra / 100)); // [0, 365]
+    const monthPrime: number = Math.floor((5 * dayOfYear + 2) / 153); // 0..11，3 月为 0
+    const day: number = dayOfYear - Math.floor((153 * monthPrime + 2) / 5) + 1;
+    const month: number = monthPrime < 10 ? monthPrime + 3 : monthPrime - 9;
+    const year: number = yearOfEra + era * 400 + (month <= 2 ? 1 : 0);
+    return [year, month, day];
   }
 
   static fromLocalMillis(millis: number): DateTimeValue {
@@ -229,6 +311,14 @@ export class DateTimeValue {
       return false;
     }
     return this.toString() === other.toString();
+  }
+
+  /**
+   * 仅比较日期部分（忽略时刻）。
+   * 对应桌面版反复出现的 `someDateTime.Date` 写法。
+   */
+  dateOnly(): DateTimeValue {
+    return new DateTimeValue(this.year, this.month, this.day, 0, 0, 0, 0);
   }
 
   private static pad(value: number, width: number): string {

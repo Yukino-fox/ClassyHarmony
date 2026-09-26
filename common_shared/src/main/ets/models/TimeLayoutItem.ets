@@ -10,7 +10,9 @@
  * 新建实例两者恒为空串，因此桌面版实际落盘为 "StartSecond":"","EndSecond":""。
  * 为保证字节级往返，这里照常输出，不可「顺手清理」。
  *
- * TimeType：0=课间休息，>0 为该时间点内第几节课（1 起）。课程时段比较依赖它。
+ * TimeType：0=上课，1=课间，2=分割线，3=行动。
+ * 课程时段靠「在 TimeType==0 列表中的下标」与 ClassInfo 对应，
+ * 切勿按「>0 为第几节课」理解——那是旧版本地废弃的约定。
  *
  * 被 [JsonIgnore] 排除：Last（= EndTime - StartTime）、BreakNameText（空名时
  * 显示「课间休息」的运行期派生值）。
@@ -24,8 +26,14 @@ import { KeyedMap } from '../collections/KeyedMap';
 import { ModelCodec } from './ModelCodec';
 import { ActionSet } from './Automation/ActionSet';
 
+/** TimeType：上课。课程时段，ClassInfo 与之按下标对应。 */
+export const TIME_TYPE_CLASS: number = 0;
 /** TimeType：课间休息。 */
-export const TIME_TYPE_BREAK: number = 0;
+export const TIME_TYPE_BREAK: number = 1;
+/** TimeType：分割线。纯视觉，不对应任何课程。 */
+export const TIME_TYPE_SEPARATOR: number = 2;
+/** TimeType：行动。执行 ActionSet，不在课表网格中显示。 */
+export const TIME_TYPE_ACTION: number = 3;
 
 export class TimeLayoutItem {
   /**
@@ -42,15 +50,15 @@ export class TimeLayoutItem {
   /** 时间段结束（当天起算的 TimeSpan）。 */
   endTime: TimeSpanValue = TimeSpanValue.zero();
 
-  /** 0=课间休息；>0 表示该时间点内第几节课。 */
-  timeType: number = 0;
+  /** 0=上课；1=课间；2=分割线；3=行动。 */
+  timeType: number = TIME_TYPE_CLASS;
 
   isHideDefault: boolean = false;
 
-  /** 课间休息的默认课程 ID。 */
+  /** 该时间点的默认科目 ID；非空时用于给对应课程填初值。 */
   defaultClassId: Guid = Guid.empty();
 
-  /** 课间休息名称，空串时显示为「课间休息」。 */
+  /** 课间名称，空串时显示为「课间休息」。 */
   breakName: string = '';
 
   /** 该时间点触发的行动组。 */
@@ -68,9 +76,24 @@ export class TimeLayoutItem {
     return this.endTime.subtract(this.startTime);
   }
 
+  /** 是否为上课时间点。 */
+  isClass(): boolean {
+    return this.timeType === TIME_TYPE_CLASS;
+  }
+
   /** 是否为课间休息时间点。 */
   isBreak(): boolean {
     return this.timeType === TIME_TYPE_BREAK;
+  }
+
+  /**
+   * 是否会出现在课表网格里。
+   * 分割线（2）显示但不占课程位；行动（3）只在自动化里出现，网格不显示。
+   */
+  isDisplayable(): boolean {
+    return this.timeType === TIME_TYPE_CLASS ||
+      this.timeType === TIME_TYPE_BREAK ||
+      this.timeType === TIME_TYPE_SEPARATOR;
   }
 
   /** 休息名称的回退显示（对应只读属性 BreakNameText）。 */

@@ -7,6 +7,14 @@
  * 1. 严禁依赖 UI、音频、媒体、后台任务——小组件 Extension 会引用本模块。
  * 2. 必须可重入：每次实例化从磁盘加载 → 一次性计算 → 销毁。
  *    禁止跨实例共享可变单例状态。
- *
- * P1 阶段此模块尚无实现，仅用于验证工程接线。
+ *    本阶段（P2）的引擎全部是「传入档案 + 传入时间」的静态纯函数，
+ *    不含任何静态可变字段。
  */
+
+/* ---- 课表引擎 ---- */
+export { EngineSettings } from './src/main/ets/engine/EngineSettings';
+export { WeekRotation } from './src/main/ets/engine/WeekRotation';
+export { ClassPlanResolver, ResolvedClassPlan, ResolvedSource } from './src/main/ets/engine/ClassPlanResolver';
+export { TempPlanManager } from './src/main/ets/engine/TempPlanManager';
+export { LessonsSnapshot, StateEvent } from './src/main/ets/engine/LessonsSnapshot';
+export { LessonsEngine } from './src/main/ets/engine/LessonsEngine';

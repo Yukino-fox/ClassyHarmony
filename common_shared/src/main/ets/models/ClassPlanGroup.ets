@@ -25,6 +25,15 @@ export class ClassPlanGroup {
     return Guid.fromCanonical('acaf4ef0-e261-4262-b941-34ea93cb4369');
   }
 
+  /**
+   * 全局课表组 ID，即 Guid.Empty。
+   * 归属此群的课表在任何所选课表群下都生效，且在选择时优先级最高。
+   * 源为 ClassPlanGroup.GlobalGroupGuid。
+   */
+  static globalGroupGuid(): Guid {
+    return Guid.empty();
+  }
+
   toJson(): JsonObject {
     const out: JsonObject = new JsonObject();
     out.set('Name', new JsonString(this.name));
