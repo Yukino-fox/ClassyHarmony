@@ -29,6 +29,7 @@ import { ScheduleGridBuilder } from '../../common_core/src/main/ets/view/Schedul
 import { ScheduleCell, ScheduleColumn, ScheduleGrid, ScheduleRow } from '../../common_core/src/main/ets/view/ScheduleGrid';
 import { WeekRotation } from '../../common_core/src/main/ets/engine/WeekRotation';
 import { LayoutForm, layoutFormOf, SINGLE_COLUMN_MAX_WIDTH, GRID_FILL_MIN_WIDTH } from '../../common_core/src/main/ets/view/LayoutForm';
+import { weekDayName, weekDayShortName } from '../../common_core/src/main/ets/view/TextFormat';
 
 let passed: number = 0;
 const failures: string[] = [];
@@ -572,8 +573,49 @@ function testLayoutForm() {
   checkNum('LayoutForm.DualWide 值', LayoutForm.DualWide, 2);
 }
 
+// ------------------------------------------------- 星期日端到端（口径回归）
+
+/**
+ * 星期日必须真的能出课。
+ *
+ * 这条守的是一个具体错误：星期几在本工程是 .NET 口径 0=周日 … 6=周六。0 与 1..6
+ * 在「周一到周六」这一段看起来完全正常，只有周日是另一头，所以任何一处把 0 当
+ * 「周一」或把 7 当「周日」的处理都只会在周日暴露。
+ *
+ * 现有断言里 testRowOrder 已经钉住了行序数组末日是 0，但那只说明「标签对得上」，
+ * 不说明「那张课表在周日真的生效」。这两件事会一起坏：编辑页的星期按钮若按下标
+ * 写 weekDay，就会出现「界面自洽、引擎永不匹配」——周日有课表但全天无课，无报错。
+ * 所以必须从「档案里 weekDay=0 的课表，在周日那天真的出课」这一端验证。
+ */
+function testSundayPlanTakesEffect(): void {
+  const sunday: string = '2026-09-27';   // 基准日 09-26 是周六，故次日是周日
+  checkNum('周日 dayOfWeek 是 0（不是 7）', dt(sunday).dayOfWeek(), 0);
+
+  const grid: ScheduleGrid = buildGrid(profileForDays([0]), `${sunday}T08:20:00`);
+
+  checkNum('周日是第 7 行（行序末日）', grid.todayRowIndex, 6);
+  checkNum('周日行 dayOfWeek = 0', rowOf(grid, 6).dayOfWeek, 0);
+  check('周日那天确实有课表', rowOf(grid, 6).hasPlan);
+  checkEqual('周日第一节有科目', cellOf(grid, 6, 0).subjectName, '语文');
+
+  // 引擎侧同一件事：状态机在周日应认出语文。
+  const snapshot: LessonsSnapshot = snapshotAt(profileForDays([0]), `${sunday}T08:20:00`);
+  check('引擎在周日认出当前科目',
+    snapshot.currentSubject !== undefined && snapshot.currentSubject.name === '语文',
+    snapshot.currentSubject === undefined ? '(空)' : snapshot.currentSubject.name);
+
+  // 名字在周日不能是空串，也不能串到「周一」。
+  checkEqual('周日名字', weekDayName(rowOf(grid, 6).dayOfWeek), '周日');
+  checkEqual('周日短名', weekDayShortName(rowOf(grid, 6).dayOfWeek), '日');
+
+  // 反向：只有周一课表时，周日必须没有课。这一条挡的是「把周日当周一」的错法。
+  const mondayOnly: ScheduleGrid = buildGrid(profileForDays([1]), `${sunday}T08:20:00`);
+  check('只有周一课表时周日无课', !rowOf(mondayOnly, 6).hasPlan);
+}
+
 // ------------------------------------------------------------------ 入口
 
+testSundayPlanTakesEffect();
 testColumns();
 testDisabledCascade();
 testRowOrder();

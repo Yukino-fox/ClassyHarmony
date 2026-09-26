@@ -70,3 +70,14 @@ export {
   weekDayShortName,
   weekRotationText
 } from './src/main/ets/view/TextFormat';
+
+/* ---- 提醒编排（P6）---- */
+export {
+  ReminderMode,
+  ReminderAdvance,
+  ReminderPlan,
+  ReminderPlanItem,
+  ReminderSnapshot,
+  ReminderDiff,
+  ReminderPlanner
+} from './src/main/ets/reminder/ReminderPlan';
