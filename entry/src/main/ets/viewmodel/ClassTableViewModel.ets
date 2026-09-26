@@ -74,6 +74,7 @@ export class ClassTableViewModel {
   private profile: Profile = new Profile();
   private timer: number = -1;
   private lastSignature: string = '';
+  private widgetJumpConsumed: boolean = false;
 
   constructor(clock: AppClock, repository: ProfileRepository) {
     this.clock = clock;
@@ -151,6 +152,33 @@ export class ClassTableViewModel {
       return;
     }
     this.selectedRowIndex = index;
+  }
+
+  /**
+   * 定位到今天往后第 offset 天。桌面卡片跳进来时调。
+   *
+   * 走独立方法而不是复用 selectRow：selectRow 带「再点一次取消选择」的语义，
+   * 而卡片跳转要求的是「明确落到那一天」，两者恰好相反 —— 复用会在 offset 为 0 时
+   * 把选择清掉，表现为点卡片进应用后停在今天而不是今天那行的高亮态。
+   *
+   * 同一进程内只生效一次。router.getParams() 拿到的是本页生命周期内的常量，
+   * 不做一次性消费的话，用户从编辑页返回时 onPageShow 又会跳一次，
+   * 表现为「我看一眼编辑页，日期自己跳到明天了」。
+   */
+  focusDayFromWidget(offset: number): void {
+    if (this.widgetJumpConsumed) {
+      return;
+    }
+    this.widgetJumpConsumed = true;
+    if (offset <= 0) {
+      return;
+    }
+    const today: number = this.grid.todayRowIndex;
+    const target: number = today + offset;
+    if (today < 0 || target >= this.grid.rows.length) {
+      return;
+    }
+    this.selectedRowIndex = target;
   }
 
   /** 网格换新之后修正选中行，避免行数变化时选中下标越界。 */

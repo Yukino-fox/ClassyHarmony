@@ -110,10 +110,27 @@ export class ScheduleEditorViewModel {
   /** 基线：上次载入或保存时的序列化结果。 */
   private baseline: string = '';
   private statusTimer: number = -1;
+  /**
+   * 档案写盘后的通知回调。
+   *
+   * 桌面卡片有自己的运行时，改了档案它不会自己知道。不通知的话用户回桌面看到的
+   * 还是旧课表，而且旧数据带着「正在上课 语文」这种有时间感的文字，看起来完全可信 ——
+   * 他不会怀疑卡片，只会以为刚才的保存没生效。
+   *
+   * 用注入而不是在这里直接调 widget 服务：ViewModel 不该知道桌面上有几张卡片，
+   * 而要拿到 reloadAllForms 需要的 UIAbilityContext 也得从外面给。组合根
+   * （AppServices）是唯一同时握有这两样的地方。
+   */
+  private profileSavedListener: (() => void) | undefined = undefined;
 
   constructor(clock: AppClock, repository: ProfileRepository) {
     this.clock = clock;
     this.repository = repository;
+  }
+
+  /** 注册「档案已写盘」回调。传 undefined 取消。 */
+  onProfileSaved(listener: (() => void) | undefined): void {
+    this.profileSavedListener = listener;
   }
 
   /**
@@ -163,11 +180,30 @@ export class ScheduleEditorViewModel {
       this.baseline = Profile.stringify(this.draft);
       this.refreshDirty();
       this.say('已保存');
+      this.notifySaved();
       return true;
     } catch (err) {
       const message: string = err instanceof Error ? err.message : String(err);
       this.errorText = `保存失败：${message}`;
       return false;
+    }
+  }
+
+  /**
+   * 通知外部「档案已落盘」。
+   *
+   * 通知本身失败绝不影响 save 的返回值：卡片晚几分钟更新只是「卡片旧了一点」，
+   * 而让保存报失败会让用户以为自己的课表没存上，进而重复操作甚至放弃保存。
+   */
+  private notifySaved(): void {
+    const listener: (() => void) | undefined = this.profileSavedListener;
+    if (listener === undefined) {
+      return;
+    }
+    try {
+      listener();
+    } catch (err) {
+      // 同上：吞掉。调用方（AppServices）自己会记日志。
     }
   }
 

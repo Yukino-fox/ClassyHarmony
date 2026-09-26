@@ -11,6 +11,22 @@
     {
       "name": "EntryAbility_label",
       "value": "课程表"
+    },
+    {
+      "name": "EntryFormAbility_desc",
+      "value": "今日课程表桌面卡片"
+    },
+    {
+      "name": "EntryFormAbility_label",
+      "value": "今日课程表"
+    },
+    {
+      "name": "form_today_display_name",
+      "value": "今日课程表"
+    },
+    {
+      "name": "form_today_description",
+      "value": "在桌面显示接下来的课程与当前状态"
     }
   ]
 }

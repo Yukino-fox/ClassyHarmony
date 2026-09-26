@@ -50,6 +50,17 @@ export {
   parseDurationText
 } from './src/main/ets/edit/EditorRows';
 
+/* ---- 小组件视图数据 ---- */
+export {
+  WIDGET_REFRESH_MAX_MINUTES,
+  WIDGET_REFRESH_MIN_MINUTES,
+  WidgetBuilder,
+  WidgetCodec,
+  WidgetDimension,
+  WidgetLesson,
+  WidgetModel
+} from './src/main/ets/view/WidgetModel';
+
 /* ---- 展示用文本格式化 ---- */
 export {
   formatClock,

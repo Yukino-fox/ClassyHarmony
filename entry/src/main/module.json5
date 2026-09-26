@@ -46,6 +46,23 @@
             "resource": "$profile:backup_config"
           }
         ],
+      },
+      {
+        "name": "EntryFormAbility",
+        "srcEntry": "./ets/widget/EntryFormAbility.ets",
+        "description": "$string:EntryFormAbility_desc",
+        "icon": "$media:layered_image",
+        "label": "$string:EntryFormAbility_label",
+        "type": "form",
+        // exported 必须为 true：卡片是由系统的卡片选择器在另一个应用里拉起的，
+        // 不导出的话卡片在选择器里根本不出现，且没有任何报错。
+        "exported": true,
+        "metadata": [
+          {
+            "name": "ohos.extension.form",
+            "resource": "$profile:form_config"
+          }
+        ]
       }
     ]
   }

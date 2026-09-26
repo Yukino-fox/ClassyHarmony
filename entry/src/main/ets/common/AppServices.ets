@@ -19,6 +19,7 @@ import { ClassTableViewModel } from '../viewmodel/ClassTableViewModel';
 import { ScheduleEditorViewModel } from '../viewmodel/ScheduleEditorViewModel';
 import { AppClock, SystemClock } from './AppClock';
 import { ProfileRepository } from '../data/ProfileRepository';
+import { FormWidgetService } from '../widget/FormWidgetService';
 import { ServiceContainer, ServiceKeys } from './ServiceContainer';
 
 let instance: ClassTableViewModel | undefined = undefined;
@@ -80,6 +81,11 @@ export function resolveScheduleEditorViewModel(
     container.require<AppClock>(ServiceKeys.CLOCK),
     container.require<ProfileRepository>(ServiceKeys.PROFILE_REPO)
   );
+  // 桌面卡片有自己的运行时，档案改了它不会自己知道。这里是全应用唯一同时
+  // 握有「档案已落盘」和「UIAbilityContext」的地方，通知由它发出。
+  editorInstance.onProfileSaved((): void => {
+    FormWidgetService.reloadAllQuietly(context);
+  });
   return editorInstance;
 }
 

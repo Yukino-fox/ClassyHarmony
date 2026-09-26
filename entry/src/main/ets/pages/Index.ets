@@ -28,9 +28,9 @@
  */
 
 import { common } from '@kit.AbilityKit';
-import { router } from '@kit.ArkUI';
 import { LayoutForm, layoutFormOf } from 'common_core';
 import { resolveClassTableViewModel } from '../common/AppServices';
+import { UiFeedback } from '../common/UiFeedback';
 import { ClassTableViewModel } from '../viewmodel/ClassTableViewModel';
 import { LessonBannerView } from '../components/LessonBannerView';
 import { ScheduleDayView } from '../components/ScheduleDayView';
@@ -81,10 +81,45 @@ struct Index {
    */
   onPageShow(): void {
     this.vm?.reloadProfile();
+    this.applyWidgetJump();
   }
 
+  /**
+   * 处理桌面卡片带来的跳转参数。
+   *
+   * 卡片可能显示的是明天或下周一（放学后它会主动滚到下一个有课的日子），
+   * 而这一页默认停在今天。不跟着跳的话，用户点卡片进来看到的日期和卡片上写的
+   * 不是一天，会以为卡片在骗他。
+   *
+   * 一次性消费由 ViewModel 负责，不在这里做：onPageShow 每次进页面都会跑，
+   * 在这里去清参数既没有可靠的时机，也容易在「参数本来就是空」时把状态弄脏。
+   */
+  private applyWidgetJump(): void {
+    const raw: Object = this.getUIContext().getRouter().getParams();
+    if (raw === undefined || raw === null || typeof raw !== 'object') {
+      return;
+    }
+    const record: Record<string, Object> = raw as Record<string, Object>;
+    const value: Object | undefined = record['dayOffset'];
+    // 只认 number。卡片那边写的是数值，别的类型（比如被外部应用塞进来的字符串）
+    // 当作没有参数处理，宁可不跳也不要把一个乱解析出来的天数定位过去。
+    if (typeof value === 'number') {
+      this.vm?.focusDayFromWidget(value);
+    }
+  }
+
+  /**
+   * 进编辑页。
+   *
+   * 走 UIContext 的 Router 而不是全局 router：后者从 API 18 起废弃。
+   * 跳转失败（页面没注册、栈满）不静默 —— 表现会是「点了没反应」，
+   * 至少让用户知道是哪里出了问题。
+   */
   private openEditor(): void {
-    router.pushUrl({ url: 'pages/Editor' });
+    const uiContext: UIContext = this.getUIContext();
+    uiContext.getRouter().pushUrl({ url: 'pages/Editor' }).catch(() => {
+      UiFeedback.toast(uiContext, '进不去编辑页');
+    });
   }
 
   /**
