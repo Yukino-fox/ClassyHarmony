@@ -37,6 +37,30 @@
           ]
         }
       ]
+    },
+    {
+      "name": "common_shared",
+      "srcPath": "./common_shared",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "common_core",
+      "srcPath": "./common_core",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
     }
   ]
 }

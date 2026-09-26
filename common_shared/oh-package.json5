@@ -1,0 +1,9 @@
+{
+  "name": "common_shared",
+  "version": "1.0.0",
+  "description": "ClassyHarmony 共享数据层：课表/档案数据模型与桌面版兼容的 JSON 编解码。对应 ClassIsland.Shared。",
+  "main": "Index.ets",
+  "author": "",
+  "license": "GPL-3.0",
+  "dependencies": {}
+}
