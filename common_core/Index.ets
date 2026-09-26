@@ -18,3 +18,6 @@ export { ClassPlanResolver, ResolvedClassPlan, ResolvedSource } from './src/main
 export { TempPlanManager } from './src/main/ets/engine/TempPlanManager';
 export { LessonsSnapshot, StateEvent } from './src/main/ets/engine/LessonsSnapshot';
 export { LessonsEngine } from './src/main/ets/engine/LessonsEngine';
+export { ScheduleCell, ScheduleColumn, ScheduleGrid, ScheduleRow, EMPTY_SUBJECT_TEXT } from './src/main/ets/view/ScheduleGrid';
+export { ScheduleGridBuilder } from './src/main/ets/view/ScheduleGridBuilder';
+export { LayoutForm, layoutFormOf, SINGLE_COLUMN_MAX_WIDTH, GRID_FILL_MIN_WIDTH } from './src/main/ets/view/LayoutForm';

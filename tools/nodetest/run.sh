@@ -70,6 +70,9 @@ sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
 sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
      s|'../../common_core/src/main/ets/|'../core/|g" \
   "$ROOT/tools/nodetest/src/engine-driver.ts" > "$WORK/src/tools/engine-driver.ts"
+sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
+     s|'../../common_core/src/main/ets/|'../core/|g" \
+  "$ROOT/tools/nodetest/src/grid-driver.ts" > "$WORK/src/tools/grid-driver.ts"
 
 "$NODE" "$TSC" \
   --outDir "$WORK/out" \
@@ -84,7 +87,8 @@ sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
   "$WORK/src/shared/Index.ts" \
   "$WORK/src/core/Index.ts" \
   "$WORK/src/tools/driver.ts" \
-  "$WORK/src/tools/engine-driver.ts" 2>&1 | sed 's/^/  /' || true
+  "$WORK/src/tools/engine-driver.ts" \
+  "$WORK/src/tools/grid-driver.ts" 2>&1 | sed 's/^/  /' || true
 
 cp -r "$ROOT/tools/nodetest/fixtures" "$WORK/out/fixtures"
 
@@ -94,4 +98,7 @@ echo "── 字节级往返 ──"
 echo ""
 echo "── 课表引擎 ──"
 "$NODE" "$WORK/out/tools/engine-driver.js" || status=1
+echo ""
+echo "── 课表网格 ──"
+"$NODE" "$WORK/out/tools/grid-driver.js" || status=1
 exit $status

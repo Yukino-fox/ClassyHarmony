@@ -3,6 +3,46 @@
     {
       "name": "start_window_background",
       "value": "#000000"
+    },
+    {
+      "name": "ch_surface",
+      "value": "#0F0F0F"
+    },
+    {
+      "name": "ch_surface_alt",
+      "value": "#1C1C1E"
+    },
+    {
+      "name": "ch_surface_weak",
+      "value": "#151517"
+    },
+    {
+      "name": "ch_text_primary",
+      "value": "#E5E5E5"
+    },
+    {
+      "name": "ch_text_secondary",
+      "value": "#99A1A6"
+    },
+    {
+      "name": "ch_text_hint",
+      "value": "#6C757D"
+    },
+    {
+      "name": "ch_outline",
+      "value": "#3A3A3C"
+    },
+    {
+      "name": "ch_accent",
+      "value": "#3EA6FF"
+    },
+    {
+      "name": "ch_accent_soft",
+      "value": "#1B2C3A"
+    },
+    {
+      "name": "ch_next",
+      "value": "#4DD0C7"
     }
   ]
 }
