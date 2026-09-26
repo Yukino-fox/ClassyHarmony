@@ -2,15 +2,15 @@
   "string": [
     {
       "name": "module_desc",
-      "value": "module description"
+      "value": "课程表：课表、课表编辑与每日提醒"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "description"
+      "value": "课程表应用主界面"
     },
     {
       "name": "EntryAbility_label",
-      "value": "ClassyHarmony"
+      "value": "课程表"
     }
   ]
 }

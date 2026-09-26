@@ -19,9 +19,16 @@
  * ----------------------
  * 「今天要上什么」和「这周整体怎么排」是两个不同的问题：前者适合竖排速读，
  * 后者适合横向对比。并排放不冲突，反而省掉一次切换。
+ *
+ * 顶栏只放两样东西
+ * ---------------
+ * 标题与「编辑」入口。再多就会开始抢课表本身的注意力 —— 课表页的主角是课表，
+ * 任何常驻控件都在跟它抢垂直空间。档案状态、导入导出这些都在编辑页里，
+ * 因为那些是「偶尔做一次」的事，不该在每天看的那个界面上占位。
  */
 
 import { common } from '@kit.AbilityKit';
+import { router } from '@kit.ArkUI';
 import { LayoutForm, layoutFormOf } from 'common_core';
 import { resolveClassTableViewModel } from '../common/AppServices';
 import { ClassTableViewModel } from '../viewmodel/ClassTableViewModel';
@@ -61,6 +68,51 @@ struct Index {
   aboutToDisappear(): void {
     // 页面销毁可能不经过 aboutToAppear（冷启动异常路径），所以走可选调用。
     this.vm?.stop();
+  }
+
+  /**
+   * 从编辑页返回时重读一次档案。
+   *
+   * 不重读的话，用户在编辑页改完保存、返回看到的还是旧的课表，要等到下一个
+   * 15 秒 tick 才更新。他会以为保存没生效，于是又去保存一遍。
+   *
+   * 首次进入时 onPageShow 也会跑在 aboutToAppear 之后，多读一次档案而已，
+   * reloadProfile 是幂等的。
+   */
+  onPageShow(): void {
+    this.vm?.reloadProfile();
+  }
+
+  private openEditor(): void {
+    router.pushUrl({ url: 'pages/Editor' });
+  }
+
+  /**
+   * 顶栏。
+   *
+   * 高度给 40vp：这个页面的垂直空间在单栏形态下最紧张，而顶栏每多占一行，
+   * 整周网格在 2in1 上就少一行课。40 够放一行 15vp 的字。
+   */
+  @Builder
+  private topBar() {
+    Row() {
+      Text('课表')
+        .fontSize(17)
+        .fontWeight(FontWeight.Medium)
+        .fontColor($r('app.color.ch_text_primary'))
+        .layoutWeight(1)
+      Text('编辑')
+        .fontSize(14)
+        .fontColor($r('app.color.ch_accent'))
+        .padding({ left: 16, top: 4, bottom: 4 })
+        .onClick(() => {
+          this.openEditor();
+        })
+    }
+    .width('100%')
+    .height(40)
+    .alignItems(VerticalAlign.Center)
+    .margin({ bottom: 4 })
   }
 
   private isSingleColumn(): boolean {
@@ -177,6 +229,8 @@ struct Index {
 
   build() {
     Column() {
+      this.topBar()
+
       if (this.vm === undefined) {
         // aboutToAppear 早于首次 build，所以这个分支只在极端异常路径上出现。
         this.loadingView('正在准备…', false)
