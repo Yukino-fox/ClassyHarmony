@@ -31,6 +31,7 @@ import { ClassPlanResolver } from '../engine/ClassPlanResolver';
 import { EngineSettings } from '../engine/EngineSettings';
 import { LessonsSnapshot } from '../engine/LessonsSnapshot';
 import { ScheduleCell, ScheduleColumn, ScheduleGrid, ScheduleRow } from './ScheduleGrid';
+import { formatClock } from './TextFormat';
 
 /** 网格行序：周一起。元素是 dayOfWeek 取值（0=周日 … 6=周六）。 */
 const ROW_ORDER: number[] = [1, 2, 3, 4, 5, 6, 0];
@@ -116,7 +117,7 @@ function buildColumns(plan: ClassPlan, layout: TimeLayout): ScheduleColumn[] {
     } else if (column.isBreak) {
       column.label = item.breakNameText();
     }
-    column.timeRange = `${formatClock(item.startTime)}-${formatClock(item.endTime)}`;
+    column.timeRange = `${formatClock(item.startTime.toSeconds())}-${formatClock(item.endTime.toSeconds())}`;
     columns.push(column);
   }
   return columns;
@@ -272,17 +273,3 @@ function resolveNextLayoutIndex(grid: ScheduleGrid, layout: TimeLayout,
   return -1;
 }
 
-/** TimeSpanValue -> 「HH:mm」。负值（跨零点的时间点）显示为 00:00。 */
-function formatClock(span: TimeSpanValue): string {
-  let seconds: number = span.toSeconds();
-  if (seconds < 0) {
-    seconds = 0;
-  }
-  const hours: number = Math.floor(seconds / 3600) % 24;
-  const minutes: number = Math.floor(seconds / 60) % 60;
-  return `${pad2(hours)}:${pad2(minutes)}`;
-}
-
-function pad2(value: number): string {
-  return value < 10 ? `0${value}` : `${value}`;
-}

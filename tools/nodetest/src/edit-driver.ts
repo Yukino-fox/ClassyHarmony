@@ -32,6 +32,24 @@ import { TimeSpanValue } from '../../common_shared/src/main/ets/json/TimeSpanVal
 import { TimeRule } from '../../common_shared/src/main/ets/models/TimeRule';
 import { TempClassPlanGroupType } from '../../common_shared/src/main/ets/enums/TempClassPlanGroupType';
 import { ScheduleMutations } from '../../common_core/src/main/ets/edit/ScheduleMutations';
+import {
+  ClassPlanGroupRow,
+  ClassPlanRow,
+  ClassSlotRow,
+  EditorRows,
+  parseClockText,
+  parseDurationText
+} from '../../common_core/src/main/ets/edit/EditorRows';
+import {
+  formatClock,
+  formatDuration,
+  timeTypeName,
+  weekDayName,
+  weekDayShortName,
+  weekRotationText
+} from '../../common_core/src/main/ets/view/TextFormat';
+import { EngineSettings } from '../../common_core/src/main/ets/engine/EngineSettings';
+import { ClassPlanResolver } from '../../common_core/src/main/ets/engine/ClassPlanResolver';
 
 let passed: number = 0;
 const failures: string[] = [];
@@ -56,6 +74,11 @@ function checkNum(name: string, actual: number, expected: number): void {
 
 function dt(text: string): DateTimeValue {
   return DateTimeValue.parseOrMin(text);
+}
+
+/** 引擎设置：单双周以 2026-09-20（周日）为起点，与 grid-driver 同基准。 */
+function settings(): EngineSettings {
+  return new EngineSettings(dt('2026-09-20T00:00:00'));
 }
 
 function point(type: number, start: string, end: string, breakName: string = ''): TimeLayoutItem {
@@ -963,6 +986,481 @@ function testMutationsAreDeterministic(): void {
   check('两遍结果一致', false, where);
 }
 
+// ------------------------------------------------------------ 文本格式化
+
+function testTextFormat(): void {
+  checkEqual('00:00', formatClock(0), '00:00');
+  checkEqual('08:05', formatClock(8 * 3600 + 5 * 60), '08:05');
+  checkEqual('10:45', formatClock(10 * 3600 + 45 * 60), '10:45');
+  // 跨零点的时间点在界面上显示 00:00，而不是 -1:-1 之类
+  checkEqual('负值降级为 00:00', formatClock(-3600), '00:00');
+  // 超过 24 小时按天回绕：作息表里有跨夜自习时不能显示成 25:00
+  checkEqual('跨夜回绕', formatClock(25 * 3600), '01:00');
+
+  checkEqual('45 分钟', formatDuration(45), '45 分钟');
+  checkEqual('1 小时', formatDuration(60), '1 小时');
+  checkEqual('1 小时 5 分', formatDuration(65), '1 小时 5 分');
+  checkEqual('0 分钟', formatDuration(0), '0 分钟');
+
+  // weekDay 是 .NET 口径 0=周日。写成 1=周一 会让所有单双周课表错一天，
+  // 而且界面上看不出异常，所以这里逐个钉住
+  checkEqual('0=周日', weekDayName(0), '周日');
+  checkEqual('1=周一', weekDayName(1), '周一');
+  checkEqual('6=周六', weekDayName(6), '周六');
+  checkEqual('越界空串', weekDayName(7), '');
+  checkEqual('负数空串', weekDayName(-1), '');
+  checkEqual('短名 一', weekDayShortName(1), '一');
+  checkEqual('短名 日', weekDayShortName(0), '日');
+
+  // weekCountDiv === 0 是「每周都匹配」，不是「第 0 周」
+  checkEqual('每周', weekRotationText(0, 2), '每周');
+  checkEqual('每周（总数也是 1）', weekRotationText(0, 1), '每周');
+  checkEqual('单周', weekRotationText(1, 2), '单周');
+  checkEqual('双周', weekRotationText(2, 2), '双周');
+  checkEqual('第 1/4 周', weekRotationText(1, 4), '第 1/4 周');
+  checkEqual('第 3/4 周', weekRotationText(3, 4), '第 3/4 周');
+  // 总数被改成 0 或负数时不能除零，也不能读成「第 1/0 周」
+  checkEqual('总数非法回落双周', weekRotationText(1, 0), '单周');
+
+  checkEqual('上课', timeTypeName(0), '上课');
+  checkEqual('课间', timeTypeName(1), '课间');
+  checkEqual('分割线', timeTypeName(2), '分割线');
+  checkEqual('行动', timeTypeName(3), '行动');
+  checkEqual('未知', timeTypeName(9), '未知');
+}
+
+function testParseClockText(): void {
+  checkNum('08:00', parseClockText('08:00') as number, 8 * 3600);
+  checkNum('前导零', parseClockText('8:00') as number, 8 * 3600);
+  checkNum('带空格', parseClockText('  09:30 ') as number, 9 * 3600 + 30 * 60);
+  checkNum('带秒', parseClockText('09:30:15') as number, 9 * 3600 + 30 * 60);
+  checkNum('24:00', parseClockText('24:00') as number, 24 * 3600);
+  // 格式不对返回 undefined 而不是 0：返回 0 会把时间点挪到 00:00，
+  // 界面上看着像「凌晨第一节课」，用户很难发现是自己输错了
+  check('空串非法', parseClockText('') === undefined);
+  check('缺分钟非法', parseClockText('08') === undefined);
+  check('缺冒号非法', parseClockText('0800') === undefined);
+  check('非数字非法', parseClockText('ab:cd') === undefined);
+  check('分钟越界非法', parseClockText('08:99') === undefined);
+  check('小时越界非法', parseClockText('25:00') === undefined);
+  check('负数非法', parseClockText('-1:00') === undefined);
+  check('四段非法', parseClockText('08:00:00:00') === undefined);
+}
+
+function testParseDurationText(): void {
+  checkNum('45 分钟', parseDurationText('45 分钟') as number, 45);
+  checkNum('纯数字', parseDurationText('45') as number, 45);
+  checkNum('1 小时', parseDurationText('1 小时') as number, 1);
+  checkNum('1 小时 5 分', parseDurationText('1 小时 5 分') as number, 15);
+  check('空串非法', parseDurationText('') === undefined);
+  check('无数字非法', parseDurationText('半小时') === undefined);
+  check('零非法', parseDurationText('0 分钟') === undefined);
+  check('超过一天非法', parseDurationText('2000 分钟') === undefined);
+}
+
+// ------------------------------------------------------- 编辑页视图数据
+
+function testEditorRowsSubjects(): void {
+  const profile: Profile = seededProfile();
+  const planId: Guid = firstPlanId(profile);
+  const rows = EditorRows.subjects(profile);
+  checkNum('三行', rows.length, 3);
+  checkEqual('按插入序', `${rows[0].name},${rows[1].name},${rows[2].name}`, '语文,数学,英语');
+  // 语文被第一节课引用；英语被第三节课引用
+  checkNum('语文被 1 张表 1 节课引用', rows[0].usedByPlans, 1);
+  checkNum('语文引用次数', rows[0].usedByClassesTotal, 1);
+  checkNum('英语引用次数', rows[2].usedByClassesTotal, 1);
+  // 缩略与教师名要带到界面上
+  checkEqual('缩略', rows[0].initial, '语');
+  checkEqual('教师', rows[0].teacherName, '张老师');
+  check('guid 取自字典键', rows[0].guid === profile.subjects.keys()[0]);
+
+  // 同一科目被一节课引用两次时，plans 与 classes 两个数要分开算
+  const sx: Guid = Guid.fromCanonical(profile.subjects.keys()[1]);
+  ScheduleMutations.setClassSubject(profile, planId, 0, sx);
+  ScheduleMutations.settle(profile);
+  const after = EditorRows.subjects(profile);
+  checkNum('数学被 1 张表引用', after[1].usedByPlans, 1);
+  checkNum('数学被引用 2 次', after[1].usedByClassesTotal, 2);
+  checkNum('语文不再被引用', after[0].usedByClassesTotal, 0);
+
+  // 删科目后引用数归零，界面才不会显示一个已经失效的引用
+  ScheduleMutations.removeSubject(profile, sx);
+  const gone = EditorRows.subjects(profile);
+  checkNum('删后剩两行', gone.length, 2);
+  checkEqual('英语顶上第 2 行', gone[1].name, '英语');
+}
+
+function testEditorRowsTimeLayout(): void {
+  const profile: Profile = seededProfile();
+  const rows = EditorRows.timeLayouts(profile);
+  checkNum('一行', rows.length, 1);
+  const row = rows[0];
+  checkEqual('名字', row.name, '标准作息');
+  checkNum('五行', row.rowCount, 5);
+  checkNum('三个课次', row.classCount, 3);
+  checkEqual('摘要取前三项并截断', row.summary, '08:00 / 大课间 / 09:00 / …');
+  checkNum('被一张课表用', row.usedByPlans, 1);
+  checkEqual('绑定的课表名', row.boundPlanNames, '周一');
+
+  // 行下标与课次下标的映射：行 1、3 是课间，课次下标必须是 -1。
+  // 这里是全篇最容易搞混的一处，写错的话排课界面会显示成「第 2 节」在课间上
+  checkNum('行 0 课次 0', row.rows[0].classSlot, 0);
+  checkNum('行 1 是课间', row.rows[1].classSlot, -1);
+  checkNum('行 2 课次 1', row.rows[2].classSlot, 1);
+  checkNum('行 3 是课间', row.rows[3].classSlot, -1);
+  checkNum('行 4 课次 2', row.rows[4].classSlot, 2);
+  checkEqual('行 0 节次文案', row.rows[0].classSlotText, '第 1 节');
+  checkEqual('课间行无节次文案', row.rows[1].classSlotText, '');
+  checkNum('行 0 是课程', row.rows[0].isClass ? 1 : 0, 1);
+  checkNum('行 1 不是课程', row.rows[1].isClass ? 1 : 0, 0);
+  checkEqual('时段', row.rows[0].startText + '-' + row.rows[0].endText, '08:00-08:45');
+  checkNum('时长分钟', row.rows[0].durationMinutes, 45);
+  checkEqual('时长文案', row.rows[0].durationText, '45 分钟');
+  checkEqual('类型文案', row.rows[1].timeTypeText, '课间');
+  checkEqual('课间名', row.rows[1].breakName, '大课间');
+}
+
+function testEditorRowsTimeLayoutDefaultApplied(): void {
+  const profile: Profile = seededProfile();
+  const layoutId: Guid = firstLayoutId(profile);
+  const yw: Guid = Guid.fromCanonical(profile.subjects.keys()[0]);
+  const sx: Guid = Guid.fromCanonical(profile.subjects.keys()[1]);
+  let row = EditorRows.timeLayouts(profile)[0];
+  checkEqual('默认未设预置科目', row.rows[2].defaultSubjectName, '');
+
+  // 行 4 是第 3 节课（行 1、3 是课间）。设成数学，已被排成数学的课数是 0
+  ScheduleMutations.setDefaultClass(profile, layoutId, 4, sx, false);
+  row = EditorRows.timeLayouts(profile)[0];
+  checkEqual('预置科目记下了', row.rows[4].defaultSubjectName, '数学');
+  checkNum('isHideDefault 为 false', row.rows[4].isHideDefault ? 1 : 0, 0);
+  // setDefaultClass 是覆盖语义：所有绑定这张时间表的课表，这一节立刻被刷成数学。
+  // 所以「设了预置但还没人用」这个状态根本不存在，计数落下就是 1
+  checkNum('落下即被实际排上', row.rows[4].defaultAppliedCount, 1);
+
+  // 再绑一张表也一并被刷，计数跟着涨
+  const extra: Guid = ScheduleMutations.addClassPlan(profile, layoutId, '周二');
+  ScheduleMutations.settle(profile);
+  row = EditorRows.timeLayouts(profile)[0];
+  checkNum('新表也被刷上', row.rows[4].defaultAppliedCount, 2);
+  checkNum('新表有 3 节', (profile.tryGetClassPlan(extra) as ClassPlan).classes.length, 3);
+
+  // 预置科目指向已删除的科目时显示占位符，而不是空串
+  // 空串会被界面当成「没设」，用户就看不到这里曾经设过东西
+  ScheduleMutations.removeSubject(profile, sx);
+  row = EditorRows.timeLayouts(profile)[0];
+  checkEqual('悬空预置科目显示占位符', row.rows[4].defaultSubjectName, '（无）');
+  check('guid 仍在', row.rows[4].defaultSubjectId === sx.toString());
+  check('不与英语混淆', yw.toString() !== row.rows[4].defaultSubjectId);
+}
+
+function testEditorRowsClassPlan(): void {
+  const profile: Profile = seededProfile();
+  const rows = EditorRows.classPlans(profile, '');
+  checkNum('一张课表', rows.length, 1);
+  const row = rows[0];
+  checkEqual('名字', row.name, '周一');
+  checkNum('绑定了时间表', row.hasTimeLayout ? 1 : 0, 1);
+  checkEqual('时间表名', row.timeLayoutName, '标准作息');
+  checkNum('三个课次', row.slots.length, 3);
+  checkEqual('第一节语文', row.slots[0].subjectName, '语文');
+  checkEqual('第二节数学', row.slots[1].subjectName, '数学');
+  checkEqual('第三节英语', row.slots[2].subjectName, '英语');
+  checkEqual('已排课摘要', row.filledText, '语文、数学、英语');
+  checkNum('已排课数', row.filledCount, 3);
+  checkEqual('星期文案', row.weekDayText, '周一');
+  checkEqual('轮转文案', row.weekRotationText, '每周');
+  checkNum('默认未启用', row.isEnabled ? 1 : 0, 1);
+  check('guid 取自字典键', row.guid === profile.classPlans.keys()[0]);
+  // 默认群不在字典里（ClassPlan.AssociatedGroup 指向它的固定 guid），
+  // 界面仍要显示得出名字，不能显示成「已失效」
+  checkEqual('默认群名', row.groupName, '默认课表群');
+}
+
+function testEditorRowsPlanEditRowsInvariant(): void {
+  // 排课页按下标配对取课次：slots[editRows[i].classSlot]。这条不变量断了，
+  // 界面就会把「第三节的课」显示在第二节那一行上，且不报任何错。
+  const profile: Profile = seededProfile();
+  const rows = EditorRows.classPlans(profile, '');
+  const row = rows[0];
+  checkNum('五个可显示行', row.editRows.length, 5);
+  checkEqual('行下标连续', `${row.editRows[0].rowIndex},${row.editRows[4].rowIndex}`, '0,4');
+  for (const edit of row.editRows) {
+    if (edit.classSlot < 0) {
+      continue;
+    }
+    check(`行 ${edit.rowIndex} 的课次下标落在 slots 范围内`,
+      edit.classSlot < row.slots.length);
+    check(`行 ${edit.rowIndex} 配对的课次自洽`,
+      row.slots[edit.classSlot].slot === edit.classSlot);
+  }
+  checkNum('课程行的课次下标', row.editRows[2].classSlot, 1);
+  checkNum('课间行的课次下标为 -1', row.editRows[1].classSlot, -1);
+  checkEqual('课间行的标签', row.editRows[1].label, '大课间');
+  checkEqual('课程行的标签', row.editRows[2].label, '第 2 节');
+  checkEqual('课程行的时段', row.editRows[2].timeRange, '09:00-09:45');
+  checkNum('课间行也有时段', row.editRows[1].timeRange.length > 0 ? 1 : 0, 1);
+}
+
+function testEditorRowsPlanEditRowsWithSeparator(): void {
+  // 分割线占行但不占课次，且不显示时段
+  const profile: Profile = seededProfile();
+  const layoutId: Guid = firstLayoutId(profile);
+  ScheduleMutations.addTimePoint(profile, layoutId, TIME_TYPE_SEPARATOR, 10 * 3600, 0);
+  ScheduleMutations.settle(profile);
+  const row = EditorRows.classPlans(profile, '')[0];
+  checkNum('行数多了一个', row.editRows.length, 6);
+  checkNum('课次数没变', row.slots.length, 3);
+  const last = row.editRows[5];
+  checkNum('末行是分割线', last.isSeparator ? 1 : 0, 1);
+  checkNum('末行不占课次', last.classSlot, -1);
+  checkEqual('末行不显示时段', last.timeRange, '');
+  checkNum('末行不参与配对', last.isClass ? 1 : 0, 0);
+}
+
+function testEditorRowsClassPlanAfterLayoutDeleted(): void {
+  // 时间表被删后课表不会被删（改动层只解绑），界面要显示成「已失效」
+  // 而不是空白，也不能崩在 profile.tryGetTimeLayout 的 undefined 上
+  const profile: Profile = seededProfile();
+  const layoutId: Guid = firstLayoutId(profile);
+  ScheduleMutations.removeTimeLayout(profile, layoutId);
+  const row = EditorRows.classPlans(profile, '')[0];
+  checkNum('标记为未绑定', row.hasTimeLayout ? 1 : 0, 0);
+  checkEqual('时间表名显示已失效', row.timeLayoutName, '（已失效）');
+  checkNum('没有课次可排', row.slots.length, 0);
+  checkNum('没有行可渲染', row.editRows.length, 0);
+  checkEqual('摘要清空', row.filledText, '');
+}
+
+function testEditorRowsClassPlanGroupFallsBack(): void {
+  const profile: Profile = emptyProfile();
+  const planId: Guid = ScheduleMutations.addClassPlan(
+    profile, Guid.newGuid(), '指向空群');
+  // 手工把课表挂到一个不存在的群上，模拟用户文件里的悬空引用
+  (profile.tryGetClassPlan(planId) as ClassPlan).associatedGroup =
+    Guid.fromCanonical('99999999-9999-9999-9999-999999999999');
+  ScheduleMutations.settle(profile);
+  const row = EditorRows.classPlans(profile, '')[0];
+  checkEqual('悬空群显示已失效', row.groupName, '（已失效）');
+
+  // 全局群 guid 是 Guid.Empty，也不在字典里
+  (profile.tryGetClassPlan(planId) as ClassPlan).associatedGroup = ClassPlanGroup.globalGroupGuid();
+  checkEqual('全局群名', EditorRows.classPlans(profile, '')[0].groupName, '全局课表群');
+}
+
+function testEditorRowsOverlaySourceFallsBack(): void {
+  const profile: Profile = seededProfile();
+  const planId: Guid = firstPlanId(profile);
+  const overlayId: Guid = ScheduleMutations.createOverlayClassPlan(
+    profile, planId, '国庆叠加') as Guid;
+  let row = findPlan(EditorRows.classPlans(profile, ''), overlayId.toString());
+  checkEqual('叠加源名', row.overlaySourceName, '周一');
+  checkNum('叠加标志', row.isOverlay ? 1 : 0, 1);
+
+  // 删源课表会连带清掉叠加表的 overlaySourceId（改动层的既定行为），
+  // 所以这里不该再显示一个悬空源，而是当成普通课表
+  ScheduleMutations.removeClassPlan(profile, planId);
+  row = findPlan(EditorRows.classPlans(profile, ''), overlayId.toString());
+  checkEqual('源指针被清', row.overlaySourceId, '');
+  checkEqual('源名清空', row.overlaySourceName, '');
+  checkNum('叠加标志仍在', row.isOverlay ? 1 : 0, 1);
+  checkNum('叠加表本身没被删', EditorRows.classPlans(profile, '').length, 1);
+}
+
+function testEditorRowsActiveMark(): void {
+  // 判定由引擎给出，编辑页不再自己算一遍。这里只验「传进来什么就标什么」
+  const profile: Profile = seededProfile();
+  const planId: string = profile.classPlans.keys()[0];
+  checkNum('空串时都不标',
+    EditorRows.classPlans(profile, '')[0].isActiveOnBaseDate ? 1 : 0, 0);
+  checkNum('传对的 guid 时标上',
+    EditorRows.classPlans(profile, planId)[0].isActiveOnBaseDate ? 1 : 0, 1);
+
+  // 引擎口径：2026-09-26 是周六（dayOfWeek=6），课表挂在周一所以不生效
+  const resolved = ClassPlanResolver.resolve(profile, dt('2026-09-26T09:00:00'), settings());
+  checkNum('引擎判今天无课', resolved.plan === undefined ? 1 : 0, 1);
+  // 换成周一就有课
+  const monday = ClassPlanResolver.resolve(profile, dt('2026-09-21T09:00:00'), settings());
+  check('引擎判周一生效', monday.plan !== undefined);
+  checkEqual('生效的正是那张', monday.guid.toString(), planId);
+  // 编辑页拿引擎结果去标，标到的就是同一张
+  const marked = EditorRows.classPlans(profile, monday.guid.toString());
+  checkNum('编辑页标同一张', marked[0].isActiveOnBaseDate ? 1 : 0, 1);
+}
+
+function testEditorRowsClassPlanGroups(): void {
+  const profile: Profile = emptyProfile();
+  const groupId: Guid = ScheduleMutations.addClassPlanGroup(profile, '单双周');
+  // 建一张挂在这个群里的课表，好数 planCount
+  const planId: Guid = ScheduleMutations.addClassPlan(
+    profile, Guid.newGuid(), '周一');
+  ScheduleMutations.setClassPlanGroup(profile, planId, groupId);
+  ScheduleMutations.settle(profile);
+
+  const rows = EditorRows.classPlanGroups(profile);
+  checkNum('一个群', rows.length, 1);
+  checkEqual('名字', rows[0].name, '单双周');
+  checkNum('群内一张表', rows[0].planCount, 1);
+  check('guid 取自字典键', rows[0].guid === groupId.toString());
+
+  ScheduleMutations.selectClassPlanGroup(profile, groupId);
+  checkNum('标为当前群',
+    EditorRows.classPlanGroups(profile)[0].isSelected ? 1 : 0, 1);
+  checkNum('可解散', EditorRows.classPlanGroups(profile)[0].canDisband ? 1 : 0, 1);
+  checkNum('可删除', EditorRows.classPlanGroups(profile)[0].canDelete ? 1 : 0, 1);
+}
+
+function testEditorRowsDanglingGroupGuards(): void {
+  // 默认群与全局群不在 classPlanGroups 字典里（它们是固定 guid），
+  // 所以 canDisband / canDelete 这道闸门只有在这里能验到。
+  // 删掉它们改的是选课结果而不只是少一个列表项。
+  const profile: Profile = emptyProfile();
+  // 手工把两个固定群塞进字典，模拟用户文件里确实有它们的情况
+  // 键就是那个固定 guid，对象本身不存 —— 全篇都靠这条
+  const defaultGroup = new ClassPlanGroup();
+  defaultGroup.name = '默认课表群';
+  profile.classPlanGroups.set(ClassPlanGroup.defaultGroupGuid().toString(), defaultGroup);
+  const globalGroup = new ClassPlanGroup();
+  globalGroup.name = '全局课表群';
+  globalGroup.isGlobal = true;
+  profile.classPlanGroups.set(ClassPlanGroup.globalGroupGuid().toString(), globalGroup);
+
+  const rows = EditorRows.classPlanGroups(profile);
+  checkNum('两个群', rows.length, 2);
+  checkNum('识别出默认群',
+    rows.some((r: ClassPlanGroupRow) => r.isDefault) ? 1 : 0, 1);
+  const global = rows.filter((r: ClassPlanGroupRow) => r.isGlobal)[0];
+  checkNum('全局群不可解散', global.canDisband ? 1 : 0, 0);
+  checkNum('全局群不可删除', global.canDelete ? 1 : 0, 0);
+  const fallback = rows.filter((r: ClassPlanGroupRow) => r.isDefault)[0];
+  checkNum('默认群不可解散', fallback.canDisband ? 1 : 0, 0);
+  checkNum('默认群不可删除', fallback.canDelete ? 1 : 0, 0);
+}
+
+function testEditorRowsProfileSummary(): void {
+  const profile: Profile = emptyProfile();
+  ScheduleMutations.renameProfile(profile, '我的课表');
+  const row = EditorRows.profile(profile);
+  checkEqual('名字', row.name, '我的课表');
+  checkNum('空档案各项为零',
+    row.subjectCount + row.timeLayoutCount + row.classPlanCount + row.groupCount, 0);
+  checkNum('未设临时课表', row.tempPlanExists ? 1 : 0, 0);
+  checkEqual('未设临时课表时名字空', row.tempPlanName, '');
+  checkNum('未启用临时群', row.isTempGroupEnabled ? 1 : 0, 0);
+
+  // 空名回落到占位符，否则列表页第一行是个看不见的空标签
+  const blank = new Profile();
+  checkEqual('空名兜底', EditorRows.profile(blank).name, '（未命名档案）');
+}
+
+function testEditorRowsProfileDanglingPointers(): void {
+  // 悬空指针在用户文件里是常态（桌面版删课表也可能留下）。显示「已失效」
+  // 是为了让用户看得见有东西不对；当成「没设」的话用户根本不会去查。
+  const profile: Profile = emptyProfile();
+  const dangling = Guid.newGuid();
+  profile.tempClassPlanId = dangling;
+  profile.tempClassPlanGroupId = Guid.newGuid();
+  profile.tempClassPlanGroupExpireTime = dt('2026-10-08T00:00:00');
+  profile.tempClassPlanGroupType = TempClassPlanGroupType.Override;
+  profile.selectedClassPlanGroupId = dangling;
+  const row = EditorRows.profile(profile);
+  check('临时课表指针仍在', row.tempPlanId === dangling.toString());
+  checkNum('标记为失效', row.tempPlanExists ? 1 : 0, 0);
+  checkEqual('名字显示已失效', row.tempPlanName, '（已失效）');
+  checkNum('临时群标记为失效', row.tempGroupExists ? 1 : 0, 0);
+  checkEqual('临时群名显示已失效', row.tempGroupName, '（已失效）');
+  checkEqual('临时群类型文案', row.tempGroupTypeText, '覆盖');
+  checkEqual('当前群显示已失效', row.selectedGroupName, '（已失效）');
+
+  // 临时课表存在时，摘要要给出名字与建立日期
+  const live = seededProfile();
+  ScheduleMutations.applyTempClassPlan(live, firstPlanId(live), dt('2026-09-26T10:00:00'));
+  const liveRow = EditorRows.profile(live);
+  checkNum('临时课表有效', liveRow.tempPlanExists ? 1 : 0, 1);
+  checkEqual('临时课表名', liveRow.tempPlanName, '周一');
+  checkEqual('建立日期', liveRow.tempPlanFromText, '2026-09-26');
+  checkEqual('类型文案', EditorRows.profile(live).tempGroupTypeText, '继承');
+}
+
+function testEditorRowsAfterDeletes(): void {
+  // 编辑页的数据必须跟着改动走：删完重建的行数、课次数、引用数都要对得上，
+  // 否则用户删了一个东西，界面上还留着它
+  const profile: Profile = seededProfile();
+  const layoutId: Guid = firstLayoutId(profile);
+  const yw: Guid = Guid.fromCanonical(profile.subjects.keys()[0]);
+  const groupId: Guid = ScheduleMutations.addClassPlanGroup(profile, '临时群');
+  const planId: Guid = firstPlanId(profile);
+  ScheduleMutations.setClassPlanGroup(profile, planId, groupId);
+  ScheduleMutations.settle(profile);
+  checkNum('前置：群内一张表',
+    EditorRows.classPlanGroups(profile)[0].planCount, 1);
+  checkEqual('前置：课表在临时群里',
+    EditorRows.classPlans(profile, '')[0].groupName, '临时群');
+
+  // 删第 2 节课（行 2）：第 3 节顶上
+  ScheduleMutations.removeTimePoint(profile, layoutId, 2);
+  ScheduleMutations.settle(profile);
+  checkNum('剩四行', EditorRows.timeLayouts(profile)[0].rowCount, 4);
+  checkNum('剩两个课次', EditorRows.timeLayouts(profile)[0].classCount, 2);
+  let planRow = EditorRows.classPlans(profile, '')[0];
+  checkNum('剩两节课', planRow.slots.length, 2);
+  checkNum('剩四行可渲染', planRow.editRows.length, 4);
+  checkEqual('第 2 节课顶成英语', planRow.slots[1].subjectName, '英语');
+  checkEqual('摘要为语文、英语', planRow.filledText, '语文、英语');
+  checkNum('已排课数', planRow.filledCount, 2);
+
+  // 删科目：那节课变成空位，摘要里不再出现
+  ScheduleMutations.removeSubject(profile, yw);
+  ScheduleMutations.settle(profile);
+  checkNum('剩两个科目', EditorRows.subjects(profile).length, 2);
+  planRow = EditorRows.classPlans(profile, '')[0];
+  checkNum('空位被识别', planRow.slots[0].isEmpty ? 1 : 0, 1);
+  checkEqual('空位显示占位符', planRow.slots[0].subjectName, '');
+  checkNum('已排课数减一', planRow.filledCount, 1);
+  checkEqual('摘要只剩英语', planRow.filledText, '英语');
+  // 配对不变量在删完之后仍然成立
+  for (const edit of planRow.editRows) {
+    if (edit.classSlot >= 0) {
+      check('删后配对仍自洽', planRow.slots[edit.classSlot].slot === edit.classSlot);
+    }
+  }
+
+  // 解散：课表留下，落到默认群。编辑页要跟着把群名改掉
+  ScheduleMutations.disbandClassPlanGroup(profile, groupId);
+  ScheduleMutations.settle(profile);
+  checkNum('课表还在', EditorRows.classPlans(profile, '').length, 1);
+  checkEqual('课表回到默认群', EditorRows.classPlans(profile, '')[0].groupName, '默认课表群');
+  checkNum('群已解散', EditorRows.classPlanGroups(profile).length, 0);
+}
+
+function testEditorRowsAfterGroupDelete(): void {
+  // 删除（区别于解散）会连群内课表一起删，编辑页不该再列出它们
+  const profile: Profile = seededProfile();
+  const groupId: Guid = ScheduleMutations.addClassPlanGroup(profile, '临时群');
+  const planId: Guid = firstPlanId(profile);
+  ScheduleMutations.setClassPlanGroup(profile, planId, groupId);
+  ScheduleMutations.settle(profile);
+  checkNum('前置：一张表', EditorRows.classPlans(profile, '').length, 1);
+
+  ScheduleMutations.deleteClassPlanGroup(profile, groupId);
+  ScheduleMutations.settle(profile);
+  checkNum('课表被一并删除', EditorRows.classPlans(profile, '').length, 0);
+  checkNum('群也没了', EditorRows.classPlanGroups(profile).length, 0);
+  // 时间表还在，只是没人用了
+  checkNum('时间表保留', EditorRows.timeLayouts(profile).length, 1);
+  checkEqual('课次数归零',
+    EditorRows.timeLayouts(profile)[0].boundPlanNames, '');
+}
+
+function findPlan(rows: ClassPlanRow[], guid: string): ClassPlanRow {
+  for (const row of rows) {
+    if (row.guid === guid) {
+      return row;
+    }
+  }
+  return new ClassPlanRow();
+}
+
 // ------------------------------------------------------------------ 入口
 
 testAddSubject();
@@ -1005,6 +1503,25 @@ testOverlayEnabledToggle();
 testRoundTripAfterEdits();
 testRoundTripAfterDeletes();
 testMutationsAreDeterministic();
+testTextFormat();
+testParseClockText();
+testParseDurationText();
+testEditorRowsSubjects();
+testEditorRowsTimeLayout();
+testEditorRowsTimeLayoutDefaultApplied();
+testEditorRowsClassPlan();
+testEditorRowsPlanEditRowsInvariant();
+testEditorRowsPlanEditRowsWithSeparator();
+testEditorRowsClassPlanAfterLayoutDeleted();
+testEditorRowsClassPlanGroupFallsBack();
+testEditorRowsOverlaySourceFallsBack();
+testEditorRowsActiveMark();
+testEditorRowsClassPlanGroups();
+testEditorRowsDanglingGroupGuards();
+testEditorRowsProfileSummary();
+testEditorRowsProfileDanglingPointers();
+testEditorRowsAfterDeletes();
+testEditorRowsAfterGroupDelete();
 
 console.log(`通过 ${passed} 项，失败 ${failures.length} 项`);
 if (failures.length > 0) {

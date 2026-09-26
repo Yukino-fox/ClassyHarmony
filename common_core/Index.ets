@@ -24,3 +24,27 @@ export { LayoutForm, layoutFormOf, SINGLE_COLUMN_MAX_WIDTH, GRID_FILL_MIN_WIDTH 
 
 /* ---- 档案改动 ---- */
 export { ScheduleMutations } from './src/main/ets/edit/ScheduleMutations';
+
+/* ---- 编辑页视图数据 ---- */
+export {
+  ClassPlanGroupRow,
+  ClassPlanRow,
+  ClassSlotRow,
+  EditorRows,
+  ProfileRow,
+  SubjectRow,
+  TimeLayoutRow,
+  TimePointRow,
+  parseClockText,
+  parseDurationText
+} from './src/main/ets/edit/EditorRows';
+
+/* ---- 展示用文本格式化 ---- */
+export {
+  formatClock,
+  formatDuration,
+  timeTypeName,
+  weekDayName,
+  weekDayShortName,
+  weekRotationText
+} from './src/main/ets/view/TextFormat';
