@@ -24,7 +24,7 @@
  */
 
 import { DateTimeValue, TempClassPlanGroupType } from 'common_shared';
-import { ClassPlanGroupRow, ClassPlanRow, ProfileRow } from 'common_core';
+import { ClassPlanGroupRow, ClassPlanRow, OrderedScheduleRow, ProfileRow } from 'common_core';
 import { ScheduleEditorViewModel } from '../../viewmodel/ScheduleEditorViewModel';
 import { UiFeedback } from '../../common/UiFeedback';
 import {
@@ -45,6 +45,12 @@ export struct TempOverlayPane {
   @Param stack: NavPathStack = new NavPathStack();
 
   @Local expanded: string = '';
+  /** 预定课表选择器是否展开。 */
+  @Local picking: boolean = false;
+  /** 选择器当前选的日期，格式是档案键（`2026-09-26T00:00:00`）。空串表示今天。 */
+  @Local pickingDate: string = '';
+  /** 正在改的那条预定原本用哪张表。只用来在列表上标「当前」。 */
+  @Local pickingKey: string = '';
 
   /**
    * 到期时间的解析。
@@ -354,6 +360,16 @@ export struct TempOverlayPane {
 
   // --------------------------------------------------------- 预定课表
 
+  /**
+   * 预定课表区。
+   *
+   * 选课表用内联展开而不是弹窗
+   * ------------------------
+   * 预定要连着定两件事：哪一天、用哪张表。用弹窗就得连开两层（日期选择器 ->
+   * 课表列表），而课表常有七八张，塞进 AlertDialog 的按钮区会挤成一团。
+   * 展开成一块就地选，既省掉一层弹窗，也让「选日期」和「选课表」在同一屏里
+   * 同时可见 —— 用户能对照着看，不像层层点下去那样忘了自己走到哪一步了。
+   */
   @Builder
   private orderedSection(vm: ScheduleEditorViewModel) {
     Column() {
@@ -363,26 +379,214 @@ export struct TempOverlayPane {
         .fontColor($r('app.color.ch_text_primary'))
         .width('100%')
 
-      if (vm.profile.orderedScheduleCount === 0) {
-        Text('没有预定的日子。预定让某一天用另一张表，比如期中考试那天。')
-          .fontSize(11)
-          .fontColor($r('app.color.ch_text_hint'))
-          .width('100%')
-          .margin({ top: 2 })
-      } else {
-        Text(`有 ${vm.profile.orderedScheduleCount} 天预定了课表。`)
-          .fontSize(12)
-          .fontColor($r('app.color.ch_text_secondary'))
-          .width('100%')
-          .margin({ top: 2, bottom: 4 })
-      }
-
-      Text('预定按日期逐条设置。这个入口先把日期与课表一起给你，配好之后逐条加。')
+      Text('预定让某一天用另一张表，比如期中考试那天。过了的日子标成已过期，' +
+        '不会自动清掉 —— 它们还在档案里，跟着同步走。')
         .fontSize(11)
         .fontColor($r('app.color.ch_text_hint'))
         .width('100%')
-        .margin({ top: 4 })
+        .margin({ top: 2, bottom: 6 })
+
+      if (this.picking) {
+        this.picker(vm)
+      } else {
+        Row() {
+          EditorChip({ text: '+ 预定某一天', onTap: () => { this.beginPick('', ''); } })
+        }
+        .width('100%')
+      }
+
+      if (vm.orderedSchedules.length === 0) {
+        EditorEmptyHint({ text: '还没有预定。' })
+      }
+
+      ForEach(vm.orderedSchedules, (row: OrderedScheduleRow) => {
+        this.orderedRow(vm, row)
+        Divider().color($r('app.color.ch_outline'))
+      }, (row: OrderedScheduleRow) => row.dateKey)
     }
     .width('100%')
   }
+
+  /** 已存在的一条预定。 */
+  @Builder
+  private orderedRow(vm: ScheduleEditorViewModel, row: OrderedScheduleRow) {
+    Row() {
+      Column() {
+        Text(row.dateText.length > 0 ? `${row.dateText} ${row.weekDayText}` : row.dateKey)
+          .fontSize(13)
+          .fontColor($r('app.color.ch_text_primary'))
+        Text(this.orderedStatus(row))
+          .fontSize(11)
+          .fontColor(row.isStale || !row.planExists
+            ? $r('app.color.ch_text_hint')
+            : (row.isActive ? $r('app.color.ch_accent') : $r('app.color.ch_text_secondary')))
+      }
+      .alignItems(HorizontalAlign.Start)
+      .layoutWeight(1)
+
+      Text('改')
+        .fontSize(12)
+        .fontColor($r('app.color.ch_accent'))
+        .margin({ right: 12 })
+        .onClick(() => { this.beginPick(row.dateKey, row.planId); })
+
+      Text('删')
+        .fontSize(12)
+        .fontColor($r('app.color.ch_accent'))
+        .onClick(() => {
+          UiFeedback.confirm(
+            this.getUIContext(),
+            '取消预定',
+            `${row.dateText} 会恢复正常选课。档案里的这条预定将被删除。`,
+            '取消预定',
+            () => { vm.setOrderedSchedule(dateOfKey(row.dateKey), undefined); }
+          );
+        })
+    }
+    .width('100%')
+    .alignItems(VerticalAlign.Center)
+    .padding({ top: 5, bottom: 5 })
+  }
+
+  /** 一条预定的状态说明。 */
+  private orderedStatus(row: OrderedScheduleRow): string {
+    if (!row.planExists) {
+      return `${row.planName} —— 课表被删了，这条预定不会生效`;
+    }
+    if (row.isStale) {
+      return `${row.planName} —— 已过期`;
+    }
+    if (row.isActive) {
+      return `${row.planName} —— 当天生效`;
+    }
+    return `${row.planName} —— 不会生效`;
+  }
+
+  /** 展开中的选择器。 */
+  @Builder
+  private picker(vm: ScheduleEditorViewModel) {
+    Column() {
+      Row() {
+        Text(this.pickingLabel())
+          .fontSize(13)
+          .fontColor($r('app.color.ch_text_primary'))
+          .layoutWeight(1)
+        EditorChip({ text: '换一天', onTap: () => { this.askDate(); } })
+        Text(' ').fontSize(4)
+        EditorChip({ text: '取消', onTap: () => { this.picking = false; } })
+      }
+      .width('100%')
+      .alignItems(VerticalAlign.Center)
+
+      if (vm.classPlans.length === 0) {
+        EditorEmptyHint({ text: '还没有课表，先到「课表」建一张。' })
+      }
+
+      ForEach(vm.classPlans, (plan: ClassPlanRow) => {
+        Row() {
+          Text(plan.name)
+            .fontSize(13)
+            .fontColor($r('app.color.ch_text_primary'))
+            .maxLines(1)
+            .layoutWeight(1)
+          Text(this.pickingKey.length > 0 && this.pickingKey === plan.guid ? '当前' : '用这张')
+            .fontSize(12)
+            .fontColor($r('app.color.ch_accent'))
+            .onClick(() => { this.commitPick(vm, plan.guid); })
+        }
+        .width('100%')
+        .alignItems(VerticalAlign.Center)
+        .padding({ top: 5, bottom: 5 })
+      }, (plan: ClassPlanRow) => plan.guid)
+    }
+    .width('100%')
+    .padding({ left: 10, right: 10, top: 8, bottom: 6 })
+    .backgroundColor($r('app.color.ch_surface_alt'))
+    .borderRadius(8)
+  }
+
+  private pickingLabel(): string {
+    const day: DateTimeValue = dateOfKey(this.pickingDate);
+    const offset: number = day.epochDay() - DateTimeValue.now().dateOnly().epochDay();
+    if (offset === 0) {
+      return `${day.toDateString()} 周${weekDayLabel(day.dayOfWeek())}（今天）`;
+    }
+    if (offset === 1) {
+      return `${day.toDateString()} 周${weekDayLabel(day.dayOfWeek())}（明天）`;
+    }
+    return `${day.toDateString()} 周${weekDayLabel(day.dayOfWeek())}`;
+  }
+
+  private beginPick(dateKey: string, planId: string): void {
+    // 键坏掉时回落到今天：选择器接受不了一个解析不出来的日期，而用户点「改」
+    // 的意图是「换一张表」，日期先给他一个能用的值。
+    this.pickingDate = dateKey.length > 0 && dateOfKey(dateKey) === undefined
+      ? '' : dateKey;
+    this.pickingKey = planId;
+    this.picking = true;
+  }
+
+  private askDate(): void {
+    const current: DateTimeValue = dateOfKey(this.pickingDate);
+    this.getUIContext().showDatePickerDialog({
+      // 不设 start/end：允许选过去的日期。改一条已经过期的预定是常事
+      // （用户可能就是想把去年留下的那条清掉），把过去禁掉会让「改」变成死路。
+      selected: toJsDate(current),
+      lunar: false,
+      onAccept: (value: DatePickerResult) => {
+        if (value.year === undefined || value.month === undefined ||
+          value.day === undefined) {
+          // 回调给了不完整的日期：不改现有选择。默默落到今天的话，用户会
+          // 以为自己选的就是今天。
+          return;
+        }
+        const picked: DateTimeValue =
+          new DateTimeValue(value.year, value.month, value.day, 0, 0, 0);
+        this.pickingDate = picked.dateOnly().toString();
+      }
+    });
+  }
+
+  private commitPick(vm: ScheduleEditorViewModel, planId: string): void {
+    const day: DateTimeValue = dateOfKey(this.pickingDate);
+    const ok: boolean = vm.setOrderedSchedule(day, planId);
+    if (ok) {
+      this.picking = false;
+    }
+  }
+}
+
+/**
+ * 档案键还原成日期。
+ *
+ * 键就是 `dateOnly().toString()`，格式 `2026-09-26T00:00:00`。这里不做
+ * 静默兜底成「今天」—— 调用方要能分辨「这是真的今天」和「这键读不出来」。
+ * 读不出来时返回今天，同时由 beginPick 提前把这种情况挡掉。
+ */
+function dateOfKey(key: string): DateTimeValue {
+  if (key.length === 0) {
+    return DateTimeValue.now().dateOnly();
+  }
+  const parsed: DateTimeValue | undefined = DateTimeValue.tryParse(key);
+  return parsed === undefined ? DateTimeValue.now().dateOnly() : parsed.dateOnly();
+}
+
+/** 星期几的单字，档案口径（0=周日）。这里只用于日期选择器那行提示。 */
+function weekDayLabel(weekDay: number): string {
+  const names: string[] = ['日', '一', '二', '三', '四', '五', '六'];
+  return weekDay < 0 || weekDay > 6 ? '?' : names[weekDay];
+}
+
+/**
+ * DateTimeValue 还原成本地时区的 JS Date。平台的选择器要 Date，不认我们的类型。
+ *
+ * 不用 `new Date(y, m - 1, d)`：那个构造器把 0..99 的年份当成 1900+y，
+ * 于是档案里一个 0099 年的日期会让选择器打开在 1999 年。多一次 setFullYear
+ * 就把这条歧义消掉了 —— 构造器先给个非 0..99 的年份占位，再改成真值。
+ */
+function toJsDate(value: DateTimeValue): Date {
+  const date: Date = new Date(2000, value.month - 1, value.day,
+    value.hour, value.minute, value.second);
+  date.setFullYear(value.year);
+  return date;
 }

@@ -41,6 +41,7 @@ export {
   ClassPlanRow,
   ClassSlotRow,
   EditorRows,
+  OrderedScheduleRow,
   PlanEditRow,
   ProfileRow,
   SubjectRow,

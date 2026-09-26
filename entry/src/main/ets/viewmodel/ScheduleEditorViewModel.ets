@@ -41,6 +41,7 @@ import {
   ClassPlanRow,
   EditorRows,
   EngineSettings,
+  OrderedScheduleRow,
   ProfileRow,
   ScheduleMutations,
   SubjectRow,
@@ -81,6 +82,8 @@ export class ScheduleEditorViewModel {
 
   /** 课表群行。整体替换。 */
   @Trace groups: ClassPlanGroupRow[] = [];
+  /** 预定课表行，按日期升序。见 EditorRows.orderedSchedules 的排序理由。 */
+  @Trace orderedSchedules: OrderedScheduleRow[] = [];
 
   // -------------------------------------------------------------- 页面态
 
@@ -727,6 +730,8 @@ export class ScheduleEditorViewModel {
     this.timeLayouts = EditorRows.timeLayouts(this.draft);
     this.classPlans = EditorRows.classPlans(this.draft, activeId);
     this.groups = EditorRows.classPlanGroups(this.draft);
+    this.orderedSchedules =
+      EditorRows.orderedSchedules(this.draft, settings, this.clock.now());
   }
 
   /**

@@ -19,6 +19,7 @@ import { ClassPlan } from '../../common_shared/src/main/ets/models/ClassPlan';
 import { ClassPlanGroup } from '../../common_shared/src/main/ets/models/ClassPlanGroup';
 import { DateTimeValue } from '../../common_shared/src/main/ets/json/DateTimeValue';
 import { Guid } from '../../common_shared/src/main/ets/json/Guid';
+import { OrderedSchedule } from '../../common_shared/src/main/ets/models/OrderedSchedule';
 import { Profile } from '../../common_shared/src/main/ets/models/Profile';
 import { Subject } from '../../common_shared/src/main/ets/models/Subject';
 import {
@@ -37,6 +38,7 @@ import {
   ClassPlanRow,
   ClassSlotRow,
   EditorRows,
+  OrderedScheduleRow,
   TimePointRow,
   parseClockText,
   parseDurationText
@@ -846,6 +848,113 @@ function testOrderedSchedule(): void {
   check('取消预定', ScheduleMutations.setOrderedSchedule(
     profile, dt('2026-09-28T00:00:00'), undefined));
   checkNum('预定清空', profile.orderedSchedules.size, 0);
+}
+
+/**
+ * 预定课表行。
+ *
+ * 三类「看起来是同一条预定、实际完全不是」的情况各测一遍：
+ *   1. 过去的预定 —— 留在档案里但已经没意义，界面要标出来
+ *   2. 指向已删课表的预定 —— 悬空指针，桌面版也可能留下
+ *   3. 指向叠加班表、而叠加班表总开关关着 —— 有预定但引擎不会用它
+ * 第 3 类最要紧：只判断「键存在 + 指针能解引用」的话它会被标成生效中，
+ * 用户以为考试那天安排好了课表，其实那天走的是常规选课。
+ */
+function testEditorRowsOrderedSchedules(): void {
+  const profile: Profile = seededProfile();
+  const planId: Guid = firstPlanId(profile);
+  // 别把局部变量也叫 settings：同名会把自己遮住，右侧的 settings() 解析到
+  // 还没初始化的局部 const 上，运行时报 TDZ 而不是编译错误。
+  const engineSettings: EngineSettings = settings();
+  const today: DateTimeValue = dt('2026-09-26T00:00:00');
+
+  // 建三天预定，插入顺序故意打乱：09-28 / 09-20 / 10-05
+  check('设三天预定',
+    ScheduleMutations.setOrderedSchedule(profile, dt('2026-09-28T00:00:00'), planId) &&
+    ScheduleMutations.setOrderedSchedule(profile, dt('2026-09-20T00:00:00'), planId) &&
+    ScheduleMutations.setOrderedSchedule(profile, dt('2026-10-05T00:00:00'), planId));
+
+  const rows: OrderedScheduleRow[] =
+    EditorRows.orderedSchedules(profile, engineSettings, today);
+  checkNum('三条都在', rows.length, 3);
+  checkEqual('按日期升序，不按插入序', rows[0].dateText, '2026-09-20');
+  checkEqual('第二条', rows[1].dateText, '2026-09-28');
+  checkEqual('第三条', rows[2].dateText, '2026-10-05');
+
+  // 今天固定取 2026-09-26（周六），下面的星期几都对着它算。
+  checkNum('过去的：偏移是负数', rows[0].dayOffset, -6);
+  check('过去的标为死条目', rows[0].isStale);
+  check('过去的仍算生效（引擎照常按它选课，只是不再有未来价值）', rows[0].isActive);
+  checkEqual('过去的星期几', rows[0].weekDayText, '周日');
+
+  checkNum('本周的偏移是 2', rows[1].dayOffset, 2);
+  check('本周的不是死条目', !rows[1].isStale);
+  check('本周的生效', rows[1].isActive);
+  checkEqual('本周的星期几', rows[1].weekDayText, '周一');
+  check('指向的课表名解出来了', rows[1].planExists);
+  checkEqual('dateKey 就是键本身', rows[1].dateKey, '2026-09-28T00:00:00');
+  checkEqual('planId 是解出来的课表', rows[1].planId, planId.toString());
+
+  // 悬空指针：直接往档案里塞一个不存在的 Guid，模拟用户文件里的残留
+  const dangling: OrderedSchedule = new OrderedSchedule();
+  dangling.classPlanId = Guid.newGuid();
+  dangling.isActive = true;
+  profile.orderedSchedules.set('2026-09-30T00:00:00', dangling);
+  const dangleRow: OrderedScheduleRow =
+    rowFor(EditorRows.orderedSchedules(profile, engineSettings, today), '2026-09-30');
+  check('悬空那条能按日期找到', dangleRow !== undefined);
+  check('悬空那条 planExists 为 false', dangleRow !== undefined && !dangleRow.planExists);
+  check('悬空那条不生效', dangleRow !== undefined && !dangleRow.isActive);
+  checkEqual('悬空那条显示已失效', dangleRow === undefined ? '' : dangleRow.planName, '（已失效）');
+
+  // 叠加班表 + 叠加班表总开关关着：有预定，但引擎不会用它。
+  // 用 createOverlayClassPlan 建而不是手搓：ClassPlan 自己没有 guid 字段
+  // （身份就是 KeyedMap 的键），手搓那张表根本进不了档案。
+  const overlayId: Guid = ScheduleMutations.createOverlayClassPlan(
+    profile, planId, '考试表') as Guid;
+  check('预定到叠加班表',
+    ScheduleMutations.setOrderedSchedule(profile, dt('2026-10-01T00:00:00'), overlayId));
+  profile.isOverlayClassPlanEnabled = false;
+  const offRow: OrderedScheduleRow =
+    rowFor(EditorRows.orderedSchedules(profile, engineSettings, today), '2026-10-01');
+  check('叠加班表关着时不算生效', offRow !== undefined && !offRow.isActive);
+  check('但不是死条目（开关一开就生效）', offRow !== undefined && !offRow.isStale);
+  profile.isOverlayClassPlanEnabled = true;
+  const onRow: OrderedScheduleRow =
+    rowFor(EditorRows.orderedSchedules(profile, engineSettings, today), '2026-10-01');
+  check('开关打开后生效', onRow !== undefined && onRow.isActive);
+
+  // 键不是合法日期：不能让它凭空消失
+  const broken: OrderedSchedule = new OrderedSchedule();
+  broken.classPlanId = planId;
+  profile.orderedSchedules.set('不是日期', broken);
+  const brokenRows: OrderedScheduleRow[] = EditorRows.orderedSchedules(profile, engineSettings, today);
+  checkNum('坏键也列出来', brokenRows.length, 6);
+  const brokenRow: OrderedScheduleRow = brokenRows[brokenRows.length - 1];
+  checkEqual('坏键排在最后', brokenRow.dateText, '不是日期');
+  check('坏键标为死条目', brokenRow.isStale);
+  check('坏键不生效（日期都读不出来，谈不上当天选课）', !brokenRow.isActive);
+
+  // 纯函数：同一份档案同一份参数，结果逐字段一致
+  const again: OrderedScheduleRow[] = EditorRows.orderedSchedules(profile, engineSettings, today);
+  let same: boolean = again.length === brokenRows.length;
+  for (let i: number = 0; same && i < again.length; i++) {
+    same = again[i].dateKey === brokenRows[i].dateKey &&
+      again[i].dayOffset === brokenRows[i].dayOffset &&
+      again[i].isActive === brokenRows[i].isActive &&
+      again[i].isStale === brokenRows[i].isStale;
+  }
+  check('两次调用结果一致', same);
+}
+
+/** 按日期文本找行。找不到返回 undefined —— 界面上不存在这种行，测试里要显式判。 */
+function rowFor(rows: OrderedScheduleRow[], dateText: string): OrderedScheduleRow | undefined {
+  for (const row of rows) {
+    if (row.dateText === dateText) {
+      return row;
+    }
+  }
+  return undefined;
 }
 
 // -------------------------------------------------------------- 档案级
@@ -1773,6 +1882,7 @@ testTextFormat();
 testParseClockText();
 testParseDurationText();
 testEditorRowsSubjects();
+testEditorRowsOrderedSchedules();
 testEditorRowsTimeLayout();
 testEditorRowsTimeLayoutDefaultApplied();
 testEditorRowsClassPlan();

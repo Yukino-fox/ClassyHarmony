@@ -22,13 +22,17 @@ import {
   ClassInfo,
   ClassPlan,
   ClassPlanGroup,
+  DateTimeValue,
   Guid,
+  OrderedSchedule,
   Profile,
   Subject,
   TempClassPlanGroupType,
   TimeLayout,
   TimeLayoutItem
 } from 'common_shared';
+import { ClassPlanResolver, ResolvedClassPlan, ResolvedSource } from '../engine/ClassPlanResolver';
+import { EngineSettings } from '../engine/EngineSettings';
 import { EMPTY_SUBJECT_TEXT } from '../view/ScheduleGrid';
 import {
   formatClock,
@@ -176,6 +180,45 @@ export class ClassPlanGroupRow {
   canDelete: boolean = true;
 }
 
+// ---------------------------------------------------------- 预定课表
+
+export class OrderedScheduleRow {
+  /**
+   * 档案里的键，也就是日期本身（`2026-09-26T00:00:00`）。
+   *
+   * 界面拿它当 ForEach 的 key，同时它就是「取消这条预定」要传给
+   * setOrderedSchedule 的日期 —— 键与日期是同一个东西，不另存一份日期字段，
+   * 免得两边漂移（改了一份没改另一份，行还在但取消不掉）。
+   */
+  dateKey: string = '';
+  /** `2026-09-26` */
+  dateText: string = '';
+  /** `周六`，用档案口径（0=周日）。 */
+  weekDayText: string = '';
+  /** 距今天多少天。负数表示已经过去。 */
+  dayOffset: number = 0;
+  planId: string = '';
+  planName: string = '';
+  /** 指向的课表被删掉了。界面据此显示「已失效」而不是当成没设。 */
+  planExists: boolean = true;
+  /**
+   * 这条预定当天真的生效。
+   *
+   * 交给 ClassPlanResolver 判，不自己判：预定可能被更靠前的规则盖掉
+   * （这张表是叠加班表而叠加班表开关关着），自己判就会把「没生效」标成
+   * 「生效中」，用户以为安排好了其实没有。
+   */
+  isActive: boolean = false;
+  /**
+   * 这条预定是死条目。
+   *
+   * 过去的日期，或指向已删的课表。它照样留在档案里（桌面版也留着，不擅自
+   * 清理用户数据），但界面上要标出来 —— 否则用户翻出一堆去年的预定，
+   * 以为程序出了 bug。
+   */
+  isStale: boolean = false;
+}
+
 // ------------------------------------------------------------ 档案摘要
 
 export class ProfileRow {
@@ -252,6 +295,63 @@ export class EditorRows {
       out.selectedGroupName = '（已失效）';
     }
     return out;
+  }
+
+  /**
+   * 预定课表行。
+   *
+   * 按日期升序排，不按档案里的插入序：预定是个「到日子之前会看几眼」的列表，
+   * 最近的排在最前才用得上。档案是 `KeyedMap`，插入序取决于用户历来的操作
+   * 顺序，跟「什么时候要生效」毫无关系。
+   *
+   * 排不动的（键不是合法日期）不丢，挂在末尾按原样列出。用户文件里出现这种
+   * 键只可能是被外部改过；直接不显示等于让它凭空消失，用户连「它还在档案里」
+   * 都无从知道。
+   *
+   * @param profile 档案
+   * @param settings 引擎参数，判「当天是否生效」要用
+   * @param today 今天（只取日期部分）
+   */
+  static orderedSchedules(profile: Profile, settings: EngineSettings,
+    today: DateTimeValue): OrderedScheduleRow[] {
+    const rows: OrderedScheduleRow[] = [];
+    const unparsable: OrderedScheduleRow[] = [];
+    profile.orderedSchedules.forEach((schedule: OrderedSchedule, key: string) => {
+      const row: OrderedScheduleRow = new OrderedScheduleRow();
+      row.dateKey = key;
+      const date: DateTimeValue | undefined = DateTimeValue.tryParse(key);
+      if (date === undefined) {
+        row.dateText = key;
+        row.weekDayText = '';
+        row.dayOffset = 0;
+        row.isStale = true;
+      } else {
+        const day: DateTimeValue = date.dateOnly();
+        row.dateText = day.toDateString();
+        row.weekDayText = weekDayName(day.dayOfWeek());
+        row.dayOffset = day.epochDay() - today.dateOnly().epochDay();
+        row.isStale = row.dayOffset < 0;
+      }
+      const plan: ClassPlan | undefined = profile.tryGetClassPlan(schedule.classPlanId);
+      row.planId = schedule.classPlanId.toString();
+      row.planExists = plan !== undefined;
+      row.planName = plan === undefined ? '（已失效）' : plan.name;
+      if (date !== undefined && plan !== undefined) {
+        const resolved: ResolvedClassPlan = ClassPlanResolver.resolve(profile, date, settings);
+        row.isActive = resolved.source === ResolvedSource.OrderedSchedule &&
+          resolved.guid.toString() === row.planId;
+      }
+      if (date === undefined) {
+        unparsable.push(row);
+      } else {
+        rows.push(row);
+      }
+    });
+    rows.sort((a: OrderedScheduleRow, b: OrderedScheduleRow): number => a.dayOffset - b.dayOffset);
+    for (const row of unparsable) {
+      rows.push(row);
+    }
+    return rows;
   }
 
   static subjects(profile: Profile): SubjectRow[] {
