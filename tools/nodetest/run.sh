@@ -14,6 +14,8 @@
 # 两个驱动：
 #   src/driver.ts        字节级往返（序列化保真）
 #   src/engine-driver.ts 课表引擎行为（状态机、轮转、临时层）
+#   src/grid-driver.ts  课表网格视图数据推导
+#   src/edit-driver.ts   档案改动的自洽性与落盘往返
 set -euo pipefail
 
 DEVECO_HOME="${DEVECO_HOME:-/mnt/data/devecostudio-26.0.0.621}"
@@ -73,6 +75,9 @@ sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
 sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
      s|'../../common_core/src/main/ets/|'../core/|g" \
   "$ROOT/tools/nodetest/src/grid-driver.ts" > "$WORK/src/tools/grid-driver.ts"
+sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
+     s|'../../common_core/src/main/ets/|'../core/|g" \
+  "$ROOT/tools/nodetest/src/edit-driver.ts" > "$WORK/src/tools/edit-driver.ts"
 
 "$NODE" "$TSC" \
   --outDir "$WORK/out" \
@@ -88,7 +93,8 @@ sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
   "$WORK/src/core/Index.ts" \
   "$WORK/src/tools/driver.ts" \
   "$WORK/src/tools/engine-driver.ts" \
-  "$WORK/src/tools/grid-driver.ts" 2>&1 | sed 's/^/  /' || true
+  "$WORK/src/tools/grid-driver.ts" \
+  "$WORK/src/tools/edit-driver.ts" 2>&1 | sed 's/^/  /' || true
 
 cp -r "$ROOT/tools/nodetest/fixtures" "$WORK/out/fixtures"
 
@@ -101,4 +107,7 @@ echo "── 课表引擎 ──"
 echo ""
 echo "── 课表网格 ──"
 "$NODE" "$WORK/out/tools/grid-driver.js" || status=1
+echo ""
+echo "── 档案改动 ──"
+"$NODE" "$WORK/out/tools/edit-driver.js" || status=1
 exit $status
