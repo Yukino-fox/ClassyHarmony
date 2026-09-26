@@ -140,13 +140,16 @@ export class Profile {
 
   /**
    * 解散课表群，群内课表移到默认课表群。
-   * 对应 Profile.DisbandClassPlanGroup。全局群与默认群不可解散，返回 false。
+   * 对应 Profile.DisbandClassPlanGroup。全局群、默认群与不存在的群都返回 false。
    */
   disbandClassPlanGroup(id: Guid): boolean {
     if (id.equals(ClassPlanGroup.globalGroupGuid()) || id.equals(ClassPlanGroup.defaultGroupGuid())) {
       return false;
     }
     const key: string = id.toString();
+    if (!this.classPlanGroups.has(key)) {
+      return false;
+    }
     this.classPlans.forEach((plan: ClassPlan) => {
       if (plan.associatedGroup.toString() === key) {
         plan.associatedGroup = ClassPlanGroup.defaultGroupGuid();
@@ -158,7 +161,11 @@ export class Profile {
 
   /**
    * 删除课表群，群内课表一并删除。
-   * 对应 Profile.DeleteClassPlanGroup。全局群与默认群不可删除，返回 false。
+   * 对应 Profile.DeleteClassPlanGroup。全局群、默认群与不存在的群都返回 false。
+   *
+   * 返回值取自字典的 delete 而不是无条件 true：界面上「解散」按钮在列表
+   * 刷新后可能被点两次，第二次如果也报成功，用户会以为还有东西没删干净，
+   * 反复点下去。什么也没删就该说没删。
    */
   deleteClassPlanGroup(id: Guid): boolean {
     if (id.equals(ClassPlanGroup.globalGroupGuid()) || id.equals(ClassPlanGroup.defaultGroupGuid())) {
@@ -174,8 +181,7 @@ export class Profile {
     for (const planKey of doomed) {
       this.classPlans.delete(planKey);
     }
-    this.classPlanGroups.delete(key);
-    return true;
+    return this.classPlanGroups.delete(key);
   }
 
   /**

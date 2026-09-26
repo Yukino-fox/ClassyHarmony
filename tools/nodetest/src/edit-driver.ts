@@ -37,6 +37,7 @@ import {
   ClassPlanRow,
   ClassSlotRow,
   EditorRows,
+  TimePointRow,
   parseClockText,
   parseDurationText
 } from '../../common_core/src/main/ets/edit/EditorRows';
@@ -48,6 +49,13 @@ import {
   weekDayShortName,
   weekRotationText
 } from '../../common_core/src/main/ets/view/TextFormat';
+import {
+  TimeSpanRow,
+  newTimeSpanRow,
+  timeRangeConflictIndex,
+  timeRangeOverlap,
+  timeRangeOverlapMinutes
+} from '../../common_core/src/main/ets/edit/TimeRange';
 import { EngineSettings } from '../../common_core/src/main/ets/engine/EngineSettings';
 import { ClassPlanResolver } from '../../common_core/src/main/ets/engine/ClassPlanResolver';
 
@@ -1452,6 +1460,29 @@ function testEditorRowsAfterGroupDelete(): void {
     EditorRows.timeLayouts(profile)[0].boundPlanNames, '');
 }
 
+/** 按 guid 键取科目名。键取不到时返回空串，用来让断言失败时看得见。 */
+function subjectNameOf(profile: Profile, key: string): string {
+  const found: Subject | undefined = profile.subjects.tryGet(key);
+  return found === undefined ? '（键不存在）' : found.name;
+}
+
+function indexOf(items: string[], target: string): number {
+  for (let i: number = 0; i < items.length; i++) {
+    if (items[i] === target) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+function startsOf(rows: TimePointRow[]): string {
+  const out: string[] = [];
+  for (const row of rows) {
+    out.push(row.startText);
+  }
+  return out.join(',');
+}
+
 function findPlan(rows: ClassPlanRow[], guid: string): ClassPlanRow {
   for (const row of rows) {
     if (row.guid === guid) {
@@ -1459,6 +1490,241 @@ function findPlan(rows: ClassPlanRow[], guid: string): ClassPlanRow {
     }
   }
   return new ClassPlanRow();
+}
+
+// ------------------------------------------------- 时间段求交（编辑用）
+
+function testTimeRangeOverlap(): void {
+  // 编辑时段时要能立刻告诉用户「和第几节课撞了」。漏判的话用户要把整个作息
+  // 表从头看一遍才知道哪里冲突。
+  checkNum('完全重合', timeRangeOverlap(800, 845, 800, 845) ? 1 : 0, 1);
+  checkNum('部分重叠', timeRangeOverlap(800, 845, 830, 900) ? 1 : 0, 1);
+  checkNum('包含', timeRangeOverlap(800, 1000, 830, 900) ? 1 : 0, 1);
+  checkNum('被包含', timeRangeOverlap(830, 900, 800, 1000) ? 1 : 0, 1);
+  // 首尾相接不算撞：08:00-08:45 与 08:45-09:00 是正常的课间排布，
+  // 判成撞的话每张作息表都会被报成「有冲突」
+  checkNum('首尾相接不算撞', timeRangeOverlap(800, 845, 845, 900) ? 1 : 0, 0);
+  checkNum('完全错开', timeRangeOverlap(800, 845, 845, 901) ? 1 : 0, 0);
+  checkNum('零长时段不撞', timeRangeOverlap(800, 800, 700, 900) ? 1 : 0, 0);
+  checkNum('负区间不撞', timeRangeOverlap(-100, -50, 0, 100) ? 1 : 0, 0);
+  // 重叠分钟数向下取整：重叠 20 分半显示 20 分钟，比 20.5 更贴近用户预期
+  // 秒为单位：08:00=28800
+  // 08:00-08:45 与 08:30-09:00 重叠 15 分钟
+  checkNum('重叠 15 分钟', timeRangeOverlapMinutes(28800, 31500, 30600, 32400), 15);
+  // 08:00-08:45 与 08:35-08:50 重叠 10 分钟
+  checkNum('重叠 10 分钟', timeRangeOverlapMinutes(28800, 31500, 30900, 31500), 10);
+  checkNum('相接为零', timeRangeOverlapMinutes(28800, 29220, 29220, 29700), 0);
+  checkNum('零长为零', timeRangeOverlapMinutes(28800, 28800, 25200, 29700), 0);
+  // 重叠不足一分钟向下取整为 0，而不是 0.98 这样的小数
+  checkNum('不足一分钟取整为零', timeRangeOverlapMinutes(28800, 28830, 28800, 28890), 0);
+  checkNum('整分零秒', timeRangeOverlapMinutes(28800, 29400, 29400, 29700), 0);
+}
+
+function testTimeRangeConflictIndex(): void {
+  const spans: TimeSpanRow[] = [
+    newTimeSpanRow(0, 800, 845, '第 1 节'),
+    newTimeSpanRow(2, 900, 945, '第 2 节'),
+    newTimeSpanRow(4, 1000, 1045, '第 3 节')
+  ];
+  checkNum('撞第 1 节', timeRangeConflictIndex(spans, 830, 900), 0);
+  checkNum('撞第 2 节', timeRangeConflictIndex(spans, 940, 1100), 1);
+  // 落在课间里（08:45-09:00）不与任何课程行冲突：课间本来就该是空的
+  checkNum('落在课间里不冲突', timeRangeConflictIndex(spans, 850, 890), -1);
+  checkNum('跨两节撞第一节', timeRangeConflictIndex(spans, 830, 1000), 0);
+  checkNum('跨两节撞第二节', timeRangeConflictIndex(spans, 900, 1000), 1);
+  checkNum('全空档案不冲突', timeRangeConflictIndex([], 800, 845), -1);
+  // 停用的行不参与冲突判定：它不会真的上课，占着它报警是噪声
+  const withDisabled: TimeSpanRow[] = [newTimeSpanRow(0, 800, 845, '第 1 节')];
+  withDisabled[0].isEnabled = false;
+  checkNum('停用行不参与', timeRangeConflictIndex(withDisabled, 800, 845), -1);
+  // 撞到多行时只报最先撞到的那一行：报三行用户反而不知道先改哪个
+  const many: TimeSpanRow[] = [
+    newTimeSpanRow(0, 800, 845, 'a'),
+    newTimeSpanRow(1, 900, 945, 'b')
+  ];
+  checkNum('多行只报第一个', timeRangeConflictIndex(many, 830, 950), 0);
+}
+
+// ------------------------------------------------------ 脏检查与规范化
+
+function testDirtyBaselineRebase(): void {
+  // 脏检查是拿当前草稿的序列化去比载入时的基线。改了又改回原样必须回到
+  // 「不脏」——用布尔标志记脏的话做不到，用户会看着「未保存」提示发呆。
+  const src: Profile = seededProfile();
+  const baseline: string = Profile.stringify(src);
+  const work: Profile = Profile.parse(baseline);
+  check('初始不脏', Profile.stringify(work) === baseline);
+
+  const yw: Guid = Guid.fromCanonical(work.subjects.keys()[0]);
+  ScheduleMutations.renameSubject(work, yw, '语文课');
+  check('改后是脏的', Profile.stringify(work) !== baseline);
+
+  ScheduleMutations.renameSubject(work, yw, '语文');
+  check('改回原值后不脏了', Profile.stringify(work) === baseline);
+
+  // 挪一下时间点再挪回来也必须回到不脏
+  const layoutId: Guid = firstLayoutId(work);
+  const before: string = Profile.stringify(work);
+  ScheduleMutations.moveTimePoint(work, layoutId, 0, 1);
+  ScheduleMutations.settle(work);
+  check('挪动后是脏的', Profile.stringify(work) !== before);
+  ScheduleMutations.moveTimePoint(work, layoutId, 1, -1);
+  ScheduleMutations.settle(work);
+  check('挪回原位后不脏了', Profile.stringify(work) === before);
+}
+
+function testNoopMutationsStayClean(): void {
+  // 无效操作（删不存在的东西、把课次排到界外）不该弄脏档案。
+  // 否则用户随手点错一下，界面上就冒出「未保存的改动」，
+  // 而实际内容一个字节都没变。
+  const src: Profile = seededProfile();
+  const baseline: string = Profile.stringify(src);
+  const work: Profile = Profile.parse(baseline);
+  const ghost: Guid = Guid.newGuid();
+  const planId: Guid = firstPlanId(work);
+  check('删不存在的科目返回 false', ScheduleMutations.removeSubject(work, ghost) === false);
+  check('删不存在的时间表返回 false', ScheduleMutations.removeTimeLayout(work, ghost) === false);
+  check('删不存在的课表返回 false', ScheduleMutations.removeClassPlan(work, ghost) === false);
+  check('删不存在的群返回 false', ScheduleMutations.deleteClassPlanGroup(work, ghost) === false);
+  check('课次界外返回 false', ScheduleMutations.setClassSubject(work, planId, 99, ghost) === false);
+  // 空 guid 是「清空这节课」，是合法语义（对应界面的清除按钮），不是无效操作。
+  // 注意它会弄脏档案：清空确实是改了内容。清空后若该时间点有预置科目，
+  // settle 会按预置补回来 —— 与桌面版一致，所以这里顺带验一遍。
+  check('清空课次返回 true', ScheduleMutations.setClassSubject(work, planId, 0, Guid.empty()) === true);
+  const cleared: string = Profile.stringify(work);
+  check('清空确实改动了字节', cleared !== baseline);
+  check('清空后 subjectId 为空',
+    (work.tryGetClassPlan(planId) as ClassPlan).classes[0].subjectId.isEmpty());
+  // 上面这步弄脏了档案，所以重置回基线再验「无效操作不弄脏」
+  const clean: Profile = Profile.parse(baseline);
+  const ghost2: Guid = Guid.newGuid();
+  ScheduleMutations.removeSubject(clean, ghost2);
+  ScheduleMutations.removeTimeLayout(clean, ghost2);
+  ScheduleMutations.removeClassPlan(clean, ghost2);
+  ScheduleMutations.deleteClassPlanGroup(clean, ghost2);
+  ScheduleMutations.disbandClassPlanGroup(clean, ghost2);
+  ScheduleMutations.setClassSubject(clean, planId, 99, ghost2);
+  ScheduleMutations.setClassEnabled(clean, planId, -1, true);
+  ScheduleMutations.removeTimePoint(clean, firstLayoutId(clean), 99);
+  ScheduleMutations.moveTimePoint(clean, firstLayoutId(clean), 0, 99);
+  ScheduleMutations.moveSubject(clean, ghost2, 1);
+  ScheduleMutations.settle(clean);
+  check('无效操作后仍不脏', Profile.stringify(clean) === baseline);
+}
+
+// ------------------------------------------------------------ 顺序置换
+
+function testReorderPermutationIsConsistent(): void {
+  // 换序必须对键与值施加同一个置换。只重排值的话，每个 guid 会指向别人的科目，
+  // 而且界面上完全看不出异常 —— 课表里语文变成数学，没有任何报错。
+  const profile: Profile = seededProfile();
+  const yw: Guid = Guid.fromCanonical(profile.subjects.keys()[0]);
+  const sx: Guid = Guid.fromCanonical(profile.subjects.keys()[1]);
+  const planId: Guid = firstPlanId(profile);
+  const ywText: string = yw.toString();
+  const sxText: string = sx.toString();
+  const keysBefore: string[] = profile.subjects.keys();
+  const third: string = keysBefore[2];
+  const sxIndex: number = indexOf(keysBefore, sxText);
+  // 把数学上移到语文的位置
+  ScheduleMutations.moveSubject(profile, sx, -sxIndex);
+  ScheduleMutations.settle(profile);
+  const keysAfter: string[] = profile.subjects.keys();
+  // 数学原在下标 1，上移一位到 0，与语文对调；英语留在 2
+  checkEqual('数学与语文对调', `${keysAfter[0]},${keysAfter[1]},${keysAfter[2]}`,
+    `${sxText},${ywText},${third}`);
+
+  // 关键不变量：值跟着自己的键走
+  checkEqual('数学仍在数学的键上', subjectNameOf(profile, sxText), '数学');
+  checkEqual('语文仍在语文的键上', subjectNameOf(profile, ywText), '语文');
+  checkEqual('英语仍在英语的键上', subjectNameOf(profile, third), '英语');
+
+  // 课次里的科目引用必须还是原来那个科目，不能跟着位置跑
+  const plan: ClassPlan = profile.tryGetClassPlan(planId) as ClassPlan;
+  checkEqual('第一节仍是语文', plan.classes[0].subjectId.toString(), ywText);
+  checkEqual('第二节仍是数学', plan.classes[1].subjectId.toString(), sxText);
+  checkEqual('第三节仍是英语', plan.classes[2].subjectId.toString(), third);
+  // EditorRows 读出来的名字也要与键一一对应
+  const rows = EditorRows.classPlans(profile, '');
+  checkEqual('行数据里第一节还是语文', rows[0].slots[0].subjectName, '语文');
+  checkEqual('行数据里第二节还是数学', rows[0].slots[1].subjectName, '数学');
+  checkEqual('行数据里第三节还是英语', rows[0].slots[2].subjectName, '英语');
+}
+
+function testTimePointReorderKeepsSlotRefs(): void {
+  // 时间点换序：课次下标是位置派生的，所以顺序变了节号就变；
+  // 但每节课挂的科目必须跟着那节课走，不能留在原下标上。
+  const profile: Profile = seededProfile();
+  const layoutId: Guid = firstLayoutId(profile);
+  ScheduleMutations.moveTimePoint(profile, layoutId, 0, 2);
+  ScheduleMutations.settle(profile);
+  // 原序 [课0, 课间, 课1, 课间, 课2]，把行 0 下移两位 -> [课间, 课1, 课0, 课间, 课2]。
+  // 课0 换到下标 2，课次下标随之从 0 变成 1；它那节课也跟着换到课次 1。
+  const row = EditorRows.timeLayouts(profile)[0];
+  checkNum('课次数不变', row.classCount, 3);
+  checkNum('行 0 变成课间', row.rows[0].classSlot, -1);
+  checkEqual('行 0 是大课间', row.rows[0].breakName, '大课间');
+  checkNum('行 1 成了第 1 节', row.rows[1].classSlot, 0);
+  checkNum('语文那行落到课次 1', row.rows[2].classSlot, 1);
+  checkNum('原第 2 节那行落到课次 0', row.rows[1].classSlot, 0);
+  const planRow = EditorRows.classPlans(profile, '')[0];
+  checkEqual('课首挂着数学', planRow.slots[0].subjectName, '数学');
+  checkEqual('课尾挂着英语', planRow.slots[2].subjectName, '英语');
+  // 行/课次配对不变量在换序后仍要成立
+  for (const edit of planRow.editRows) {
+    if (edit.classSlot >= 0) {
+      check('换序后配对仍自洽', planRow.slots[edit.classSlot].slot === edit.classSlot);
+    }
+  }
+}
+
+function testSortTimeLayoutIsAscending(): void {
+  // 桌面版 UpdateTimeLayout 的 l.Sort(); l.Reverse(); 净效果是升序
+  //（CompareTo 是降序）。这里钉死升序：排反了的话课表从上往下时间递减，
+  // 界面上看着「第一节课 10:00、第二节课 08:00」，而没有任何报错。
+  const profile: Profile = emptyProfile();
+  const layoutId: Guid = ScheduleMutations.addTimeLayout(profile, '乱序');
+  // 新建时间表自带一个 00:00 占位行（与桌面版一致），先删掉再谈排序
+  checkNum('新建自带一行占位', EditorRows.timeLayouts(profile)[0].rowCount, 1);
+  checkEqual('占位行的时刻', EditorRows.timeLayouts(profile)[0].rows[0].startText, '00:00');
+  ScheduleMutations.removeTimePoint(profile, layoutId, 0);
+  ScheduleMutations.settle(profile);
+  checkNum('占位行已删', EditorRows.timeLayouts(profile)[0].rowCount, 0);
+  // 故意按乱序插入
+  ScheduleMutations.addTimePoint(profile, layoutId, TIME_TYPE_CLASS, 16 * 3600, 45);
+  ScheduleMutations.addTimePoint(profile, layoutId, TIME_TYPE_CLASS, 8 * 3600, 45);
+  ScheduleMutations.addTimePoint(profile, layoutId, TIME_TYPE_CLASS, 12 * 3600, 45);
+  ScheduleMutations.addTimePoint(profile, layoutId, TIME_TYPE_CLASS, 10 * 3600, 45);
+  ScheduleMutations.settle(profile);
+  checkEqual('插入顺序保持原样', startsOf(EditorRows.timeLayouts(profile)[0].rows),
+    '16:00,08:00,12:00,10:00');
+
+  check('重排返回 true', ScheduleMutations.sortTimeLayout(profile, layoutId));
+  ScheduleMutations.settle(profile);
+  checkEqual('重排后升序', startsOf(EditorRows.timeLayouts(profile)[0].rows),
+    '08:00,10:00,12:00,16:00');
+
+  // 课间也参与排序；排完课次下标要重新按位置算，不能沿用排序前的
+  const withBreak: Profile = emptyProfile();
+  const breakLayout: Guid = ScheduleMutations.addTimeLayout(withBreak, '带课间');
+  ScheduleMutations.addTimePoint(withBreak, breakLayout, TIME_TYPE_CLASS, 9 * 3600, 45);
+  ScheduleMutations.removeTimePoint(withBreak, breakLayout, 0);
+  ScheduleMutations.addTimePoint(withBreak, breakLayout, TIME_TYPE_BREAK, 9 * 3600 + 40 * 60, 20);
+  ScheduleMutations.addTimePoint(withBreak, breakLayout, TIME_TYPE_CLASS, 8 * 3600, 45);
+  ScheduleMutations.settle(withBreak);
+  ScheduleMutations.sortTimeLayout(withBreak, breakLayout);
+  ScheduleMutations.settle(withBreak);
+  // 排完是 [08:00 课, 09:00 课, 09:40 课间]。课间在两节课中间，但它的开始时刻
+  // 09:40 晚于 09:00，所以按时刻排序后落到最后 —— 排课表是按时刻排的，
+  // 不是按「课程在前」的分组顺序排的。
+  const row = EditorRows.timeLayouts(withBreak)[0];
+  checkEqual('按时刻升序', startsOf(row.rows), '08:00,09:00,09:40');
+  checkNum('课次数不受排序影响', row.classCount, 2);
+  checkNum('行 0 是第 1 节', row.rows[0].classSlot, 0);
+  checkNum('行 1 是第 2 节', row.rows[1].classSlot, 1);
+  checkNum('行 2 是课间', row.rows[2].classSlot, -1);
+  // addTimePoint 给课间行填的默认名是「课间」，不是「课间1」之类
+  checkEqual('课间名跟着走', row.rows[2].breakName, '课间');
 }
 
 // ------------------------------------------------------------------ 入口
@@ -1522,6 +1788,20 @@ testEditorRowsProfileSummary();
 testEditorRowsProfileDanglingPointers();
 testEditorRowsAfterDeletes();
 testEditorRowsAfterGroupDelete();
+testTimeRangeOverlap();
+testTimeRangeConflictIndex();
+testDirtyBaselineRebase();
+testNoopMutationsStayClean();
+testReorderPermutationIsConsistent();
+testTimePointReorderKeepsSlotRefs();
+testSortTimeLayoutIsAscending();
+testTimeRangeOverlap();
+testTimeRangeConflictIndex();
+testDirtyBaselineRebase();
+testNoopMutationsStayClean();
+testReorderPermutationIsConsistent();
+testTimePointReorderKeepsSlotRefs();
+testSortTimeLayoutIsAscending();
 
 console.log(`通过 ${passed} 项，失败 ${failures.length} 项`);
 if (failures.length > 0) {

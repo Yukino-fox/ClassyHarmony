@@ -16,11 +16,13 @@
 
 import { common } from '@kit.AbilityKit';
 import { ClassTableViewModel } from '../viewmodel/ClassTableViewModel';
+import { ScheduleEditorViewModel } from '../viewmodel/ScheduleEditorViewModel';
 import { AppClock, SystemClock } from './AppClock';
 import { ProfileRepository } from '../data/ProfileRepository';
 import { ServiceContainer, ServiceKeys } from './ServiceContainer';
 
 let instance: ClassTableViewModel | undefined = undefined;
+let editorInstance: ScheduleEditorViewModel | undefined = undefined;
 
 /**
  * 取进程内唯一的课表页 ViewModel，首次调用时装配。
@@ -51,4 +53,37 @@ export function resetClassTableViewModel(): void {
     instance.stop();
   }
   instance = undefined;
+}
+
+/**
+ * 取进程内唯一的编辑页 ViewModel，首次调用时装配。
+ *
+ * 与课表页的 ViewModel 分开持有：编辑页持有草稿（一份完整的 Profile），
+ * 课表页持有轮询定时器。放同一个实例里的话，进编辑页会把课表页的定时器
+ * 一起牵住，退出编辑页又要判断「用户到底有没有改动」来决定要不要刷盘 ——
+ * 两个生命周期不同的事耦在一起，最后谁也说不清。
+ *
+ * @param context UIAbility 的 context
+ */
+export function resolveScheduleEditorViewModel(
+  context: common.UIAbilityContext): ScheduleEditorViewModel {
+  if (editorInstance !== undefined) {
+    return editorInstance;
+  }
+  const container: ServiceContainer = new ServiceContainer();
+  container.registerValue<AppClock>(ServiceKeys.CLOCK, new SystemClock());
+  container.register<ProfileRepository>(ServiceKeys.PROFILE_REPO, () => {
+    return new ProfileRepository(context.filesDir);
+  });
+
+  editorInstance = new ScheduleEditorViewModel(
+    container.require<AppClock>(ServiceKeys.CLOCK),
+    container.require<ProfileRepository>(ServiceKeys.PROFILE_REPO)
+  );
+  return editorInstance;
+}
+
+/** 丢掉编辑页 ViewModel，下次 resolve 重新装配（草稿随之丢弃）。 */
+export function resetScheduleEditorViewModel(): void {
+  editorInstance = undefined;
 }

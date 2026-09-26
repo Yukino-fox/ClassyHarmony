@@ -25,12 +25,23 @@ export { LayoutForm, layoutFormOf, SINGLE_COLUMN_MAX_WIDTH, GRID_FILL_MIN_WIDTH 
 /* ---- 档案改动 ---- */
 export { ScheduleMutations } from './src/main/ets/edit/ScheduleMutations';
 
+/* ---- 时间段求交 ---- */
+export {
+  TimeRange,
+  TimeSpanRow,
+  newTimeSpanRow,
+  timeRangeConflictIndex,
+  timeRangeOverlap,
+  timeRangeOverlapMinutes
+} from './src/main/ets/edit/TimeRange';
+
 /* ---- 编辑页视图数据 ---- */
 export {
   ClassPlanGroupRow,
   ClassPlanRow,
   ClassSlotRow,
   EditorRows,
+  PlanEditRow,
   ProfileRow,
   SubjectRow,
   TimeLayoutRow,
