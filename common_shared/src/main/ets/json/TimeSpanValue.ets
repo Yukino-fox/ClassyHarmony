@@ -157,13 +157,16 @@ export class TimeSpanValue {
       return undefined;
     }
 
-    // 分离天数：形如 "1." 或 "12."
+    // 分离天数：形如 "1.02:03:04" 的 "1."。
+    // 不能简单取第一个点——"00:00:00.5" 的点属于小数秒而非天数。
+    // 判据是位置：天数分隔点必然出现在第一个冒号之前，小数点必然在其后。
     let days: number = 0;
-    const dotIndex: number = body.indexOf('.');
     let timePart: string = body;
-    if (dotIndex >= 0) {
-      const dayPart: string = body.substring(0, dotIndex);
-      timePart = body.substring(dotIndex + 1);
+    const firstColon: number = body.indexOf(':');
+    const dayDotIndex: number = firstColon > 0 ? body.lastIndexOf('.', firstColon) : -1;
+    if (dayDotIndex > 0) {
+      const dayPart: string = body.substring(0, dayDotIndex);
+      timePart = body.substring(dayDotIndex + 1);
       if (!TimeSpanValue.isAllDigits(dayPart) || dayPart.length === 0) {
         return undefined;
       }
@@ -182,13 +185,16 @@ export class TimeSpanValue {
       fraction = Number(fracPart) * Math.pow(10, 7 - fracPart.length);
     }
 
+    // 桌面版写出恒为 hh:mm:ss 三段；这里额外容忍省略秒的 "8:00" 写法，
+    // 因为课表 JSON 常被用户手工编辑，读入宽松可避免整份档案导入失败。
     const segments: string[] = timePart.split(':');
-    if (segments.length !== 3) {
+    if (segments.length < 2 || segments.length > 3) {
       return undefined;
     }
     const hours: number | undefined = TimeSpanValue.toNumber(segments[0]);
     const minutes: number | undefined = TimeSpanValue.toNumber(segments[1]);
-    const seconds: number | undefined = TimeSpanValue.toNumber(segments[2]);
+    const seconds: number | undefined =
+      segments.length === 3 ? TimeSpanValue.toNumber(segments[2]) : 0;
     if (hours === undefined || minutes === undefined || seconds === undefined) {
       return undefined;
     }

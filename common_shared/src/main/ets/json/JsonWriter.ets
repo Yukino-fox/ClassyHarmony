@@ -169,11 +169,18 @@ export class JsonWriter {
     return `${out}"`;
   }
 
+  /**
+   * 输出 \uXXXX，必须恰好 4 位十六进制。
+   *
+   * 少一位不是「不美观」而是数据损坏：JSON 解析器在 `\u` 后固定读 4 位，
+   * `\u000E9` 会被解析成 U+000E 再跟一个字面 '9'，字符直接变了。
+   * 故此处按 4 位补零，且十六进制为大写（与桌面版一致）。
+   */
   private escapeCodeUnit(code: number): string {
     const hex: string = code.toString(16).toUpperCase();
     if (hex.length >= 4) {
       return `\\u${hex}`;
     }
-    return `\\u000${hex}`;
+    return `\\u${'0'.repeat(4 - hex.length)}${hex}`;
   }
 }
