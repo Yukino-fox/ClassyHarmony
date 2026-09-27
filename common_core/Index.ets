@@ -152,3 +152,31 @@ export {
   RulesetEditModel,
   RulesetEditor
 } from './src/main/ets/rules/RulesetEditModel';
+
+/* ---- 自动化链路（P8c）---- */
+export {
+  TriggerInfo,
+  TriggerCatalog,
+  TriggerSettingsKind,
+  TriggerSupport
+} from './src/main/ets/automation/TriggerCatalog';
+export {
+  ActionInfo,
+  ActionCatalog,
+  ActionSettingsKind,
+  ActionSupport
+} from './src/main/ets/automation/ActionCatalog';
+export { CronExpression } from './src/main/ets/automation/CronExpression';
+export {
+  AutomationEngine,
+  AutomationReason,
+  AutomationRun,
+  AutomationTick,
+  AutomationTickResult,
+  TriggerVerdict
+} from './src/main/ets/automation/AutomationEngine';
+export {
+  AutomationDefaults,
+  DEFAULT_ACTION_SET_NAME,
+  WorkflowMutations
+} from './src/main/ets/automation/WorkflowMutations';

@@ -40,6 +40,26 @@ export { ModelCodec } from './src/main/ets/models/ModelCodec';
 export { ModelCloner } from './src/main/ets/models/ModelCloner';
 export { ActionItem } from './src/main/ets/models/Automation/ActionItem';
 export { ActionSet } from './src/main/ets/models/Automation/ActionSet';
+export { TriggerSettings } from './src/main/ets/models/Automation/TriggerSettings';
+export { Workflow } from './src/main/ets/models/Automation/Workflow';
+export {
+  CronTriggerSettings,
+  PreTimePointTriggerSettings,
+  SignalTriggerSettings,
+  TrayMenuTriggerSettings,
+  UriTriggerSettings,
+  TriggerIds
+} from './src/main/ets/models/Automation/Triggers';
+export {
+  AppRestartActionSettings,
+  ModifyAppSettingsActionSettings,
+  NotificationActionSettings,
+  RunActionRunType,
+  RunActionSettings,
+  SleepActionSettings,
+  WeatherNotificationActionSettings,
+  ActionIds
+} from './src/main/ets/models/Automation/Actions';
 export { Subject } from './src/main/ets/models/Subject';
 export { TimeRule } from './src/main/ets/models/TimeRule';
 export {

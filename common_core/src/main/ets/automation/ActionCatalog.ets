@@ -1,0 +1,227 @@
+/*
+ * 行动注册表。对应桌面版的 IActionService.ActionInfos +
+ * ActionRegistryExtensions.AddAction。
+ *
+ * 为什么是显式表
+ * ------------
+ * 与 TriggerCatalog 同一条理由。桌面版靠 DI + 特性反射，这里不能。
+ *
+ * 7 个行动，3 个已实现
+ * ------------------
+ * 已实现：
+ *   classisland.action.sleep   等 N 秒。整条链路里唯一「什么都不做」的行动，
+ *                             但它是编排的关键（等 5 秒再说下一句），不能省。
+ *   classisland.settings       改一项应用设置。**七个里唯一支持恢复的**
+ *                             （ModifyAppSettingsAction 覆写了 OnRevert），
+ *                             所以「改完再改回来」这条链在鸿蒙侧是通的。
+ *   classisland.app.quit       退出应用。
+ *
+ * 未实现（4 个），照常列出、可以配（值原样落盘），但界面上标出来：
+ *   classisland.showNotification    要先有通知系统（P9）。
+ *   classisland.notification.weather 要先有天气数据（P11）。
+ *   classisland.os.run              鸿蒙应用不能拉起任意进程 / 执行命令行。
+ *   classisland.app.restart         重启要走 startAbility + terminateSelf，
+ *                                  进程被杀时系统可能不给回调，新起的进程也
+ *                                  拿不到原来的状态。桌面版靠 Environment.Exit
+ *                                  + Process.Start，这套在鸿蒙上没有对应物。
+ *
+ * isRevertable 照抄桌面版的算法
+ * ----------------------------
+ * 桌面版 `info.IsRevertable = HasOverriddenOnRevert(actionType)`，即「有没有
+ * 覆写 OnRevert」。七个行动里只有 ModifyAppSettingsAction 覆写了，所以只有
+ * classisland.settings 为 true。这一栏决定 ActionSet.IsRevertEnabled 打开时，
+ * 恢复阶段哪些行动会被回滚。
+ *
+ * 为什么不藏起来
+ * --------------
+ * 规则那边把无实现的规则藏在设置控件后面（只是不显示），但行动不行：用户从
+ * 桌面版同步过来的行动组里可能有「显示提醒」，这边若在列表里少一条，用户
+ * 没有任何地方能看出「这个行动在这台设备上不会发生」。所以照常列出、标出来。
+ */
+
+import {
+  AppRestartActionSettings,
+  JsonNode,
+  JsonObject,
+  ModifyAppSettingsActionSettings,
+  NotificationActionSettings,
+  RunActionSettings,
+  SleepActionSettings,
+  WeatherNotificationActionSettings,
+  ActionIds,
+  ActionItem
+} from 'common_shared';
+
+/** 行动实现状态。决定编辑器给它打什么标。 */
+export enum ActionSupport {
+  /** 执行器里有实现，能真的做。 */
+  Implemented = 0,
+  /** 已注册但鸿蒙侧无对应物，跑到它时跳过并记一笔。 */
+  Unsupported = 1,
+  /** 配置里的陌生 id。跑到它时跳过并记一笔。 */
+  Unknown = 2
+}
+
+/** 行动设置的类型标签。解码分支集中在 settingsOf。 */
+export enum ActionSettingsKind {
+  None = 0,
+  AppRestart = 1,
+  ModifyAppSettings = 2,
+  Notification = 3,
+  Run = 4,
+  Sleep = 5,
+  WeatherNotification = 6
+}
+
+/** 一个行动的注册信息。对应桌面版 ActionInfo。 */
+export class ActionInfo {
+  id: string = '';
+  /** 显示名。桌面版注册时给的中文名。 */
+  name: string = '';
+  /** 桌面版是 Segoe Fluent 图标的码位。保留字段但不渲染，同 TriggerInfo。 */
+  iconGlyph: string = '';
+  support: ActionSupport = ActionSupport.Unsupported;
+  settingsKind: ActionSettingsKind = ActionSettingsKind.None;
+  /**
+   * 是否支持恢复。对应桌面版 `HasOverriddenOnRevert`。
+   * 七个里只有 classisland.settings 为 true。
+   */
+  isRevertable: boolean = false;
+  /** 未实现时给用户看的一句话。实现了就是空串。 */
+  unsupportedReason: string = '';
+}
+
+function entry(id: string, name: string, glyph: string, kind: ActionSettingsKind,
+  isRevertable: boolean, reason: string = ''): ActionInfo {
+  const out: ActionInfo = new ActionInfo();
+  out.id = id;
+  out.name = name;
+  out.iconGlyph = glyph;
+  out.settingsKind = kind;
+  out.isRevertable = isRevertable;
+  out.support = reason.length > 0 ? ActionSupport.Unsupported : ActionSupport.Implemented;
+  out.unsupportedReason = reason;
+  return out;
+}
+
+const NOTIFICATION_REASON: string =
+  '鸿蒙侧还没有通知系统（规划在 P9）。等那边落地后这一条才能真的弹出来。';
+const WEATHER_REASON: string =
+  '要先有天气数据（规划在 P11），否则没有可播报的内容。';
+const OS_RUN_REASON: string =
+  '鸿蒙应用不能拉起任意进程，也不能执行命令行 —— 这一条在鸿蒙上没有对应物。';
+const APP_RESTART_REASON: string =
+  '重启要走 startAbility + terminateSelf，而进程被杀时系统不保证回调，' +
+  '新起的进程也拿不到原来的状态。桌面版靠 Environment.Exit + Process.Start，' +
+  '鸿蒙上没有这套。';
+
+const REGISTRY: ActionInfo[] = [
+  entry(ActionIds.APP_QUIT, '退出 ClassIsland', '', ActionSettingsKind.None, false),
+  entry(ActionIds.APP_RESTART, '重启 ClassIsland', '', ActionSettingsKind.AppRestart, false,
+    APP_RESTART_REASON),
+  entry(ActionIds.SETTINGS, '应用设置', '', ActionSettingsKind.ModifyAppSettings, true),
+  entry(ActionIds.SHOW_NOTIFICATION, '显示提醒', '', ActionSettingsKind.Notification, false,
+    NOTIFICATION_REASON),
+  entry(ActionIds.OS_RUN, '运行', '', ActionSettingsKind.Run, false, OS_RUN_REASON),
+  entry(ActionIds.SLEEP, '等待时长', '', ActionSettingsKind.Sleep, false),
+  entry(ActionIds.NOTIFICATION_WEATHER, '显示天气提醒', '',
+    ActionSettingsKind.WeatherNotification, false, WEATHER_REASON)
+];
+
+export class ActionCatalog {
+  static find(id: string): ActionInfo | undefined {
+    for (const each of REGISTRY) {
+      if (each.id === id) {
+        return each;
+      }
+    }
+    return undefined;
+  }
+
+  /** 全部内置行动，按注册顺序。 */
+  static all(): ActionInfo[] {
+    return REGISTRY;
+  }
+
+  static supportOf(id: string): ActionSupport {
+    const found: ActionInfo | undefined = ActionCatalog.find(id);
+    return found === undefined ? ActionSupport.Unknown : found.support;
+  }
+
+  /** 显示名。未知 id 回显 id。 */
+  static displayNameOf(id: string): string {
+    const found: ActionInfo | undefined = ActionCatalog.find(id);
+    return found === undefined ? id : found.name;
+  }
+
+  /**
+   * 这一条支持不支持恢复。
+   *
+   * 未知 id 返回 false —— 与桌面版
+   * `if (!ActionInfos.TryGetValue(...) || !actionInfo.IsRevertable) return;` 一致。
+   */
+  static isRevertable(id: string): boolean {
+    const found: ActionInfo | undefined = ActionCatalog.find(id);
+    return found !== undefined && found.isRevertable;
+  }
+
+  /**
+   * 把行动项上的 Settings 解成强类型对象。
+   *
+   * Settings 为 null 时按「空对象」解，等价于桌面版
+   * `i.Settings ?? Activator.CreateInstance(settingsType)`。
+   */
+  static settingsOf(item: ActionItem): Object | undefined {
+    const found: ActionInfo | undefined = ActionCatalog.find(item.id);
+    if (found === undefined) {
+      return undefined;
+    }
+    const raw: JsonNode = item.settings === undefined ? new JsonObject() : item.settings;
+    if (found.settingsKind === ActionSettingsKind.AppRestart) {
+      return AppRestartActionSettings.parse(raw);
+    }
+    if (found.settingsKind === ActionSettingsKind.ModifyAppSettings) {
+      return ModifyAppSettingsActionSettings.parse(raw);
+    }
+    if (found.settingsKind === ActionSettingsKind.Notification) {
+      return NotificationActionSettings.parse(raw);
+    }
+    if (found.settingsKind === ActionSettingsKind.Run) {
+      return RunActionSettings.parse(raw);
+    }
+    if (found.settingsKind === ActionSettingsKind.Sleep) {
+      return SleepActionSettings.parse(raw);
+    }
+    if (found.settingsKind === ActionSettingsKind.WeatherNotification) {
+      return WeatherNotificationActionSettings.parse(raw);
+    }
+    return undefined;
+  }
+
+  /** 新建一条该 id 的行动时该带什么设置。未知 id 返回 undefined。 */
+  static defaultSettingsOf(id: string): Object | undefined {
+    const found: ActionInfo | undefined = ActionCatalog.find(id);
+    if (found === undefined) {
+      return undefined;
+    }
+    if (found.settingsKind === ActionSettingsKind.AppRestart) {
+      return new AppRestartActionSettings();
+    }
+    if (found.settingsKind === ActionSettingsKind.ModifyAppSettings) {
+      return new ModifyAppSettingsActionSettings();
+    }
+    if (found.settingsKind === ActionSettingsKind.Notification) {
+      return new NotificationActionSettings();
+    }
+    if (found.settingsKind === ActionSettingsKind.Run) {
+      return new RunActionSettings();
+    }
+    if (found.settingsKind === ActionSettingsKind.Sleep) {
+      return new SleepActionSettings();
+    }
+    if (found.settingsKind === ActionSettingsKind.WeatherNotification) {
+      return new WeatherNotificationActionSettings();
+    }
+    return undefined;
+  }
+}
