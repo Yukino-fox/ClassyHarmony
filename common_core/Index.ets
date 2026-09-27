@@ -114,3 +114,14 @@ export {
   ComponentLayoutMutations,
   ComponentLocation
 } from './src/main/ets/components/ComponentLayoutMutations';
+
+/* ---- 面板渲染模型（P7c）---- */
+export {
+  PanelNode,
+  PanelNodeKind,
+  PanelLine,
+  PanelLesson,
+  PanelModel,
+  PanelWidthKind,
+  PanelBuilder
+} from './src/main/ets/panel/PanelModel';

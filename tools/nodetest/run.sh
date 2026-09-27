@@ -19,6 +19,7 @@
 #   src/widget-driver.ts 小组件视图数据推导与编解码
 #   src/reminder-driver.ts 课前提醒的编排（触发时刻 / 额度降级 / 差异比对）
 #   src/component-driver.ts 主界面组件布局（往返保真 / 注册表 / 增删移）
+#   src/panel-driver.ts     面板渲染模型（倒计时格式 / 样式合成 / 课表边界 / 深度上限）
 set -euo pipefail
 
 DEVECO_HOME="${DEVECO_HOME:-/mnt/data/devecostudio-26.0.0.621}"
@@ -90,6 +91,9 @@ sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
 sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
      s|'../../common_core/src/main/ets/|'../core/|g" \
   "$ROOT/tools/nodetest/src/component-driver.ts" > "$WORK/src/tools/component-driver.ts"
+sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
+     s|'../../common_core/src/main/ets/|'../core/|g" \
+  "$ROOT/tools/nodetest/src/panel-driver.ts" > "$WORK/src/tools/panel-driver.ts"
 
 "$NODE" "$TSC" \
   --outDir "$WORK/out" \
@@ -109,7 +113,8 @@ sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
   "$WORK/src/tools/edit-driver.ts" \
   "$WORK/src/tools/widget-driver.ts" \
   "$WORK/src/tools/reminder-driver.ts" \
-  "$WORK/src/tools/component-driver.ts" 2>&1 | sed 's/^/  /' || true
+  "$WORK/src/tools/component-driver.ts" \
+  "$WORK/src/tools/panel-driver.ts" 2>&1 | sed 's/^/  /' || true
 
 cp -r "$ROOT/tools/nodetest/fixtures" "$WORK/out/fixtures"
 
@@ -134,4 +139,7 @@ echo "── 课前提醒 ──"
 echo ""
 echo "── 组件布局 ──"
 "$NODE" "$WORK/out/tools/component-driver.js" || status=1
+echo ""
+echo "── 面板渲染 ──"
+"$NODE" "$WORK/out/tools/panel-driver.js" || status=1
 exit $status

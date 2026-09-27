@@ -912,7 +912,7 @@ function testDeepLayout(): void {
   checkNum('别处不受影响：分组容器里仍是 2 个',
     ComponentCatalog.childrenOf(reparsed.lines[0].children[1]).length, 2);
   // 删的是子组件，容器自己的设置不能跟着没
-  checkEqual('别处不受影响：轮播容器的切换间隔还在',
+  checkNum('别处不受影响：轮播容器的切换间隔还在',
     ModelCodec.number(nodeOf(reparsed.lines[2].children[0]), 'SlideSeconds', 0), 15);
   checkEqual('别处不受影响：行 2 的堆叠容器还在',
     reparsed.lines[2].children[1].id, COMPONENT_STACK);

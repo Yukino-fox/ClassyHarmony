@@ -32,7 +32,8 @@ import {
   JsonObject,
   JsonString,
   JsonValue,
-  ModelCodec
+  ModelCodec,
+  TimeSpanValue
 } from 'common_shared';
 
 /** 设置对象的基类。空实现：没有设置的内置组件（日期、分割线）用它。 */
@@ -51,6 +52,22 @@ function readColor(node: JsonObject, fieldName: string, fallback: ColorValue): C
 
 function writeColor(node: JsonObject, fieldName: string, value: ColorValue): void {
   node.set(fieldName, new JsonString(value.toString()));
+}
+
+/**
+ * 读一个可空 TimeSpan 字面量，缺失或读不出来走默认值。
+ *
+ * 用 parseOrZero 兜底而不是跳过这个键：TimeSpan 的落盘格式在 .NET 侧可以写成
+ * `"1.00:00:00"`（带天数）也可以是 `"24:00:00"`，tryParse 认得两种；真正读不
+ * 出来的是用户手改坏的值，那种情况下把它当 0 比抛出去更可用 —— 抛出去的话整个
+ * 面板都渲染不出来，而一个周期的时长为 0 只是让倒计时显示「0天」。
+ */
+function readTimeSpan(node: JsonObject, fieldName: string, fallback: TimeSpanValue): TimeSpanValue {
+  if (!node.has(fieldName)) {
+    return fallback;
+  }
+  const parsed: TimeSpanValue | undefined = TimeSpanValue.tryParse(ModelCodec.string(node, fieldName, ''));
+  return parsed === undefined ? TimeSpanValue.zero() : parsed;
 }
 
 /** 时钟组件。 */
@@ -85,9 +102,30 @@ export class CountDownPayload extends ComponentPayload {
   countDownConnector: string = '还有';
   isConnectorColorEmphasized: boolean = false;
   startTime: DateTimeValue = DateTimeValue.now().dateOnly();
+  useAccentOnProgressBar: boolean = true;
+  progressBarMode: number = 0;
   showProgress: boolean = false;
   isProgressInverted: boolean = false;
   customStringFormat: string = '%D天';
+  // --- 以下是「倒计时从哪一段时间算起」的四组设置 ---
+  //
+  // 之前没建模，代价是倒计时只能用 start/end 两个日期（P7c 加面板渲染时才
+  // 发现）：CountdownSource 有 0..3 四档，用户选了 1（周期）或 3（本周）就得到
+  // 一个按 start/end 算的、与设置对不上的数 —— 显示的数字看着合理，错的是
+  // 语义，用户查不出来。补上比留个「不支持」诚实。
+  countdownSource: number = 0;
+  cycleStartTime: DateTimeValue = DateTimeValue.now();
+  cycleBeforeDuration: TimeSpanValue = TimeSpanValue.zero();
+  cycleDuration: TimeSpanValue = TimeSpanValue.fromHours(24);
+  cycleAfterDuration: TimeSpanValue = TimeSpanValue.zero();
+  isCycleCountLimited: boolean = false;
+  cycleCountLimit: number = 2;
+  isAdvancedCycleTimingEnabled: boolean = false;
+  /** 自然日口径：0 按课表首末节，1 整天，2 找不到课表时不显示。 */
+  natureTimeUseMode: number = 0;
+  /** 0 = 周日，与档案里所有星期几字段同口径。桌面版默认 Monday = 1。 */
+  weekCountdownStartDay: number = 1;
+  isCustomWeekCountdownStartDayEnabled: boolean = false;
 
   static decode(node: JsonObject): CountDownPayload {
     const out: CountDownPayload = new CountDownPayload();
@@ -100,9 +138,23 @@ export class CountDownPayload extends ComponentPayload {
     out.countDownConnector = ModelCodec.string(node, 'CountDownConnector', '还有');
     out.isConnectorColorEmphasized = ModelCodec.bool(node, 'IsConnectorColorEmphasized', false);
     out.startTime = ModelCodec.readDateTime(node, 'StartTime');
+    out.useAccentOnProgressBar = ModelCodec.bool(node, 'UseAccentOnProgressBar', true);
+    out.progressBarMode = ModelCodec.int(node, 'ProgressBarMode', 0);
     out.showProgress = ModelCodec.bool(node, 'ShowProgress', false);
     out.isProgressInverted = ModelCodec.bool(node, 'IsProgressInverted', false);
     out.customStringFormat = ModelCodec.string(node, 'CustomStringFormat', '%D天');
+    out.countdownSource = ModelCodec.int(node, 'CountdownSource', 0);
+    out.cycleStartTime = ModelCodec.readDateTime(node, 'CycleStartTime');
+    out.cycleBeforeDuration = readTimeSpan(node, 'CycleBeforeDuration', TimeSpanValue.zero());
+    out.cycleDuration = readTimeSpan(node, 'CycleDuration', TimeSpanValue.fromHours(24));
+    out.cycleAfterDuration = readTimeSpan(node, 'CycleAfterDuration', TimeSpanValue.zero());
+    out.isCycleCountLimited = ModelCodec.bool(node, 'IsCycleCountLimited', false);
+    out.cycleCountLimit = ModelCodec.int(node, 'CycleCountLimit', 2);
+    out.isAdvancedCycleTimingEnabled = ModelCodec.bool(node, 'IsAdvancedCycleTimingEnabled', false);
+    out.natureTimeUseMode = ModelCodec.int(node, 'NatureTimeUseMode', 0);
+    out.weekCountdownStartDay = ModelCodec.int(node, 'WeekCountdownStartDay', 1);
+    out.isCustomWeekCountdownStartDayEnabled =
+      ModelCodec.bool(node, 'IsCustomWeekCountdownStartDayEnabled', false);
     return out;
   }
 
@@ -116,9 +168,23 @@ export class CountDownPayload extends ComponentPayload {
     node.set('CountDownConnector', new JsonString(this.countDownConnector));
     node.set('IsConnectorColorEmphasized', new JsonBoolean(this.isConnectorColorEmphasized));
     node.set('StartTime', new JsonString(this.startTime.toString()));
+    node.set('UseAccentOnProgressBar', new JsonBoolean(this.useAccentOnProgressBar));
+    node.set('ProgressBarMode', ModelCodec.intNode(this.progressBarMode));
     node.set('ShowProgress', new JsonBoolean(this.showProgress));
     node.set('IsProgressInverted', new JsonBoolean(this.isProgressInverted));
     node.set('CustomStringFormat', new JsonString(this.customStringFormat));
+    node.set('CountdownSource', ModelCodec.intNode(this.countdownSource));
+    node.set('CycleStartTime', new JsonString(this.cycleStartTime.toString()));
+    node.set('CycleBeforeDuration', new JsonString(this.cycleBeforeDuration.toString()));
+    node.set('CycleDuration', new JsonString(this.cycleDuration.toString()));
+    node.set('CycleAfterDuration', new JsonString(this.cycleAfterDuration.toString()));
+    node.set('IsCycleCountLimited', new JsonBoolean(this.isCycleCountLimited));
+    node.set('CycleCountLimit', ModelCodec.intNode(this.cycleCountLimit));
+    node.set('IsAdvancedCycleTimingEnabled', new JsonBoolean(this.isAdvancedCycleTimingEnabled));
+    node.set('NatureTimeUseMode', ModelCodec.intNode(this.natureTimeUseMode));
+    node.set('WeekCountdownStartDay', ModelCodec.intNode(this.weekCountdownStartDay));
+    node.set('IsCustomWeekCountdownStartDayEnabled',
+      new JsonBoolean(this.isCustomWeekCountdownStartDayEnabled));
   }
 }
 
