@@ -31,7 +31,7 @@
  * 都整体重建视图行，界面每次都拿最新的下标，不缓存。
  */
 
-import { ComponentProfile, ComponentSettings, MainWindowLineSettings } from 'common_shared';
+import { ComponentProfile, ComponentSettings, DateTimeValue, MainWindowLineSettings, Profile } from 'common_shared';
 import {
   COMPONENT_CLOCK,
   COMPONENT_COUNTDOWN,
@@ -47,16 +47,29 @@ import {
   ComponentCatalog,
   ComponentLayoutMutations,
   ComponentLocation,
-  ComponentPayload
+  ComponentPayload,
+  EngineSettings,
+  PanelBuilder,
+  PanelModel
 } from 'common_core';
 import {
   ComponentLayoutRepository,
   DEFAULT_PANEL_SCHEME,
   isValidPanelScheme
 } from '../data/ComponentLayoutRepository';
+import { ProfileRepository } from '../data/ProfileRepository';
+import { defaultEngineSettings } from '../common/AppSettings';
 
 /** 提示行显示多久（毫秒）。到点自动清空，避免旧提示一直挂着误导用户。 */
 const STATUS_TTL_MS: number = 4000;
+
+/**
+ * 预览开着实时时钟时的重算间隔（毫秒）。
+ *
+ * 一秒一次，与桌面版面板的时钟节奏一致。面板节点是几十量级，整份重算的成本可以
+ * 接受；真觉得卡，把这个数调大或干脆关掉实时开关。
+ */
+const CLOCK_TICK_MS: number = 1000;
 
 /**
  * 布局最多展平多少层。
@@ -168,17 +181,43 @@ export class ComponentLayoutViewModel {
   /** 载入时是否出了错。非空表示磁盘上那份读不出来，当前看到的是临时草稿。 */
   @Trace loadErrorText: string = '';
 
+  /**
+   * 预览的渲染模型。
+   *
+   * 由 core 的 PanelBuilder 算出来，ArkUI 侧不碰 JSON。改一次草稿就整份替换 ——
+   * 面板的节点是几十量级，比算清楚哪些节点变了更不容易出错（与 rebuild() 同理由）。
+   */
+  @Trace panelModel: PanelModel = new PanelModel();
+
+  /**
+   * 预览里的时钟要不要跟着走。
+   *
+   * 默认关着。开着就每秒重算一次整个面板：内容不变时 buildSignature 相同，
+   * 界面只刷新时钟那一格；一旦开着面板卡顿，先看这里。
+   */
+  @Trace liveClock: boolean = false;
+
   // ---------------------------------------------------------------- 内部
 
   private readonly repository: ComponentLayoutRepository;
+  private readonly profiles: ProfileRepository;
   private draft: ComponentProfile = ComponentProfile.defaultProfile();
   /** 基线：上次载入或保存时的序列化结果。 */
   private baseline: string = '';
   private statusTimer: number = -1;
   private loaded: boolean = false;
+  private clockTimer: number = -1;
+  /**
+   * 预览用的课表档案缓存。
+   *
+   * 不加 @Trace：预览的整体替换是 panelModel 一个字段的事，档案本身换了引用也不会
+   * 有人单独观察它。读盘的时机见 reloadProfileForPreview()。
+   */
+  private previewProfile: Profile | undefined = undefined;
 
-  constructor(repository: ComponentLayoutRepository) {
+  constructor(repository: ComponentLayoutRepository, profiles: ProfileRepository) {
     this.repository = repository;
+    this.profiles = profiles;
   }
 
   // ------------------------------------------------------------ 载入保存
@@ -618,6 +657,11 @@ export class ComponentLayoutViewModel {
    *
    * 一次改动之后所有下标都可能变（移进容器会把一串组件的 path 全变），所以
    * 不用增量更新 —— 组件数量是几十量级，重建比算清楚哪些变了更不容易出错。
+   *
+   * 预览也在这里重排，而不是塞进 settle()：load / save / discardChanges /
+   * duplicateScheme 这四条路是直接调 rebuild() 的（它们不走 settle，那套
+   * 「改完给个提示」的语义对它们不适用），漏掉一处就表现为「换了方案，预览还
+   * 停在旧方案上」。统一收在这里，少一个地方会忘。
    */
   private rebuild(): void {
     const lineRows: PanelLineRow[] = [];
@@ -643,6 +687,7 @@ export class ComponentLayoutViewModel {
     this.lines = lineRows;
     this.components = componentRows;
     this.isDirty = ComponentProfile.stringify(this.draft) !== this.baseline;
+    this.refreshPreview();
   }
 
   /**
@@ -689,8 +734,73 @@ export class ComponentLayoutViewModel {
     }, STATUS_TTL_MS);
   }
 
+  // ------------------------------------------------------------------ 预览
+
   /**
-   * 丢弃页面时清掉提示定时器。
+   * 按当前草稿重算预览模型。
+   *
+   * 走的是与桌面版同一条路：core 的 PanelBuilder 把布局算成节点树，界面只消费
+   * 结果。这里唯一需要自己拿的是「课表档案」与「引擎参数」。
+   *
+   * 档案读的是**磁盘上已保存**的那份，不看编辑页里没保存的草稿 —— 面板是另一个
+   * 文件、另一份草稿，两边的未保存状态刻意不互相污染（同 pages/Panel.ets 顶上
+   * 写的那条理由）。代价是：编辑页改了课表还没保存时，面板预览里看不到。
+   */
+  refreshPreview(): void {
+    const now: DateTimeValue = DateTimeValue.now();
+    const settings: EngineSettings = defaultEngineSettings(now);
+    this.panelModel = PanelBuilder.build(this.draft, this.previewProfile, settings, now);
+  }
+
+  /**
+   * 重读一次课表档案，再重排预览。
+   *
+   * 与 refreshPreview() 分开是因为读档案要解析整个 profile.json，而实时时钟每秒
+   * 都会 refreshPreview() 一次 —— 每秒解析一遍档案是白扔的 CPU。档案只会在编辑页
+   * 保存时变，所以重读交给「进面板页」这个时机（PanelPage.aboutToAppear）。
+   *
+   * 读失败不是面板的问题：预览照样能排（时间、日期、时钟都不依赖档案），只是课程表
+   * 与倒计时会显示占位文案。刻意不抛 —— 抛了整页预览就没了，而用户真正要改的是布局。
+   */
+  reloadProfileForPreview(): void {
+    let profile: Profile | undefined = undefined;
+    try {
+      if (this.profiles.exists()) {
+        const loaded: Profile = this.profiles.load();
+        // 与小组件同一个坑：load() 出来的那份派生状态是空的，要自己刷一遍
+        loaded.refreshDerivedState();
+        profile = loaded;
+      }
+    } catch (error) {
+      profile = undefined;
+    }
+    this.previewProfile = profile;
+    this.refreshPreview();
+  }
+
+  /**
+   * 预览里的时钟开关。
+   *
+   * 开：每秒重算一次整个面板。开着卡的话先关它看看是不是这里。
+   */
+  setLiveClock(enabled: boolean): void {
+    if (this.liveClock === enabled) {
+      return;
+    }
+    this.liveClock = enabled;
+    if (this.clockTimer >= 0) {
+      clearInterval(this.clockTimer);
+      this.clockTimer = -1;
+    }
+    if (enabled) {
+      this.clockTimer = setInterval(() => {
+        this.refreshPreview();
+      }, CLOCK_TICK_MS);
+    }
+  }
+
+  /**
+   * 丢弃页面时清掉提示定时器与时钟定时器。
    *
    * 不清的话定时器会一直挂着并持有 this，页面销毁后这个 ViewModel 仍被引用着。
    */
@@ -698,6 +808,10 @@ export class ComponentLayoutViewModel {
     if (this.statusTimer >= 0) {
       clearTimeout(this.statusTimer);
       this.statusTimer = -1;
+    }
+    if (this.clockTimer >= 0) {
+      clearInterval(this.clockTimer);
+      this.clockTimer = -1;
     }
   }
 }

@@ -34,6 +34,7 @@ import {
 } from '../../viewmodel/ComponentLayoutViewModel';
 import { ComponentSettingsPane } from './ComponentSettingsPane';
 import { ComponentLineView } from './ComponentTreeView';
+import { PanelPreview } from '../../panel/PanelPreview';
 
 /** 复制方案时推荐的名字。 */
 const COPY_SUFFIX: string = ' 副本';
@@ -47,6 +48,13 @@ export struct ComponentLayoutPane {
   @Local editing: PanelComponentRow | undefined = undefined;
   /** 方案列表是否展开。 */
   @Local switching: boolean = false;
+  /**
+   * 预览是否展开。
+   *
+   * 默认开着：排面板是看着效果调的过程，看不见效果就只能靠背组件的尺寸。多一屏
+   * 内容，编辑区本身是 Scroll，少了顶部几行而已。
+   */
+  @Local showPreview: boolean = true;
 
   // ------------------------------------------------------------ 方案切换
 
@@ -106,6 +114,47 @@ export struct ComponentLayoutPane {
   }
 
   // ---------------------------------------------------------------- 渲染
+
+  /**
+   * 预览。
+   *
+   * 模型由 vm 每次改动后重排，界面只画 vm.panelModel。预览的「实时时钟」开关
+   * 交给 vm.setLiveClock，因为它要在 ViewModel 里起/清定时器 —— 放在视图里起
+   * 定时器的话，aboutToDisappear 忘了清就会在页面销毁后继续每秒钟重建一次面板。
+   */
+  @Builder
+  private previewCard() {
+    EditorCard({
+      title: '预览',
+      hint: '按当前排法显示。课表用磁盘上已保存的那份，所以编辑页里改了课表还没保存时，这里看不到。'
+    })
+    Row() {
+      EditorChip({
+        text: this.showPreview ? '收起预览' : '展开预览',
+        tone: 1,
+        onTap: () => { this.showPreview = !this.showPreview; }
+      })
+      if (this.showPreview) {
+        EditorChip({
+          text: this.vm.liveClock ? '时钟：走' : '时钟：停',
+          onTap: () => { this.vm.setLiveClock(!this.vm.liveClock); }
+        })
+      }
+    }
+    .width('100%')
+    .alignItems(VerticalAlign.Center)
+
+    if (this.showPreview) {
+      Stack({ alignContent: Alignment.Start }) {
+        PanelPreview({ model: this.vm.panelModel })
+      }
+      .width('100%')
+      .backgroundColor($r('app.color.ch_surface'))
+      .borderRadius(10)
+      .border({ width: 1, color: $r('app.color.ch_outline') })
+      .margin({ top: 6 })
+    }
+  }
 
   @Builder
   private schemeCard() {
@@ -272,6 +321,8 @@ export struct ComponentLayoutPane {
             }
 
             this.schemeCard()
+
+            this.previewCard()
 
             if (this.vm.lines.length === 0) {
               EditorEmptyHint({ text: '还没有任何一行。先加一行，再往里加组件。' })

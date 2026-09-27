@@ -1,0 +1,116 @@
+/*
+ * Copyright (c) 2026 ClassyHarmony contributors
+ * SPDX-License-Identifier: GPL-3.0
+ *
+ * 面板预览。
+ *
+ * 只画 core 算好的 PanelModel
+ * --------------------------
+ * 行序、可见性、隐藏行计数、占位文案全在 PanelModel 里定好了，这里不判断。
+ * 唯一的输入就是 model，唯一的输出就是那几行 —— 预览与将来真正的面板页共用
+ * 这一个组件，免得两边各画一套、然后不一致。
+ *
+ * 为什么没有背景板
+ * ---------------
+ * 面板在桌面版是贴在桌面上的透明浮层，鸿蒙侧的信息面板也是。为了看清组件间的
+ * 间距，这里铺一层浅底与一圈描边；换成深色只是配色，不影响行为。
+ */
+
+import { PanelLine, PanelModel, PanelNode } from 'common_core';
+import { PanelNodeView } from './PanelNodeView';
+
+/**
+ * 行与行之间的纵向间距（vp）。
+ *
+ * 出处：桌面版 MainWindow.axaml 的行 ItemsPanel 是
+ * `<StackPanel Spacing="{Binding ViewModel.Settings.MainWindowLineVerticalMargin}"/>`，
+ * 而 Settings.cs 里 `_mainWindowLineVerticalMargin = 5`。
+ *
+ * 取的是桌面版**默认值**而不是用户值：这个值存在桌面版的 settings.json 里，
+ * 鸿蒙侧的 AppPreferences 还没有对应项（P6 只落了提醒提前量与面板方案名）。
+ * 照抄默认值至少视觉一致；等 P9 把 settings.json 的其余部分搬过来，这里换成
+ * 读用户配置。
+ */
+const LINE_GAP: number = 5;
+
+/**
+ * 面板外框的内边距（vp）。
+ *
+ * 桌面版没有这一层（浮层直接贴桌面），这里是预览框自己要的 —— 免得组件紧贴
+ * 描边，看不出间距。
+ */
+const PREVIEW_PADDING: number = 12;
+
+@ComponentV2
+export struct PanelPreview {
+  @Require @Param model: PanelModel = new PanelModel();
+
+  build() {
+    Column() {
+      if (this.model.isEmpty) {
+        this.emptyState()
+      } else {
+        Column({ space: LINE_GAP }) {
+          ForEach(this.model.lines, (line: PanelLine) => {
+            this.lineView(line)
+          }, (line: PanelLine) => `${line.lineIndex}`)
+        }
+        .width('100%')
+      }
+      if (this.model.hiddenLineCount > 0) {
+        // 隐藏的行不进模型，但要让用户知道「有一行被你关掉了」，否则他对着一个
+        // 比预期少一行的预览会以为改动没生效。
+        Text(`另有 ${this.model.hiddenLineCount} 行已隐藏，在上面的行列表里可以打开`)
+          .fontSize(12)
+          .fontColor($r('app.color.ch_text_hint'))
+          .margin({ top: LINE_GAP })
+      }
+    }
+    .width('100%')
+    .padding(PREVIEW_PADDING)
+  }
+
+  @Builder
+  private emptyState() {
+    Column() {
+      Text('这个方案还没有显示中的行')
+        .fontSize(14)
+        .fontColor($r('app.color.ch_text_secondary'))
+      Text('在上面加一行，面板就会有内容了')
+        .fontSize(12)
+        .fontColor($r('app.color.ch_text_hint'))
+        .margin({ top: 4 })
+    }
+    .width('100%')
+    .padding({ top: 24, bottom: 24 })
+  }
+
+  /**
+   * 一行。
+   *
+   * 行的背景色与圆角是「给整行铺底」用的；桌面版把那层底画在 MainWindowLine 的
+   * ContentClipBorder 上，比组件自己的背景更靠后，所以这里的行底包在组件外面。
+   * 行的 opacity 叠在最外层 —— 桌面版是把 Opacity 设在 MainWindowLine 这个
+   * 控件上，效果相同。
+   */
+  @Builder
+  private lineView(line: PanelLine) {
+    Stack({ alignContent: Alignment.Start }) {
+      Column() {
+        Row({ space: 6 }) {
+          ForEach(line.nodes, (node: PanelNode) => {
+            PanelNodeView({ node: node })
+          }, (node: PanelNode) => node.guid)
+        }
+        .alignItems(VerticalAlign.Center)
+        .width('100%')
+      }
+      .width('100%')
+    }
+    .width('100%')
+    .padding({ top: 2, bottom: 2 })
+    .backgroundColor(line.backgroundColor.length > 0 ? line.backgroundColor : Color.Transparent)
+    .borderRadius(line.cornerRadius)
+    .opacity(line.opacity)
+  }
+}

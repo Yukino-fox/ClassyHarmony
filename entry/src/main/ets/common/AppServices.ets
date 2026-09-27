@@ -142,10 +142,13 @@ export function resolveComponentLayoutViewModel(
   });
 
   panelInstance = new ComponentLayoutViewModel(
-    container.require<ComponentLayoutRepository>(ServiceKeys.PANEL_REPO)
+    container.require<ComponentLayoutRepository>(ServiceKeys.PANEL_REPO),
+    new ProfileRepository(context.filesDir)
   );
   // 方案名走 preferences，与 ReminderSettings 一样直接 new：preferences 按名字
   // 返回进程内同一份实例，不需要容器来保证唯一性。
+  // load() 内部会 rebuild() → refreshPreview()，所以这里出来就有预览模型，
+  // 不用等用户第一次改动。
   panelInstance.load(new AppPreferences(context).getString(PrefKeys.PANEL_SCHEME, ''));
   return panelInstance;
 }

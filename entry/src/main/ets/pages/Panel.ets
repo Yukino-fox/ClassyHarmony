@@ -47,6 +47,10 @@ struct PanelPage {
     const host: common.UIAbilityContext =
       this.getUIContext().getHostContext() as common.UIAbilityContext;
     this.vm = resolveComponentLayoutViewModel(host);
+    // ViewModel 是进程内单例，可能已经活过一整段会话。这里重读一次课表档案，让
+    // 预览跟上编辑页那边刚保存的内容 —— 之所以不在 ViewModel 构造时读，是因为
+    // 那时还没有「用户进过面板页」这回事，而每次进页面读一次就够了。
+    this.vm.reloadProfileForPreview();
   }
 
   onBackPress(): boolean {
