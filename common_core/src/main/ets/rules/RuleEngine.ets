@@ -97,6 +97,17 @@ export class RuleReason {
   static readonly NoRuleset: string = 'noRuleset';
   /** 组被停用，整组不参与。 */
   static readonly GroupDisabled: string = 'groupDisabled';
+  /**
+   * 被短路跳过，压根没轮到它判定。
+   *
+   * And 模式下前面有一条不成立、Or 模式下前面有一条成立时，剩下的组 / 规则
+   * 就不再算了（桌面版那个 `break` 一样）。它们的状态留 STATE_NONE 是对的，
+   * 但**原因不能留占位值** —— 占位值是 notChosen / groupEmpty，界面上会
+   * 翻译成「还没挑规则」「组里没有挑过规则」。用户明明挑好了规则、组里也
+   * 明明有东西，却被告知没配过 —— 这种话比不说更糟，它会把用户引去
+   * 重配一遍本来没错的东西。
+   */
+  static readonly ShortCircuited: string = 'shortCircuited';
 }
 
 /** 求值输入。 */
@@ -118,13 +129,22 @@ export class RuleContext {
 /** 单条规则的判定结果。 */
 export class RuleVerdict {
   state: number = STATE_NONE;
-  reason: string = RuleReason.NotChosen;
+  /**
+   * 占位原因。求值时会就地改掉。
+   *
+   * 初始化成 ShortCircuited 而不是 NotChosen：下面 evaluate 里先把整条轨迹的
+   * 形状铺好（这样被短路跳过的部分也留得住位置），没被真正判定过的那几项
+   * 就保持这个值。留 NotChosen 的话，短路跳过的那几条会被界面说成「还没挑
+   * 规则」。理由见 RuleReason.ShortCircuited。
+   */
+  reason: string = RuleReason.ShortCircuited;
 }
 
 /** 一组规则的判定结果。 */
 export class RuleGroupVerdict {
   state: number = STATE_NONE;
-  reason: string = RuleReason.GroupEmpty;
+  /** 占位原因，同 RuleVerdict.reason。 */
+  reason: string = RuleReason.ShortCircuited;
   /** 与原组内规则一一对应，含被短路跳过的那些（state 保持 STATE_NONE）。 */
   rules: RuleVerdict[] = [];
   /** 原组的 IsEnabled。界面用它显示「已停用」，避免与「未判定」混淆。 */

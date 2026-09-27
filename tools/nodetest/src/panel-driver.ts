@@ -54,7 +54,10 @@ import { TimeLayout } from '../../common_shared/src/main/ets/models/TimeLayout';
 import { TimeLayoutItem } from '../../common_shared/src/main/ets/models/TimeLayoutItem';
 import { TimeRule } from '../../common_shared/src/main/ets/models/TimeRule';
 import { TimeSpanValue } from '../../common_shared/src/main/ets/json/TimeSpanValue';
+import { TimeState } from '../../common_shared/src/main/ets/enums/TimeState';
 import { EngineSettings } from '../../common_core/src/main/ets/engine/EngineSettings';
+import { LessonsEngine } from '../../common_core/src/main/ets/engine/LessonsEngine';
+import { RuleContext } from '../../common_core/src/main/ets/rules/RuleEngine';
 import {
   COMPONENT_CLOCK,
   COMPONENT_COUNTDOWN,
@@ -75,6 +78,14 @@ import {
   PanelNodeKind,
   PanelModel
 } from '../../common_core/src/main/ets/panel/PanelModel';
+import {
+  Rule,
+  RuleGroup,
+  RuleIds,
+  Ruleset,
+  RulesetLogicalMode,
+  TimeStateRuleSettings
+} from '../../common_shared/src/main/ets/models/Ruleset';
 
 let passed: number = 0;
 const failures: string[] = [];
@@ -258,6 +269,337 @@ function build(layout: ComponentProfile, at: string, profile?: Profile): PanelMo
 /** 第 0 行第 0 个节点。 */
 function node0(model: PanelModel): PanelNode {
   return model.lines[0].nodes[0];
+}
+
+// ------------------------------------------------------------- 隐藏规则夹具
+
+/**
+ * 造一个「时间状态」隐藏规则集。
+ *
+ * 这是唯一一条在当前平台既Implemented 又不依赖任何外部数据的规则（课表快照
+ * 里就有），所以面板侧的隐藏判定全部用它。
+ */
+function timeStateRuleset(state: TimeState, mode?: RulesetLogicalMode): JsonObject {
+  const settings: TimeStateRuleSettings = new TimeStateRuleSettings();
+  settings.state = state;
+  const ruleset: Ruleset = new Ruleset();
+  ruleset.mode = mode === undefined ? RulesetLogicalMode.Or : mode;
+  const group: RuleGroup = new RuleGroup();
+  group.mode = RulesetLogicalMode.Or;
+  const rule: Rule = new Rule();
+  rule.id = RuleIds.LESSONS_TIME_STATE;
+  rule.settings = settings.toJson();
+  group.rules.push(rule);
+  ruleset.groups.push(group);
+  return ruleset.toJson();
+}
+
+/**
+ * 造一个容器。
+ *
+ * 容器的子组件存在 settings.Children 里（裸 JSON），走 withSettings 那条通用
+ * 通道会把它当成未知字段，所以这里直接拼 JsonNode。
+ */
+function groupOf(children: ComponentSettings[]): ComponentSettings {
+  const settings: JsonObject = new JsonObject();
+  const arr: JsonArray = new JsonArray();
+  for (const child of children) {
+    arr.push(child.toJson());
+  }
+  settings.set('Children', arr);
+  const out: ComponentSettings = component(COMPONENT_GROUP);
+  out.settings = settings;
+  return out;
+}
+
+/** 给组件挂上隐藏规则。 */
+function withRule(node: ComponentSettings, hideOnRule: boolean, rules?: JsonObject): ComponentSettings {
+  node.hideOnRule = hideOnRule;
+  if (rules !== undefined) {
+    node.hidingRules = rules;
+  }
+  return node;
+}
+
+/** 给行挂上隐藏规则。 */
+function lineWithRule(children: ComponentSettings[], hideOnRule: boolean,
+  rules?: JsonObject): MainWindowLineSettings {
+  const out: MainWindowLineSettings = line(children);
+  out.hideOnRule = hideOnRule;
+  if (rules !== undefined) {
+    out.hidingRules = rules;
+  }
+  return out;
+}
+
+/** 08:30 正在上第一节课（语文），BASE_DAY 是周六，档案里排满课。 */
+const ON_CLASS_AT: string = `${BASE_DAY}T08:30:00`;
+
+/** 12:00 今天没课了（末节课 10:45 结束），状态是已放学。 */
+const AFTER_SCHOOL_AT: string = `${BASE_DAY}T12:00:00`;
+
+// ------------------------------------------------------------ 隐藏规则判定
+
+function testRuleNeedsBothSwitchAndRules(): void {
+  // 桌面版是 `HideOnRule && HidingRules != null && IsRulesetSatisfied(HidingRules)`，
+  // 三个条件缺一不可。这里分别去掉前两个。
+  const rules: JsonObject = timeStateRuleset(TimeState.OnClass);
+
+  const noSwitch: PanelModel = build(
+    layoutOf([line([withRule(component(COMPONENT_DATE), false, rules)])]), ON_CLASS_AT);
+  check('配了规则但没开开关 → 不藏', !node0(noSwitch).isRuleHidden);
+
+  const noRules: PanelModel = build(
+    layoutOf([line([withRule(component(COMPONENT_DATE), true)])]), ON_CLASS_AT);
+  check('开了开关但没配规则 → 不藏', !node0(noRules).isRuleHidden);
+
+  const both: PanelModel = build(
+    layoutOf([line([withRule(component(COMPONENT_DATE), true, rules)])]), ON_CLASS_AT);
+  check('开关与规则都在且成立 → 藏', node0(both).isRuleHidden);
+}
+
+function testRuleHiddenStillRendersContent(): void {
+  // 桌面版只是把 IsVisibleInternal 置 false，presenter 里该算的照算（换算时刻、
+  // 筛课表都要跑），所以内容必须还在树上 —— 界面上编辑页要靠这些内容画那份
+  // 淡化的「被藏起来」的样子。
+  const rules: JsonObject = timeStateRuleset(TimeState.OnClass);
+  const model: PanelModel = build(layoutOf([line([withSettings(COMPONENT_TEXT, {
+    TextContent: '期中'
+  })])]), ON_CLASS_AT);
+  const node: PanelNode = node0(model);
+  checkEqual('未命中时文本照常算', node.primaryText, '期中');
+
+  const hidden: PanelModel = build(layoutOf([line([withRule(withSettings(COMPONENT_TEXT, {
+    TextContent: '期中'
+  }), true, rules)])]), ON_CLASS_AT);
+  check('命中时节点仍在树上', hidden.lines[0].nodes.length === 1);
+  checkEqual('命中时内容照样算出来', hidden.lines[0].nodes[0].primaryText, '期中');
+  check('命中标志打上了', hidden.lines[0].nodes[0].isRuleHidden);
+}
+
+function testRuleNotMatchedAtOtherTime(): void {
+  // 同一份规则在放学后不成立。这条最容易写错成「只要有规则就藏」。
+  const rules: JsonObject = timeStateRuleset(TimeState.OnClass);
+  const model: PanelModel = build(
+    layoutOf([line([withRule(component(COMPONENT_DATE), true, rules)])]), AFTER_SCHOOL_AT);
+  check('规则不成立 → 不藏', !node0(model).isRuleHidden);
+}
+
+function testLineRuleHidden(): void {
+  const rules: JsonObject = timeStateRuleset(TimeState.OnClass);
+  const hidden: PanelModel = build(
+    layoutOf([lineWithRule([component(COMPONENT_DATE)], true, rules)]), ON_CLASS_AT);
+  checkNum('被规则藏的行数', hidden.ruleHiddenLineCount, 1);
+  checkNum('被规则藏的行不算「用户关掉的」', hidden.hiddenLineCount, 0);
+  // 关键：行仍然在模型里。桌面版编辑模式下这一行照常占位（只淡化），
+  // 真面板由 PanelNodeView 按 inEditMode 决定画不画 —— core 不替界面决定。
+  checkNum('被规则藏的行仍在模型里', hidden.lines.length, 1);
+  check('行的命中标志打上了', hidden.lines[0].isRuleHidden);
+
+  const miss: PanelModel = build(
+    layoutOf([lineWithRule([component(COMPONENT_DATE)], true, rules)]), AFTER_SCHOOL_AT);
+  checkNum('规则不成立时不算被藏的行', miss.ruleHiddenLineCount, 0);
+  check('规则不成立时行不标记', !miss.lines[0].isRuleHidden);
+}
+
+function testLineRuleIndependentOfChildren(): void {
+  // 桌面版 MainWindowLine.UpdateHiddenState 里
+  // `Settings.IsVisible = IsVisibleInternal` —— 只看自己的规则，不与子节点做
+  // 与运算。所以一行里所有组件都被藏了之后，这一行仍然不是「被规则藏的行」。
+  const rules: JsonObject = timeStateRuleset(TimeState.OnClass);
+  const model: PanelModel = build(layoutOf([
+    line([withRule(component(COMPONENT_DATE), true, rules),
+      withRule(component(COMPONENT_CLOCK), true, rules)])
+  ]), ON_CLASS_AT);
+  checkNum('两个子组件都被藏', model.lines[0].nodes.filter(
+    (n: PanelNode) => n.isRuleHidden).length, 2);
+  check('行本身不算被规则藏', !model.lines[0].isRuleHidden);
+  checkNum('被藏的行数仍是 0', model.ruleHiddenLineCount, 0);
+}
+
+function testExplicitlyHiddenLineSkipsRuleCheck(): void {
+  // IsVisible=false 的行在算规则之前就被跳过了（PanelBuilder.build 里 continue），
+  // 所以它只进 hiddenLineCount，不会同时进 ruleHiddenLineCount —— 一个行被算
+  // 两次会让「另有 N 行已隐藏」这句话里的 N 大于用户实际关掉的行数。
+  const rules: JsonObject = timeStateRuleset(TimeState.OnClass);
+  const hidden: MainWindowLineSettings = lineWithRule([component(COMPONENT_DATE)], true, rules);
+  hidden.isVisible = false;
+  const model: PanelModel = build(layoutOf([hidden]), ON_CLASS_AT);
+  checkNum('显式隐藏的行进 hiddenLineCount', model.hiddenLineCount, 1);
+  checkNum('显式隐藏的行不进 ruleHiddenLineCount', model.ruleHiddenLineCount, 0);
+  checkNum('模型里没有这一行', model.lines.length, 0);
+  check('空模型', model.isEmpty);
+}
+
+function testAllChildrenHiddenPropagates(): void {
+  // 递归口径：子节点的「有效可见」= 自身没被藏 **且** 子节点不全空。
+  // 对应桌面版 _isAllComponentsHid + `IsVisible = IsVisibleInternal && !_isAllComponentsHid`。
+  const rules: JsonObject = timeStateRuleset(TimeState.OnClass);
+  const hiddenChild: ComponentSettings = withRule(component(COMPONENT_DATE), true, rules);
+
+  // 1. 组里只有一个被藏的子组件 → 组的 allChildrenHidden 为真，但组自己不算被藏。
+  const onlyHidden: PanelModel = build(layoutOf([line([groupOf([hiddenChild])])]), ON_CLASS_AT);
+  const groupNode: PanelNode = onlyHidden.lines[0].nodes[0];
+  check('单个被藏子组件 → 组的 allChildrenHidden', groupNode.allChildrenHidden);
+  check('组自己不算被规则藏', !groupNode.isRuleHidden);
+
+  // 2. 组里有一个可见子组件 → 不算全藏。
+  const mixed: PanelModel = build(layoutOf([line([
+    groupOf([hiddenChild, component(COMPONENT_CLOCK)])])]), ON_CLASS_AT);
+  check('有可见子组件 → 不算全藏', !mixed.lines[0].nodes[0].allChildrenHidden);
+
+  // 3. 空容器：桌面版 `Children.FirstOrDefault(x => x.IsVisible) == null` 对空列表
+  //    同样成立，所以空容器算「全藏」—— 它还显示着靠的是自己的 IsVisibleInternal。
+  const empty: PanelModel = build(layoutOf([line([groupOf([])])]), ON_CLASS_AT);
+  check('空容器算全藏', empty.lines[0].nodes[0].allChildrenHidden);
+  check('空容器不算被规则藏', !empty.lines[0].nodes[0].isRuleHidden);
+}
+
+function testAllChildrenHiddenRecurses(): void {
+  // 两层嵌套：内层的子组件全被藏 → 内层 allChildrenHidden；外层只有一个内层，
+  // 照同一口径也全藏。一层就停的话，外层会以为自己还有可见内容。
+  const rules: JsonObject = timeStateRuleset(TimeState.OnClass);
+  const inner: ComponentSettings = groupOf([withRule(component(COMPONENT_DATE), true, rules)]);
+  const outer: ComponentSettings = groupOf([inner]);
+  const model: PanelModel = build(layoutOf([line([outer])]), ON_CLASS_AT);
+  const outerNode: PanelNode = model.lines[0].nodes[0];
+  check('外层 allChildrenHidden', outerNode.allChildrenHidden);
+  check('内层 allChildrenHidden', outerNode.children[0].allChildrenHidden);
+  check('内层的子组件被藏', outerNode.children[0].children[0].isRuleHidden);
+  check('外层与内层都不算自身被藏', !outerNode.isRuleHidden && !outerNode.children[0].isRuleHidden);
+}
+
+function testAllChildrenHiddenStopsAtOwnHit(): void {
+  // 节点自身被藏了，allChildrenHidden 就无所谓了：桌面版是
+  // `IsVisibleInternal && !_isAllComponentsHid`，自身已经假了与运算的结果不会翻过来。
+  // 这里让被藏的组里放一个可见子组件：allChildrenHidden 应为假。
+  const rules: JsonObject = timeStateRuleset(TimeState.OnClass);
+  const group: ComponentSettings = groupOf([component(COMPONENT_CLOCK)]);
+  withRule(group, true, rules);
+  const model: PanelModel = build(layoutOf([line([group])]), ON_CLASS_AT);
+  const node: PanelNode = model.lines[0].nodes[0];
+  check('自身被藏的组 isRuleHidden', node.isRuleHidden);
+  check('自身被藏但子节点可见 → allChildrenHidden 为假', !node.allChildrenHidden);
+}
+
+function testRuleHiddenSharesOneContext(): void {
+  // 整块面板只算一次 RuleContext。同一时刻两个组件用同一份课表状态，一个该藏
+  // 一个不该藏 —— 如果按节点各算一次，这两份状态可能因为跨过某一刻而不一致。
+  const onClass: JsonObject = timeStateRuleset(TimeState.OnClass);
+  const afterSchool: JsonObject = timeStateRuleset(TimeState.AfterSchool);
+  const model: PanelModel = build(layoutOf([line([
+    withRule(component(COMPONENT_DATE), true, onClass),
+    withRule(component(COMPONENT_CLOCK), true, afterSchool)
+  ])]), ON_CLASS_AT);
+  check('上课中：命中「上课中」的那个', model.lines[0].nodes[0].isRuleHidden);
+  check('上课中：不命中「已放学」的那个', !model.lines[0].nodes[1].isRuleHidden);
+
+  const later: PanelModel = build(layoutOf([line([
+    withRule(component(COMPONENT_DATE), true, onClass),
+    withRule(component(COMPONENT_CLOCK), true, afterSchool)
+  ])]), AFTER_SCHOOL_AT);
+  check('放学后：反过来', !later.lines[0].nodes[0].isRuleHidden
+    && later.lines[0].nodes[1].isRuleHidden);
+}
+
+function testRuleHiddenInSignature(): void {
+  // 隐藏状态必须进指纹。文本组件的内容一个字都不会变，课表状态一变被藏的
+  // 组件就换人 —— 不进指纹的话面板不重绘，藏起来的那个要等下一次别处变化才消失。
+  const onClass: JsonObject = timeStateRuleset(TimeState.OnClass);
+  const afterSchool: JsonObject = timeStateRuleset(TimeState.AfterSchool);
+  // 两个一模一样的文本组件各挂一条不同的规则，内容不变，只有隐藏状态会变。
+  const layout: ComponentProfile = layoutOf([line([
+    withRule(withSettings(COMPONENT_TEXT, { TextContent: '期中' }), true, onClass),
+    withRule(withSettings(COMPONENT_TEXT, { TextContent: '期末' }), true, afterSchool)
+  ])]);
+  const a: PanelModel = build(layout, ON_CLASS_AT);
+  const b: PanelModel = build(layout, AFTER_SCHOOL_AT);
+  check('隐藏状态翻转时签名要变', a.buildSignature() !== b.buildSignature());
+  check('节点自身翻转也要变',
+    PanelBuilder.signatureOf(a.lines[0].nodes)
+    !== PanelBuilder.signatureOf(b.lines[0].nodes));
+
+  // 只有 allChildrenHidden 变（节点自身都没被藏）时也要变。
+  const inner: ComponentSettings = groupOf([withRule(component(COMPONENT_DATE), true, onClass)]);
+  const outer: ComponentSettings = groupOf([inner, component(COMPONENT_CLOCK)]);
+  const layout2: ComponentProfile = layoutOf([line([outer])]);
+  const a2: PanelModel = build(layout2, ON_CLASS_AT);
+  const b2: PanelModel = build(layout2, AFTER_SCHOOL_AT);
+  check('allChildrenHidden 变时节点签名要变',
+    PanelBuilder.signatureOf(a2.lines[0].nodes)
+    !== PanelBuilder.signatureOf(b2.lines[0].nodes));
+  check('allChildrenHidden 变时整模签名要变',
+    a2.buildSignature() !== b2.buildSignature());
+}
+
+function testRuleReversedIsHonored(): void {
+  // 组件上把整条规则集取反：上课时不藏、放学时藏。这条与求值器无关，
+  // 但它确认 PanelBuilder 走的是 RuleEngine 而不是自己判。
+  const rules: JsonObject = timeStateRuleset(TimeState.OnClass);
+  const reversed: Ruleset = Ruleset.parse(rules);
+  reversed.isReversed = true;
+  const layout: ComponentProfile = layoutOf([
+    line([withRule(component(COMPONENT_DATE), true, reversed.toJson())])]);
+  check('取反后上课时不藏', !node0(build(layout, ON_CLASS_AT)).isRuleHidden);
+  check('取反后放学时藏', node0(build(layout, AFTER_SCHOOL_AT)).isRuleHidden);
+}
+
+function testRuleCountingWithMixedLines(): void {
+  // 三个行：可见、显式关掉、被规则藏。三个计数各自独立。
+  const rules: JsonObject = timeStateRuleset(TimeState.OnClass);
+  const manual: MainWindowLineSettings = line([component(COMPONENT_DATE)]);
+  manual.isVisible = false;
+  const model: PanelModel = build(layoutOf([
+    line([component(COMPONENT_DATE)]),
+    manual,
+    lineWithRule([component(COMPONENT_CLOCK)], true, rules)
+  ]), ON_CLASS_AT);
+  checkNum('可见行进了模型', model.lines.length, 2);
+  checkNum('显式关掉的行数', model.hiddenLineCount, 1);
+  checkNum('被规则藏的行数', model.ruleHiddenLineCount, 1);
+  check('不空', !model.isEmpty);
+}
+
+function testRuleWithoutProfile(): void {
+  // 编辑预览时可能还没选课表（profile 是 undefined）。没有课表状态时课表类规则
+  // 判不成立，别的规则照常求值 —— 不能因为没有档案就把整棵树的规则判定
+  // 变成「全部不藏」，那会让预览里看不到任何一条被藏起来的组件。
+  const rules: JsonObject = timeStateRuleset(TimeState.OnClass);
+  const model: PanelModel = PanelBuilder.build(
+    layoutOf([line([withRule(component(COMPONENT_DATE), true, rules)])]),
+    undefined, engineSettings(), dt(ON_CLASS_AT));
+  check('没有课表时课表类规则不成立', !node0(model).isRuleHidden);
+  check('没有课表时仍能算隐藏状态（不崩）', model.lines.length === 1);
+
+  // 恒假的那几条（窗口类）没档案也一样不成立，不该反过来成立。
+  const window: JsonObject = timeStateRuleset(TimeState.OnClass);
+  const model2: PanelModel = PanelBuilder.build(
+    layoutOf([line([withRule(component(COMPONENT_DATE), true, window)])]),
+    undefined, engineSettings(), dt(ON_CLASS_AT));
+  check('没档案也不会误判成立', !node0(model2).isRuleHidden);
+}
+
+function testIsRuleHiddenDirectly(): void {
+  // PanelBuilder.isRuleHidden 是行与组件共用的那个函数，公开出来就是为了界面上
+  // 的编辑器与测试能问同一个问题。这里直接测它的三个早退。
+  const context: RuleContext = new RuleContext();
+  context.now = dt(ON_CLASS_AT);
+  context.profile = fullWeekProfile();
+  context.snapshot = LessonsEngine.compute(context.profile, engineSettings(), context.now);
+  const rules: JsonObject = timeStateRuleset(TimeState.OnClass);
+  check('开关关 → 假', !PanelBuilder.isRuleHidden(false, rules, context));
+  check('没规则 → 假', !PanelBuilder.isRuleHidden(true, undefined, context));
+  check('开关与规则都在且成立 → 真', PanelBuilder.isRuleHidden(true, rules, context));
+
+  // 换一份时刻不同的上下文，同一份规则的结论要跟着变。函数里如果藏了个静态
+  // 缓存的快照，这里会返回上一次那个时刻的结论。
+  const later: RuleContext = new RuleContext();
+  later.now = dt(AFTER_SCHOOL_AT);
+  later.profile = fullWeekProfile();
+  later.snapshot = LessonsEngine.compute(later.profile, engineSettings(), later.now);
+  check('换时刻后同一份规则不成立', !PanelBuilder.isRuleHidden(true, rules, later));
+  check('早退不依赖上下文', !PanelBuilder.isRuleHidden(false, rules, later)
+    && !PanelBuilder.isRuleHidden(true, undefined, later));
 }
 
 // --------------------------------------------------------- A. 倒计时格式串
@@ -1299,6 +1641,21 @@ testSettingsPreservedInPayload();
 testDefaultProfileRenders();
 testDisplayNameFallback();
 testCatalogStillRegistersAll();
+testRuleNeedsBothSwitchAndRules();
+testRuleHiddenStillRendersContent();
+testRuleNotMatchedAtOtherTime();
+testLineRuleHidden();
+testLineRuleIndependentOfChildren();
+testExplicitlyHiddenLineSkipsRuleCheck();
+testAllChildrenHiddenPropagates();
+testAllChildrenHiddenRecurses();
+testAllChildrenHiddenStopsAtOwnHit();
+testRuleHiddenSharesOneContext();
+testRuleHiddenInSignature();
+testRuleReversedIsHonored();
+testRuleCountingWithMixedLines();
+testRuleWithoutProfile();
+testIsRuleHiddenDirectly();
 
 console.log(`面板渲染 通过 ${passed} 项，失败 ${failures.length} 项`);
 if (failures.length > 0) {

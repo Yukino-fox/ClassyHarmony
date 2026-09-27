@@ -17,6 +17,7 @@
  */
 
 import { PanelLine, PanelModel, PanelNode } from 'common_core';
+import { HIDDEN_DIM_OPACITY, panelHiddenMark } from './HiddenMark';
 import { PanelNodeView } from './PanelNodeView';
 
 /**
@@ -45,6 +46,18 @@ const PREVIEW_PADDING: number = 12;
 export struct PanelPreview {
   @Require @Param model: PanelModel = new PanelModel();
 
+  /**
+   * 编辑模式。
+   *
+   * 开着时，被隐藏规则藏掉的行与组件照常占位，只是淡化 + 45° 斜纹。照抄桌面版
+   * 编辑模式下的行为（`IsVisible = IsVisibleInternal || InEditMode`）。
+   *
+   * 默认关着：这个组件将来会被真正的面板页复用，那边要的是「藏了就消失」。
+   * 编辑页自己显式传 true，别把默认值改成 true —— 忘了传就等于真面板把藏起来的
+   * 内容也画出来，那是最不该犯的错。
+   */
+  @Param inEditMode: boolean = false;
+
   build() {
     Column() {
       if (this.model.isEmpty) {
@@ -61,6 +74,14 @@ export struct PanelPreview {
         // 隐藏的行不进模型，但要让用户知道「有一行被你关掉了」，否则他对着一个
         // 比预期少一行的预览会以为改动没生效。
         Text(`另有 ${this.model.hiddenLineCount} 行已隐藏，在上面的行列表里可以打开`)
+          .fontSize(12)
+          .fontColor($r('app.color.ch_text_hint'))
+          .margin({ top: LINE_GAP })
+      }
+      if (this.model.ruleHiddenLineCount > 0) {
+        // 规则藏的行与用户自己关掉的行不是一回事：前者改规则就能恢复，位置也
+        // 还在预览里（编辑模式）。混成一句话会让用户跑去行列表里找开关。
+        Text(`另有 ${this.model.ruleHiddenLineCount} 行被规则藏起来了（斜纹标记）`)
           .fontSize(12)
           .fontColor($r('app.color.ch_text_hint'))
           .margin({ top: LINE_GAP })
@@ -95,22 +116,37 @@ export struct PanelPreview {
    */
   @Builder
   private lineView(line: PanelLine) {
+    if (line.isRuleHidden && !this.inEditMode) {
+      // 真面板：整行不画。桌面版的 MainWindowLine 同样是 IsVisible=false
+      // 被摘出布局。
+      Column() {}
+    } else {
+      this.lineShell(line)
+    }
+  }
+
+  @Builder
+  private lineShell(line: PanelLine) {
     Stack({ alignContent: Alignment.Start }) {
       Column() {
         Row({ space: 6 }) {
           ForEach(line.nodes, (node: PanelNode) => {
-            PanelNodeView({ node: node })
+            PanelNodeView({ node: node, inEditMode: this.inEditMode })
           }, (node: PanelNode) => node.guid)
         }
         .alignItems(VerticalAlign.Center)
         .width('100%')
       }
       .width('100%')
+      if (line.isRuleHidden) {
+        panelHiddenMark()
+      }
     }
     .width('100%')
     .padding({ top: 2, bottom: 2 })
     .backgroundColor(line.backgroundColor.length > 0 ? line.backgroundColor : Color.Transparent)
     .borderRadius(line.cornerRadius)
-    .opacity(line.opacity)
+    .clip(true)
+    .opacity(line.isRuleHidden ? line.opacity * HIDDEN_DIM_OPACITY : line.opacity)
   }
 }

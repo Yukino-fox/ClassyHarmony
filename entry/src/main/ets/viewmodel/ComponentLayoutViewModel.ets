@@ -31,7 +31,17 @@
  * 都整体重建视图行，界面每次都拿最新的下标，不缓存。
  */
 
-import { ComponentProfile, ComponentSettings, DateTimeValue, MainWindowLineSettings, Profile } from 'common_shared';
+import {
+  ComponentProfile,
+  ComponentSettings,
+  DateTimeValue,
+  JsonNode,
+  MainWindowLineSettings,
+  Profile,
+  Ruleset,
+  Subject,
+  RulesetLogicalMode
+} from 'common_shared';
 import {
   COMPONENT_CLOCK,
   COMPONENT_COUNTDOWN,
@@ -49,8 +59,17 @@ import {
   ComponentLocation,
   ComponentPayload,
   EngineSettings,
+  LessonsEngine,
+  LessonsSnapshot,
   PanelBuilder,
-  PanelModel
+  PanelModel,
+  PanelNode,
+  RuleChoiceRow,
+  RuleContext,
+  RuleSupport,
+  RulesetEditModel,
+  RulesetEditor,
+  RulesetMutations
 } from 'common_core';
 import {
   ComponentLayoutRepository,
@@ -115,6 +134,10 @@ export class PanelLineRow {
   lineIndex: number = 0;
   /** 行是否可见。落在 MainWindowLineSettings.IsVisible 上。 */
   isVisible: boolean = true;
+  /** 是否开了「按规则隐藏」。 */
+  hideOnRule: boolean = false;
+  /** 规则当下成立，也就是这一行现在会被藏掉。 */
+  isRuleHidden: boolean = false;
   /** 这一行有几个直接子组件。 */
   childCount: number = 0;
   /** 这一行有几个已注册的组件。未注册的单独计数，用于提示用户。 */
@@ -133,8 +156,15 @@ export class PanelComponentRow {
   isKnown: boolean = false;
   /** 是否是容器。容器才能往里加组件。 */
   isContainer: boolean = false;
-  /** 是否开了「按规则隐藏」。规则判定在 P8，这里只透出这个开关本身。 */
+  /**
+   * 是否开了「按规则隐藏」。
+   *
+   * 这条是「隐藏规则成立」而不是「开关开着」——两者不同：开关开着但规则当下
+   * 不成立时组件照常显示，界面上标成「正在被规则管着」比标成「已隐藏」准确。
+   */
   hideOnRule: boolean = false;
+  /** 规则当下成立，也就是这块内容现在会被藏掉。 */
+  isRuleHidden: boolean = false;
   /** 缩进层数：0 是行的直接子组件。 */
   depth: number = 0;
   /** 同一层里是第几个。界面据此决定「前移/后移」该不该可点。 */
@@ -148,6 +178,39 @@ export class PanelComponentRow {
    * 「这里有东西但太深了」更糟。
    */
   isTruncated: boolean = false;
+}
+
+/**
+ * 「科目是」这条规则的一个候选。
+ *
+ * 放这里而不是 RulesetEditModel：那是规则编辑的行数据（规则集、组、规则），
+ * 这一条是档案里的东西 —— 取自档案的科目表，不属于规则结构。
+ */
+export class RuleSubjectChoice {
+  guid: string = '';
+  name: string = '';
+}
+
+/**
+ * 隐藏规则的宿主快照。
+ *
+ * 「按规则隐藏」这一对字段（HideOnRule / HidingRules）在桌面版挂在两个类上：
+ * ComponentSettings 与 MainWindowLineSettings，字段名与语义一模一样。桌面版为
+ * 两者各写一套 UI 后共用同一个 RulesetControl，所以这边也不把「改规则」绑死在
+ * 某一类宿主上，而是先把这两个字段摘出来成一��快照，改完再按宿主类型写回去。
+ *
+ * 快照而不是引用：写回时组件可能已经被移走（同一帧里的另一次改动），
+ * 拿着引用写会写到一个已经不属于布局的数组元素上。exists 标记就是给这种情况的 ——
+ * 写不回时整次改动丢弃，界面上自然回到与布局一致的状态。
+ *
+ * 不加 @Trace：它是纯中转，界面从不观察它。改动的可见效果由 draft 经 settle()
+ * 整体重建行数组带出来。
+ */
+class RuleHost {
+  hideOnRule: boolean = false;
+  hidingRules: JsonNode | undefined = undefined;
+  /** 宿主还在不在。false 时这次改动要整个丢弃。 */
+  exists: boolean = false;
 }
 
 @ObservedV2
@@ -598,19 +661,271 @@ export class ComponentLayoutViewModel {
     return true;
   }
 
-  /** 改一个组件的「按规则隐藏」开关。 */
+  // ------------------------------------------------------------ 隐藏规则
+
+  /**
+   * 某个组件的规则编辑态。
+   *
+   * 每次现解不缓存：草稿上的 hidingRules 只有这一处真源（见 mutateRules），
+   * 缓存一份就得多一套失效逻辑，而规则集是几十字节量级，解一次的成本可以忽略。
+   */
+  ruleModelFor(location: ComponentLocation): RulesetEditModel {
+    return this.ruleModel(this.snapshotHost(location, false));
+  }
+
+  /** 某一行的规则编辑态。行的 HideOnRule / HidingRules 与组件同名同义。 */
+  lineRuleModel(lineIndex: number): RulesetEditModel {
+    return this.ruleModel(this.snapshotHost(ComponentLocation.of(lineIndex, []), true));
+  }
+
+  /** 规则选择器的 13 个选项（外加「还没挑」）。 */
+  ruleChoices(): RuleChoiceRow[] {
+    return RulesetEditor.choices();
+  }
+
+  /**
+   * 「科目是」这条规则的候选科目。
+   *
+   * 取自预览用的那份档案，与 ruleContext() 是同一份 —— 换了档案、课表改了，
+   * 编辑器里的科目列表与规则判定看到的就对不上了，而这种「规则用旧课表判」
+   * 的错从界面上完全看不出来。
+   *
+   * 按名称排。档案里科目的存放顺序是 KeyedMap 的插入序，是用户历次改动的
+   * 副产品，与「语文数学英语」这种习惯顺序没有半点关系，而一个每次打开顺序
+   * 都不一样的下拉会被当成列表在乱跳。
+   *
+   * 没有档案时给空数组：界面上只显示「还没选课表」，不崩。
+   */
+  subjectChoices(): RuleSubjectChoice[] {
+    const out: RuleSubjectChoice[] = [];
+    if (this.previewProfile === undefined) {
+      return out;
+    }
+    this.previewProfile.subjects.forEach((subject: Subject, guid: string) => {
+      const row: RuleSubjectChoice = new RuleSubjectChoice();
+      row.guid = guid;
+      row.name = subject.name;
+      out.push(row);
+    });
+    out.sort((a: RuleSubjectChoice, b: RuleSubjectChoice) => {
+      const byName: number = a.name.localeCompare(b.name);
+      return byName !== 0 ? byName : (a.guid < b.guid ? -1 : 1);
+    });
+    return out;
+  }
+
+  /**
+   * 改一个组件的「按规则隐藏」开关。
+   *
+   * 关掉时把规则集本身也清掉。留着的话用户下次打开这个开关会看到一条
+   * 自己从没设过的规则，以为是别人改的。
+   */
   setHideOnRule(location: ComponentLocation, value: boolean): void {
+    const host: RuleHost = this.snapshotHost(location, false);
+    if (!host.exists) {
+      return;
+    }
+    host.hideOnRule = value;
+    if (!value) {
+      host.hidingRules = undefined;
+    }
+    this.writeHost(host, location, false);
+    this.settle(value ? '已打开按规则隐藏' : '已取消按规则隐藏');
+  }
+
+  /** 改一行的「按规则隐藏」开关。 */
+  setLineHideOnRule(lineIndex: number, value: boolean): void {
+    const host: RuleHost = this.snapshotHost(ComponentLocation.of(lineIndex, []), true);
+    if (!host.exists) {
+      return;
+    }
+    host.hideOnRule = value;
+    if (!value) {
+      host.hidingRules = undefined;
+    }
+    this.writeHost(host, ComponentLocation.of(lineIndex, []), true);
+    this.settle(value ? `第 ${lineIndex + 1} 行已打开按规则隐藏` : `第 ${lineIndex + 1} 行已取消`);
+  }
+
+  /**
+   * 对某个宿主的规则集做一次改动。
+   *
+   * 「读出来 → 改 → 写回去」三步合成一个调用，中间的 Ruleset 对象不外泄。
+   * 这么做的理由是规则集在草稿里存的是裸 JsonNode（未注册规则的设置要原样透传），
+   * 不这样包一层的话每次改动都要在界面里手写这三步，漏掉写回就表现为
+   * 「改了规则但存盘后没了」。
+   */
+  private mutateRules(location: ComponentLocation, isLine: boolean,
+    mutate: (ruleset: Ruleset) => void): boolean {
+    const host: RuleHost = this.snapshotHost(location, isLine);
+    if (!host.exists) {
+      return false;
+    }
+    if (!host.hideOnRule) {
+      // 规则没开就没必要改：桌面版关掉 HideOnRule 时 HidingRules 也不参与求值，
+      // 留着上次配的内容会让人以为它还在生效。
+      return false;
+    }
+    const ruleset: Ruleset = host.hidingRules === undefined
+      ? Ruleset.defaultRuleset() : Ruleset.parse(host.hidingRules);
+    mutate(ruleset);
+    host.hidingRules = ruleset.toJson();
+    this.writeHost(host, location, isLine);
+    this.settle('');
+    return true;
+  }
+
+  setRulesetMode(location: ComponentLocation, isLine: boolean, mode: RulesetLogicalMode): void {
+    this.mutateRules(location, isLine, (rs: Ruleset) => { RulesetMutations.setRulesetMode(rs, mode); });
+  }
+
+  setRulesetReversed(location: ComponentLocation, isLine: boolean, value: boolean): void {
+    this.mutateRules(location, isLine, (rs: Ruleset) => { RulesetMutations.setRulesetReversed(rs, value); });
+  }
+
+  addRuleGroup(location: ComponentLocation, isLine: boolean, index: number): void {
+    this.mutateRules(location, isLine, (rs: Ruleset) => { RulesetMutations.addGroup(rs, index); });
+  }
+
+  removeRuleGroup(location: ComponentLocation, isLine: boolean, index: number): void {
+    this.mutateRules(location, isLine, (rs: Ruleset) => { RulesetMutations.removeGroup(rs, index); });
+  }
+
+  setRuleGroupMode(location: ComponentLocation, isLine: boolean, groupIndex: number,
+    mode: RulesetLogicalMode): void {
+    this.mutateRules(location, isLine, (rs: Ruleset) => {
+      RulesetMutations.setGroupMode(rs, groupIndex, mode);
+    });
+  }
+
+  setRuleGroupReversed(location: ComponentLocation, isLine: boolean, groupIndex: number,
+    value: boolean): void {
+    this.mutateRules(location, isLine, (rs: Ruleset) => {
+      RulesetMutations.setGroupReversed(rs, groupIndex, value);
+    });
+  }
+
+  setRuleGroupEnabled(location: ComponentLocation, isLine: boolean, groupIndex: number,
+    value: boolean): void {
+    this.mutateRules(location, isLine, (rs: Ruleset) => {
+      RulesetMutations.setGroupEnabled(rs, groupIndex, value);
+    });
+  }
+
+  addRule(location: ComponentLocation, isLine: boolean, groupIndex: number, index: number,
+    ruleId: string): void {
+    this.mutateRules(location, isLine, (rs: Ruleset) => {
+      RulesetMutations.addRule(rs, groupIndex, index, ruleId);
+    });
+  }
+
+  removeRule(location: ComponentLocation, isLine: boolean, groupIndex: number, ruleIndex: number): void {
+    this.mutateRules(location, isLine, (rs: Ruleset) => {
+      RulesetMutations.removeRule(rs, groupIndex, ruleIndex);
+    });
+  }
+
+  moveRule(location: ComponentLocation, isLine: boolean, groupIndex: number, from: number,
+    to: number): void {
+    this.mutateRules(location, isLine, (rs: Ruleset) => {
+      RulesetMutations.moveRule(rs, groupIndex, from, to);
+    });
+  }
+
+  setRuleId(location: ComponentLocation, isLine: boolean, groupIndex: number, ruleIndex: number,
+    ruleId: string): void {
+    this.mutateRules(location, isLine, (rs: Ruleset) => {
+      RulesetMutations.setRuleId(rs, groupIndex, ruleIndex, ruleId);
+    });
+  }
+
+  setRuleReversed(location: ComponentLocation, isLine: boolean, groupIndex: number, ruleIndex: number,
+    value: boolean): void {
+    this.mutateRules(location, isLine, (rs: Ruleset) => {
+      RulesetMutations.setRuleReversed(rs, groupIndex, ruleIndex, value);
+    });
+  }
+
+  /** 写回一条规则的强类型设置。 */
+  writeRuleSettings(location: ComponentLocation, isLine: boolean, groupIndex: number,
+    ruleIndex: number, settings: Object): void {
+    this.mutateRules(location, isLine, (rs: Ruleset) => {
+      RulesetMutations.writeSettings(rs, groupIndex, ruleIndex, settings);
+    });
+  }
+
+  /**
+   * 求值用的上下文。
+   *
+   * 与 refreshPreview() 喂给 PanelBuilder 的是同一份（同一份 previewProfile、
+   * 同一份引擎参数、同一时刻读一次 now），所以编辑器里看到的结论与预览里
+   * 组件消失与否必然一致。两边分开算的话，会出现「预览里已经藏了，编辑器里
+   * 却说规则不成立」，用户根本没法判断该信哪个。
+   */
+  private ruleContext(): RuleContext {
+    const now: DateTimeValue = DateTimeValue.now();
+    const context: RuleContext = new RuleContext();
+    context.now = now;
+    context.profile = this.previewProfile;
+    context.snapshot = this.previewProfile === undefined
+      ? new LessonsSnapshot()
+      : LessonsEngine.compute(this.previewProfile, defaultEngineSettings(now), now);
+    return context;
+  }
+
+  private ruleModel(host: RuleHost): RulesetEditModel {
+    if (!host.exists) {
+      return new RulesetEditModel();
+    }
+    const ruleset: Ruleset = host.hidingRules === undefined
+      ? Ruleset.defaultRuleset() : Ruleset.parse(host.hidingRules);
+    // 没开开关时不求值：界面上整块是收起的，给一组「无」比给一份会变的结论
+    // 少一处让人以为它在生效的地方。
+    return RulesetEditor.build(ruleset, host.hideOnRule ? this.ruleContext() : undefined);
+  }
+
+  /** 读出宿主的两个规则字段。组件不存在时 exists 为 false。 */
+  private snapshotHost(location: ComponentLocation, isLine: boolean): RuleHost {
+    const host: RuleHost = new RuleHost();
+    if (isLine) {
+      const index: number = location.lineIndex;
+      if (index < 0 || index >= this.draft.lines.length) {
+        return host;
+      }
+      const line: MainWindowLineSettings = this.draft.lines[index];
+      host.hideOnRule = line.hideOnRule;
+      host.hidingRules = line.hidingRules;
+      host.exists = true;
+      return host;
+    }
+    const component: ComponentSettings | undefined = this.componentAt(location);
+    if (component === undefined) {
+      return host;
+    }
+    host.hideOnRule = component.hideOnRule;
+    host.hidingRules = component.hidingRules;
+    host.exists = true;
+    return host;
+  }
+
+  /** 把宿主的两个规则字段写回。写不回（位置已不存在）时不动草稿。 */
+  private writeHost(host: RuleHost, location: ComponentLocation, isLine: boolean): void {
+    if (isLine) {
+      const index: number = location.lineIndex;
+      if (index < 0 || index >= this.draft.lines.length) {
+        return;
+      }
+      const line: MainWindowLineSettings = this.draft.lines[index];
+      line.hideOnRule = host.hideOnRule;
+      line.hidingRules = host.hidingRules;
+      return;
+    }
     const component: ComponentSettings | undefined = this.componentAt(location);
     if (component === undefined) {
       return;
     }
-    component.hideOnRule = value;
-    if (!value) {
-      // 关掉规则时把规则集本身也清掉。留着的话用户下次打开「按规则隐藏」会
-      // 看到一条自己从没设过的规则，以为是别人改的。
-      component.hidingRules = undefined;
-    }
-    this.settle(value ? '已按规则隐藏（规则判定尚未实现）' : '已取消按规则隐藏');
+    component.hideOnRule = host.hideOnRule;
+    component.hidingRules = host.hidingRules;
   }
 
   /** 改一个组件的自定义名。 */
@@ -664,6 +979,11 @@ export class ComponentLayoutViewModel {
    * 停在旧方案上」。统一收在这里，少一个地方会忘。
    */
   private rebuild(): void {
+    // 预览先排，规则状态随后从它里面取 —— 树里标的「正在被规则藏掉」与预览里
+    // 组件消失与否必须是同一份结论。两边各算一次的话，会出现树上说没藏、预览里
+    // 却空了一块，用户没法判断该信哪个。
+    this.refreshPreview();
+
     const lineRows: PanelLineRow[] = [];
     const componentRows: PanelComponentRow[] = [];
 
@@ -672,6 +992,8 @@ export class ComponentLayoutViewModel {
       const row: PanelLineRow = new PanelLineRow();
       row.lineIndex = i;
       row.isVisible = line.isVisible;
+      row.hideOnRule = line.hideOnRule;
+      row.isRuleHidden = this.lineRuleHidden(i);
       row.childCount = line.children.length;
       let known: number = 0;
       for (const child of line.children) {
@@ -687,7 +1009,36 @@ export class ComponentLayoutViewModel {
     this.lines = lineRows;
     this.components = componentRows;
     this.isDirty = ComponentProfile.stringify(this.draft) !== this.baseline;
-    this.refreshPreview();
+  }
+
+  /**
+   * 从预览模型里取某一行被规则藏了没有。
+   *
+   * 行被显式关掉（IsVisible=false）时压根没进预览模型，那种情况不算「被规则藏」——
+   * 树里已经有独立的可见性开关在标它了，两处都标会让用户以为规则也在管它。
+   */
+  private lineRuleHidden(lineIndex: number): boolean {
+    if (lineIndex < 0 || lineIndex >= this.panelModel.lines.length) {
+      return false;
+    }
+    return this.panelModel.lines[lineIndex].isRuleHidden;
+  }
+
+  /** 从预览模型里按位置取节点，用来给树行标「正在被规则藏掉」。 */
+  private nodeRuleHiddenAt(lineIndex: number, path: number[]): boolean {
+    if (lineIndex < 0 || lineIndex >= this.panelModel.lines.length) {
+      return false;
+    }
+    let level: PanelNode[] = this.panelModel.lines[lineIndex].nodes;
+    let found: PanelNode | undefined = undefined;
+    for (const step of path) {
+      if (step < 0 || step >= level.length) {
+        return false;
+      }
+      found = level[step];
+      level = found.children;
+    }
+    return found !== undefined && found.isRuleHidden;
   }
 
   /**
@@ -711,6 +1062,7 @@ export class ComponentLayoutViewModel {
       row.isKnown = ComponentCatalog.isKnown(component.id);
       row.isContainer = ComponentCatalog.find(component.id)?.isContainer === true;
       row.hideOnRule = component.hideOnRule;
+      row.isRuleHidden = this.nodeRuleHiddenAt(lineIndex, path);
       row.depth = depth;
       row.siblingIndex = i;
       row.siblingCount = list.length;

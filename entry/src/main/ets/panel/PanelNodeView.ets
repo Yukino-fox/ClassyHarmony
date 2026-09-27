@@ -25,6 +25,7 @@
  */
 
 import { PanelLesson, PanelNode, PanelNodeKind, PanelWidthKind } from 'common_core';
+import { HIDDEN_DIM_OPACITY, panelHiddenMark } from './HiddenMark';
 
 /**
  * 行内与容器内相邻组件的横向间距（vp）。
@@ -270,6 +271,8 @@ struct PanelLessonRow {
 @ComponentV2
 struct PanelRollingView {
   @Require @Param node: PanelNode;
+  /** 编辑页里被规则藏掉的内容仍然显示（淡化 + 斜纹）。见 PanelNodeView 的同名参数。 */
+  @Param inEditMode: boolean = false;
 
   /**
    * Scroller 不能加 @Local/@State —— SDK 的 build_config.json 把它列进
@@ -320,7 +323,7 @@ struct PanelRollingView {
     Scroll(this.scroller) {
       Row({ space: CHILD_GAP }) {
         ForEach(this.node.children, (child: PanelNode) => {
-          PanelNodeView({ node: child })
+          PanelNodeView({ node: child, inEditMode: this.inEditMode })
         }, (child: PanelNode) => child.guid)
       }
       .height('100%')
@@ -351,15 +354,47 @@ struct PanelRollingView {
 export struct PanelNodeView {
   @Require @Param node: PanelNode;
 
+  /**
+   * 编辑页里被规则藏掉的内容仍然显示（淡化 + 斜纹）。
+   *
+   * 照抄桌面版 `ComponentPresenter.axaml` 的
+   * `IsVisible = IsVisibleInternal || MainWindowInEditMode` —— 隐藏项在编辑
+   * 模式下照常占位，否则用户改完规则回头看面板会发现「我藏的那个去哪了」，
+   * 而分不清是规则生效了还是自己把它删了。
+   *
+   * 只管这一件事：真面板与预览的其余部分完全一样。
+   */
+  @Param inEditMode: boolean = false;
+
   build() {
-    // 外层只管样式（背景、圆角、外边距、宽度、不透明度），里层按种类画内容。
-    // 分两层是因为背景要裹住全部内容，而内容区的排布（横排 / 叠放 / 滚动 /
-    // 轮播）随种类变。
+    if (this.node.isRuleHidden && !this.inEditMode) {
+      // 真面板：整块不画。桌面版是 UserControl.IsVisible=false，Avalonia 把它
+      // 从布局里摘掉（不占位），所以这里给一个空壳而不是留白。
+      Column() {}
+    } else {
+      this.shell()
+    }
+  }
+
+  /**
+   * 节点外壳。
+   *
+   * 外层只管样式（背景、圆角、外边距、宽度、不透明度），里层按种类画内容。
+   * 分两层是因为背景要裹住全部内容，而内容区的排布（横排 / 叠放 / 滚动 /
+   * 轮播）随种类变。
+   */
+  @Builder
+  private shell() {
     Stack({ alignContent: stackAlignOf(this.node.horizontalAlignment) }) {
       Column() {
         this.body()
       }
       .width('100%')
+      if (this.node.isRuleHidden) {
+        // 编辑页里的被藏标记。盖在内容上面，且不吃触摸 —— 面板上的组件本来
+        // 也不接收点击（P6 的提醒走系统通知），但别让这层斜条挡住别的命中。
+        panelHiddenMark()
+      }
     }
     .width('100%')
     .padding({ left: this.node.marginLeft, top: this.node.marginTop,
@@ -368,7 +403,11 @@ export struct PanelNodeView {
       ? this.node.backgroundColor : Color.Transparent)
     .borderRadius(this.node.cornerRadius)
     .constraintSize(constraintOf(this.node))
-    .opacity(this.node.opacity)
+    .clip(true)
+    // 被规则藏掉的那份淡化：桌面版靠遮罩的两档透明度（0.69 / 0.31）达到平均
+    // 约 0.5，这里用同一个平均值。没有遮罩就至少保证「明显不是正常显示」。
+    .opacity(this.node.isRuleHidden
+      ? this.node.opacity * HIDDEN_DIM_OPACITY : this.node.opacity)
   }
 
   @Builder
@@ -529,7 +568,7 @@ export struct PanelNodeView {
     if (this.node.children.length > 0) {
       Row({ space: CHILD_GAP }) {
         ForEach(this.node.children, (child: PanelNode) => {
-          PanelNodeView({ node: child })
+          PanelNodeView({ node: child, inEditMode: this.inEditMode })
         }, (child: PanelNode) => child.guid)
       }
       .alignItems(VerticalAlign.Center)
@@ -547,7 +586,7 @@ export struct PanelNodeView {
     if (this.node.children.length > 0) {
       Stack({ alignContent: stackAlignOf(this.node.horizontalAlignment) }) {
         ForEach(this.node.children, (child: PanelNode) => {
-          PanelNodeView({ node: child })
+          PanelNodeView({ node: child, inEditMode: this.inEditMode })
         }, (child: PanelNode) => child.guid)
       }
     }
@@ -556,7 +595,7 @@ export struct PanelNodeView {
   @Builder
   private rolling() {
     if (this.node.children.length > 0) {
-      PanelRollingView({ node: this.node })
+      PanelRollingView({ node: this.node, inEditMode: this.inEditMode })
     }
   }
 
@@ -574,7 +613,7 @@ export struct PanelNodeView {
     if (this.node.children.length > 0) {
       Swiper() {
         ForEach(this.node.children, (child: PanelNode) => {
-          PanelNodeView({ node: child })
+          PanelNodeView({ node: child, inEditMode: this.inEditMode })
         }, (child: PanelNode) => child.guid)
       }
       .width('100%')

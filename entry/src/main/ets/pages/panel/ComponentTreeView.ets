@@ -28,7 +28,8 @@
  */
 
 import { ComponentLocation } from 'common_core';
-import { EditorChip, EditorEmptyHint } from '../../components/EditorWidgets';
+import { EditorChip, EditorEmptyHint, EditorToggleRow } from '../../components/EditorWidgets';
+import { RulesetEditorView } from '../../panel/RulesetEditorView';
 import {
   AddableComponent,
   ComponentLayoutViewModel,
@@ -178,8 +179,13 @@ struct ComponentRowView {
           this.tag('容器')
         }
         if (this.row.hideOnRule) {
-          // 规则判定在 P8。这里只透出「开了这个开关」这件事，不假装它在生效。
-          this.tag('规则待支持')
+          this.tag('按规则隐藏')
+        }
+        if (this.row.isRuleHidden) {
+          // 「开着开关」与「当下正被藏着」是两件事，得分开标：前者是配置，
+          // 后者是这一秒的结论。合成一个标签的话，用户在课间打开面板看到组件
+          // 消失，会以为规则生效了，而实际上整条规则可能压根没成立。
+          this.hotTag('正被规则藏着')
         }
 
         Text(this.isSelected ? '收起' : '操作')
@@ -231,6 +237,18 @@ struct ComponentRowView {
       .padding({ left: 6, right: 6, top: 2, bottom: 2 })
       .margin({ right: 6 })
   }
+
+  /** 「此刻的判定结论」那一类标签：与配置类标签分开配色。 */
+  @Builder
+  private hotTag(text: string) {
+    Text(text)
+      .fontSize(10)
+      .fontColor($r('app.color.ch_accent'))
+      .backgroundColor($r('app.color.ch_accent_soft'))
+      .borderRadius(8)
+      .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+      .margin({ right: 6 })
+  }
 }
 
 /** 一行：标题、显示开关、行的前后移动，以及这一行里的全部组件。 */
@@ -244,6 +262,8 @@ export struct ComponentLineView {
   @Param rows: PanelComponentRow[] = [];
   @Local selectedKey: string = '';
   @Local picking: boolean = false;
+  /** 隐藏规则这一块是否展开。 */
+  @Local rulesOpen: boolean = false;
 
   private keyOf(row: PanelComponentRow): string {
     return `${row.location.lineIndex}/${row.location.path.join('/')}`;
@@ -321,16 +341,72 @@ export struct ComponentLineView {
         tone: 1,
         onTap: () => { this.picking = !this.picking; }
       })
+      EditorChip({
+        text: this.ruleChipText(),
+        onTap: () => { this.rulesOpen = !this.rulesOpen; }
+      })
     }
     .width('100%')
     .alignItems(VerticalAlign.Center)
     .margin({ top: 4, bottom: 4 })
   }
 
+  /** 工具条上那个按钮的文案。开着就明说，省得再点一次才知道。 */
+  private ruleChipText(): string {
+    if (this.rulesOpen) {
+      return '收起规则';
+    }
+    if (this.lineRow.isRuleHidden) {
+      return '规则（正藏着）';
+    }
+    if (this.lineRow.hideOnRule) {
+      return '隐藏规则';
+    }
+    return '隐藏规则';
+  }
+
+  /**
+   * 行的隐藏规则，就地展开。
+   *
+   * 不做成独立的一页：行的其余操作（显示开关、前移后移、添加组件）都是就地展开
+   * 的，而一个只有两个字段的行单独占一整页，为了看一行规则要把整个列表滚出
+   * 屏幕。行的规则配置在桌面版也是挂在 MainWindowLine 的编辑框里。
+   */
+  @Builder
+  private lineRules() {
+    Column() {
+      EditorToggleRow({
+        label: '按规则隐藏',
+        hint: '规则成立时，这一整行都不显示。与组件上的规则各自独立。',
+        isOn: this.lineRow.hideOnRule,
+        onToggle: (next: boolean) => {
+          this.vm.setLineHideOnRule(this.lineRow.lineIndex, next);
+        }
+      })
+      if (this.lineRow.hideOnRule) {
+        RulesetEditorView({
+          vm: this.vm,
+          location: ComponentLocation.of(this.lineRow.lineIndex, []),
+          isLine: true,
+          title: `第 ${this.lineRow.lineIndex + 1} 行的隐藏规则`
+        })
+      }
+    }
+    .width('100%')
+    .backgroundColor($r('app.color.ch_surface_weak'))
+    .borderRadius(8)
+    .padding({ left: 10, right: 10, top: 4, bottom: 10 })
+    .margin({ top: 4, bottom: 8 })
+  }
+
   build() {
     Column() {
       this.header()
       this.lineToolbar()
+
+      if (this.rulesOpen) {
+        this.lineRules()
+      }
 
       if (this.picking) {
         ComponentPicker({

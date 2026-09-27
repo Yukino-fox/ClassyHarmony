@@ -38,8 +38,10 @@ import {
   ComponentProfile,
   ComponentSettings,
   DateTimeValue,
+  JsonNode,
   MainWindowLineSettings,
   Profile,
+  Ruleset,
   Subject,
   TimeLayout,
   TimeLayoutItem,
@@ -47,6 +49,9 @@ import {
 } from 'common_shared';
 import { ClassPlanResolver, ResolvedClassPlan } from '../engine/ClassPlanResolver';
 import { EngineSettings } from '../engine/EngineSettings';
+import { LessonsEngine } from '../engine/LessonsEngine';
+import { LessonsSnapshot } from '../engine/LessonsSnapshot';
+import { RuleContext, RuleEngine } from '../rules/RuleEngine';
 import { weekDayName } from '../view/TextFormat';
 import {
   COMPONENT_CLOCK,
@@ -176,6 +181,31 @@ export class PanelNode {
   /** 容器因为层数上限没展开子节点。 */
   isTruncated: boolean = false;
 
+  /**
+   * 这一节点被自己的隐藏规则命中了。
+   *
+   * 口径照抄桌面版 `ComponentPresenter.CheckHideRule`：
+   * `HideOnRule && HidingRules != null && IsRulesetSatisfied(HidingRules)`。
+   * 两个前置条件缺一不可 —— 光配规则不勾开关是不生效的，这一点很容易忘。
+   *
+   * 界面上不画这个节点。真面板直接消失，编辑页淡化 + 45° 斜纹（照抄
+   * `ComponentPresenter.axaml` 的 `IsVisible = IsVisibleInternal || InEditMode`
+   * 与那个 RotateTransform(45) 的 OpacityMask）。
+   */
+  isRuleHidden: boolean = false;
+  /**
+   * 自己的规则没命中，但所有子节点都命中了。
+   *
+   * 桌面版 `UpdateComponentHidState` 算的是
+   * `Settings.IsVisible = IsVisibleInternal && !_isAllComponentsHid`，
+   * 也就是「子节点全藏了就把自己也标成不可见」，然后由父节点读这个标记往上冒。
+   *
+   * 界面上**不**因此跳过本节点：桌面版的 presenter 只按 IsVisibleInternal 决定
+   * 自己的可见性，一个子节点全空的容器仍会渲染（渲染成空的）。照抄。
+   * 这个字段给的是父节点往上冒时要看的那一份。
+   */
+  allChildrenHidden: boolean = false;
+
   /** 主文本。 */
   primaryText: string = '';
   /** 主文本下面那行小字。 */
@@ -260,6 +290,16 @@ export class PanelLine {
   isMainLine: boolean = false;
   /** 行是否可见。落在 MainWindowLineSettings.IsVisible 上。 */
   isVisible: boolean = true;
+  /**
+   * 整行被自己的隐藏规则命中了。
+   *
+   * 注意桌面版 `MainWindowLine.UpdateHiddenState` 里
+   * `Settings.IsVisible = IsVisibleInternal` —— 行的落盘可见性**只**反映自己的规则，
+   * 不与子节点的状态做与运算（子节点全空另有一个 `IsAllComponentsHid` 字段，
+   * 只用于「要不要发提醒」，不用于渲染）。所以一行里所有组件都被规则藏了之后，
+   * 这一行仍会渲染，只是渲染成空的。照抄。
+   */
+  isRuleHidden: boolean = false;
   /** 整行背景色，#AARRGGBB。空串表示不画。 */
   backgroundColor: string = '';
   /** 整行圆角，vp。 */
@@ -281,6 +321,14 @@ export class PanelModel {
    * 关掉了」，后者在编辑页里有开关可改，前者只能加组件。
    */
   hiddenLineCount: number = 0;
+  /**
+   * 被规则藏起来的行数。
+   *
+   * 与 hiddenLineCount 分开数：前者在真面板与编辑页都消失（用户自己在
+   * `IsVisible` 上关掉的），后者两边都留着 —— 真面板不画，编辑页淡化显示，
+   * 否则用户改规则时看不到「我刚藏的那个去哪了」。
+   */
+  ruleHiddenLineCount: number = 0;
   /** 没有任何可见行。 */
   isEmpty: boolean = true;
   /**
@@ -299,11 +347,12 @@ export class PanelModel {
    */
   buildSignature(): string {
     const parts: string[] = [
-      `${this.isEmpty}`, `${this.hiddenLineCount}`, `${this.clockShowsSeparator}`
+      `${this.isEmpty}`, `${this.hiddenLineCount}`, `${this.ruleHiddenLineCount}`,
+      `${this.clockShowsSeparator}`
     ];
     for (const line of this.lines) {
       parts.push(`L${line.lineIndex},${line.isMainLine},${line.backgroundColor},` +
-        `${line.cornerRadius},${line.opacity};`);
+        `${line.cornerRadius},${line.opacity},${line.isRuleHidden};`);
       parts.push(PanelBuilder.signatureOf(line.nodes));
     }
     return parts.join('|');
@@ -322,6 +371,14 @@ export class PanelBuilder {
   static build(layout: ComponentProfile, profile: Profile | undefined, settings: EngineSettings,
     now: DateTimeValue): PanelModel {
     const model: PanelModel = new PanelModel();
+    // 隐藏规则整块求值一次，逐条规则喂同一份课表状态。
+    // 面板每秒重算一次，所以这里不能再按节点各算一遍课表快照 ——
+    // 一个面板挂十几个组件是常事，那等于每秒多算十几次全量课表。
+    const context: RuleContext = new RuleContext();
+    context.now = now;
+    context.profile = profile;
+    context.snapshot = profile === undefined
+      ? new LessonsSnapshot() : LessonsEngine.compute(profile, settings, now);
     for (let i: number = 0; i < layout.lines.length; i++) {
       const line: MainWindowLineSettings = layout.lines[i];
       if (!line.isVisible) {
@@ -331,17 +388,58 @@ export class PanelBuilder {
       const row: PanelLine = new PanelLine();
       row.lineIndex = i;
       row.isMainLine = line.isMainLine;
+      row.isRuleHidden = PanelBuilder.isRuleHidden(line.hideOnRule, line.hidingRules, context);
+      if (row.isRuleHidden) {
+        model.ruleHiddenLineCount++;
+      }
       row.backgroundColor = PanelBuilder.lineBackgroundOf(line);
       row.cornerRadius = line.isCustomCornerRadiusEnabled ? line.customCornerRadius : 0;
       row.opacity = PanelBuilder.clamp01(line.opacity);
       for (const child of line.children) {
-        row.nodes.push(PanelBuilder.nodeOf(child, line, profile, settings, now, 0));
+        row.nodes.push(PanelBuilder.nodeOf(child, line, profile, settings, now, 0, context));
       }
       model.lines.push(row);
     }
     model.isEmpty = model.lines.length === 0;
     model.clockShowsSeparator = now.second % 2 === 1;
     return model;
+  }
+
+  /**
+   * 一组子节点是不是全被藏了。
+   *
+   * 递归口径：子节点的「有效可见」= 它自己没被规则藏 **且** 它的子节点不是全空的。
+   * 与桌面版 `_isAllComponentsHid` + `Settings.IsVisible = IsVisibleInternal &&
+   * !_isAllComponentsHid` 逐字对应。
+   *
+   * 空列表算「全藏」。桌面版 `Children.FirstOrDefault(x => x.IsVisible) == null`
+   * 对空列表同样成立（FirstOrDefault 返回 null），而一个没有子节点的容器
+   * 之所以还显示着，靠的是它自己的 IsVisibleInternal，不靠这里。
+   */
+  private static allChildrenHiddenOf(children: PanelNode[]): boolean {
+    for (const child of children) {
+      if (!child.isRuleHidden && !child.allChildrenHidden) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * 求一次隐藏规则。
+   *
+   * `hideOnRule` 与 `hidingRules` 挂在 ComponentSettings 与 MainWindowLineSettings
+   * 上，语义完全一样（桌面版两个类各有同名的一对属性），所以合成一个函数。
+   *
+   * hidingRules 是裸 JsonNode（未注册规则的设置要原样透传，见 Ruleset.ets 文件头），
+   * 所以每次现解。布局里没有规则时早退，不浪费一次 parse。
+   */
+  static isRuleHidden(hideOnRule: boolean, hidingRules: JsonNode | undefined,
+    context: RuleContext): boolean {
+    if (!hideOnRule || hidingRules === undefined) {
+      return false;
+    }
+    return RuleEngine.evaluate(Ruleset.parse(hidingRules), context).satisfied;
   }
 
   /**
@@ -352,11 +450,13 @@ export class PanelBuilder {
    */
   private static nodeOf(component: ComponentSettings, line: MainWindowLineSettings,
     profile: Profile | undefined, settings: EngineSettings, now: DateTimeValue,
-    depth: number): PanelNode {
+    depth: number, context: RuleContext): PanelNode {
     const node: PanelNode = new PanelNode();
     node.guid = component.id;
     node.kind = PanelBuilder.kindOf(component.id);
     node.displayName = PanelBuilder.displayNameOf(component);
+    node.isRuleHidden =
+      PanelBuilder.isRuleHidden(component.hideOnRule, component.hidingRules, context);
     PanelBuilder.applyStyle(node, component, line);
 
     const descriptor: ComponentDescriptor | undefined = ComponentCatalog.find(component.id);
@@ -376,8 +476,10 @@ export class PanelBuilder {
         return node;
       }
       for (const child of ComponentCatalog.childrenOf(component)) {
-        node.children.push(PanelBuilder.nodeOf(child, line, profile, settings, now, depth + 1));
+        node.children.push(
+          PanelBuilder.nodeOf(child, line, profile, settings, now, depth + 1, context));
       }
+      node.allChildrenHidden = PanelBuilder.allChildrenHiddenOf(node.children);
     }
 
     switch (node.kind) {
@@ -1005,7 +1107,12 @@ export class PanelBuilder {
   static signatureOf(nodes: PanelNode[]): string {
     let out: string = '';
     for (const node of nodes) {
+      // isRuleHidden / allChildrenHidden 必须进指纹。课表状态一变，被规则藏掉的
+      // 那个组件就可能换人，而这类组件（文本、倒计时以外的）内容往往一个字都没
+      // 变 —— 不进指纹的话内容没变、隐藏状态变了，面板就不重绘，藏起来的那个
+      // 要等到下一次别的内容变化才跟着消失。
       out += `${node.guid},${node.kind},${node.isUnknown},${node.isTruncated},` +
+        `${node.isRuleHidden},${node.allChildrenHidden},` +
         `${node.primaryText},${node.secondaryText},${node.detailText},${node.hintText},` +
         `${node.foregroundColor},${node.backgroundColor},${node.cornerRadius},${node.opacity},` +
         `${node.fontSize},${node.secondaryFontSize},${node.emphasisFontSize},` +

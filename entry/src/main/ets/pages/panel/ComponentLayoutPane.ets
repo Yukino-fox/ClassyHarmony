@@ -146,7 +146,7 @@ export struct ComponentLayoutPane {
 
     if (this.showPreview) {
       Stack({ alignContent: Alignment.Start }) {
-        PanelPreview({ model: this.vm.panelModel })
+        PanelPreview({ model: this.vm.panelModel, inEditMode: true })
       }
       .width('100%')
       .backgroundColor($r('app.color.ch_surface'))

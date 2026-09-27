@@ -144,3 +144,11 @@ export {
   STATE_FALSE,
   STATE_TRUE
 } from './src/main/ets/rules/RuleEngine';
+export { RulesetMutations } from './src/main/ets/rules/RulesetMutations';
+export {
+  RuleChoiceRow,
+  RuleEditRow,
+  RuleGroupEditRow,
+  RulesetEditModel,
+  RulesetEditor
+} from './src/main/ets/rules/RulesetEditModel';

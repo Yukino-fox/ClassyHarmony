@@ -28,8 +28,9 @@
  *
  * 缺字段不补
  * --------
- * 只编辑已建模的字段。没建模的（倒计时的周期设置、规则集等）原样留在文件里，
- * 往返一次它们还在。界面上不列出来是为了不给「能改所有设置」的错觉。
+ * 只编辑已建模的字段。没建模的（倒计时的周期设置等）原样留在文件里，往返一次
+ * 它们还在。界面上不列出来是为了不给「能改所有设置」的错觉。隐藏规则集是个
+ * 例外：它不在这份表单里，而是就地展开 RulesetEditorView。
  */
 
 import { ColorValue, ComponentSettings, DateTimeValue } from 'common_shared';
@@ -60,6 +61,7 @@ import {
   EditorTextField,
   EditorToggleRow
 } from '../../components/EditorWidgets';
+import { RulesetEditorView } from '../../panel/RulesetEditorView';
 import { ComponentLayoutViewModel } from '../../viewmodel/ComponentLayoutViewModel';
 
 /**
@@ -790,13 +792,21 @@ export struct ComponentSettingsPane {
           })
           EditorToggleRow({
             label: '按规则隐藏',
-            hint: '规则判定还没实现，现在只保存这个开关',
+            hint: '规则成立时这个组件不显示。判定按打开页面的那一刻的课表。',
             isOn: this.hideOnRule,
             onToggle: (next: boolean) => {
               this.hideOnRule = next;
               this.vm.setHideOnRule(this.location, next);
             }
           })
+          if (this.hideOnRule) {
+            RulesetEditorView({
+              vm: this.vm,
+              location: this.location,
+              isLine: false,
+              title: '这块内容的隐藏规则'
+            })
+          }
 
           EditorCard({
             title: '设置',

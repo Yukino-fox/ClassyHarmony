@@ -74,11 +74,20 @@ import {
   RuleContext,
   RuleEngine,
   RuleGroupVerdict,
+  RuleReason,
   RulesetVerdict,
   STATE_FALSE,
   STATE_NONE,
   STATE_TRUE
 } from '../../common_core/src/main/ets/rules/RuleEngine';
+import { RulesetMutations } from '../../common_core/src/main/ets/rules/RulesetMutations';
+import {
+  RuleChoiceRow,
+  RuleEditRow,
+  RuleGroupEditRow,
+  RulesetEditModel,
+  RulesetEditor
+} from '../../common_core/src/main/ets/rules/RulesetEditModel';
 
 let passed: number = 0;
 const failures: string[] = [];
@@ -223,6 +232,24 @@ function settingsNode(settings: Object): JsonNode {
     return settings.toJson();
   }
   return new JsonObject();
+}
+
+/**
+ * 一条待往返的设置：id 决定 RuleCatalog 按哪个类型解，所以 id 与设置必须配对。
+ *
+ * 配错的话 readSettings 会解出另一个类型（或者干脆解出 StringMatchingSettings），
+ * 而值看着都对 —— 这是最容易漏的一处：类型错了而字段恰好同名。
+ */
+class SettingsCase {
+  id: string = '';
+  settings: Object = new Object();
+}
+
+function settingsCase(id: string, settings: Object): SettingsCase {
+  const out: SettingsCase = new SettingsCase();
+  out.id = id;
+  out.settings = settings;
+  return out;
 }
 
 function rule(id: string, settings?: Object, isReversed: boolean = false): Rule {
@@ -1144,6 +1171,650 @@ testRuleIdsAreDistinct();
 testVerdictIsPureData();
 testContextWithNoProfile();
 testGroupVerdictCarriesEnabledFlag();
+testMutationsRejectNoChange();
+testMutationsRejectBadIndex();
+testAddGroupShape();
+testAddRuleCarriesDefaultSettings();
+testMoveRuleSemantics();
+testSetRuleIdResetsSettings();
+testSettingsRoundTripThroughMutations();
+testWriteSettingsRejectsUnknownType();
+testMutationsKeepOpaqueSettingsForUnknownRule();
+testMutationsRoundTripThroughJson();
+testEditorChoices();
+testEditorBuildWithoutRuleset();
+testEditorBuildWithoutContext();
+testShortCircuitKeepsHonestReason();
+testEditorBuildCarriesSameVerdict();
+testEditorBuildAlignsCoordinates();
+testEditorFlagsUnchosenAndUnknown();
+testEditorMarksUnsupportedRulesNotEditable();
+testEditorDecodesSettingsObjects();
+testEditorCarriesEnabledAndReversedFlags();
+testEditorIsPureData();
+testEditorHandlesGroupVerdictCarriesEnabled();
+testEditorEmptyRulesetGroupsOnly();
+
+// ------------------------------------------------- B. 编辑操作（RulesetMutations）
+
+function testMutationsRejectNoChange(): void {
+  // 返回值表示「有没有改成」。不改还返回 true 的话，界面每按一次就重建整棵
+  // 规则树并重算一次轨迹，而内容一个字节没变。
+  const rs: Ruleset = one(TimeState.OnClass);
+  check('setRulesetMode 相同模式不报改动',
+    !RulesetMutations.setRulesetMode(rs, RulesetLogicalMode.Or));
+  check('setRulesetMode 换模式报改动',
+    RulesetMutations.setRulesetMode(rs, RulesetLogicalMode.And));
+  checkEqual('模式真的改了', `${rs.mode}`, `${RulesetLogicalMode.And}`);
+  check('setRulesetReversed 相同值不报改动',
+    !RulesetMutations.setRulesetReversed(rs, false));
+  check('setRulesetReversed 改值报改动', RulesetMutations.setRulesetReversed(rs, true));
+  check('setGroupMode 相同模式不报改动',
+    !RulesetMutations.setGroupMode(rs, 0, RulesetLogicalMode.And));
+  check('setGroupMode 换模式报改动',
+    RulesetMutations.setGroupMode(rs, 0, RulesetLogicalMode.Or));
+  check('setGroupReversed 相同值不报改动', !RulesetMutations.setGroupReversed(rs, 0, false));
+  check('setGroupReversed 改值报改动', RulesetMutations.setGroupReversed(rs, 0, true));
+  check('setGroupEnabled 相同值不报改动', !RulesetMutations.setGroupEnabled(rs, 0, true));
+  check('setGroupEnabled 改值报改动', RulesetMutations.setGroupEnabled(rs, 0, false));
+  check('setRuleReversed 相同值不报改动',
+    !RulesetMutations.setRuleReversed(rs, 0, 0, false));
+  check('setRuleReversed 改值报改动',
+    RulesetMutations.setRuleReversed(rs, 0, 0, true));
+}
+
+function testMutationsRejectBadIndex(): void {
+  // 非法下标一律返回 false 且不动对象。界面上改的是「行 N」，而下标是用户
+  // 上一次操作留下的 —— 两者不一致时（下标越界）静默改动会写到别的地方。
+  const rs: Ruleset = one(TimeState.OnClass);
+  check('负组下标被拒', !RulesetMutations.removeGroup(rs, -1));
+  check('越界组下标被拒', !RulesetMutations.removeGroup(rs, 1));
+  check('负规则下标被拒', !RulesetMutations.removeRule(rs, 0, -1));
+  check('越界规则下标被拒', !RulesetMutations.removeRule(rs, 0, 1));
+  check('越界组下标改模式被拒', !RulesetMutations.setGroupMode(rs, 5, RulesetLogicalMode.Or));
+  check('越界组下标改启用被拒', !RulesetMutations.setGroupEnabled(rs, 5, false));
+  check('越界规则下标改 id 被拒',
+    !RulesetMutations.setRuleId(rs, 5, 0, RuleIds.LESSONS_TIME_STATE));
+  check('越界规则下标加规则被拒', !RulesetMutations.addRule(rs, 5, 0, ''));
+  check('组内插入下标越界被拒', !RulesetMutations.addRule(rs, 0, 5, ''));
+  check('插入下标负数被拒', !RulesetMutations.addRule(rs, 0, -1, ''));
+  check('插入组下标越界被拒', !RulesetMutations.addGroup(rs, 5));
+  check('插入组下标负数被拒', !RulesetMutations.addGroup(rs, -1));
+  checkNum('组数没变', rs.groups.length, 1);
+  checkNum('组内规则数没变', rs.groups[0].rules.length, 1);
+  checkEqual('规则 id 没变', rs.groups[0].rules[0].id, RuleIds.LESSONS_TIME_STATE);
+  check('组启用状态没变', rs.groups[0].isEnabled);
+}
+
+function testAddGroupShape(): void {
+  // 新组给的是桌面版的默认形状（And + 一条空规则），不是空组 ——
+  // 空组整组不参与求值，用户插进去会看到「什么都没发生」。
+  const rs: Ruleset = ruleset(RulesetLogicalMode.Or, []);
+  check('加一组报改动', RulesetMutations.addGroup(rs, 0));
+  checkNum('组数加一', rs.groups.length, 1);
+  checkEqual('新组默认 And', `${rs.groups[0].mode}`, `${RulesetLogicalMode.And}`);
+  checkNum('新组自带一条空规则', rs.groups[0].rules.length, 1);
+  checkEqual('那条规则还没挑', rs.groups[0].rules[0].id, '');
+  check('新组默认启用', rs.groups[0].isEnabled);
+  check('新组默认不取反', !rs.groups[0].isReversed);
+
+  // 插到中间：index 是「移动完成后」的位置语义，与组件层级一致。
+  RulesetMutations.addGroup(rs, rs.groups.length);
+  checkNum('追加到末尾', rs.groups.length, 2);
+  RulesetMutations.addGroup(rs, 1);
+  checkNum('插到中间', rs.groups.length, 3);
+  checkNum('三组都有效', rs.groups.filter((g: RuleGroup) => g.rules.length === 1).length, 3);
+}
+
+function testAddRuleCarriesDefaultSettings(): void {
+  // 桌面版 AddRule 之后是 new settingsType()，效果一样：新规则带上该 id 的
+  // 默认设置，不是一个空壳 —— 空壳的话求值器会拿默认值去判，而用户在界面上
+  // 看到的是一片空白。
+  const rs: Ruleset = ruleset(RulesetLogicalMode.Or, [group(RulesetLogicalMode.And, [])]);
+  check('加一条规则报改动',
+    RulesetMutations.addRule(rs, 0, 0, RuleIds.LESSONS_TIME_STATE));
+  checkNum('组内规则数加一', rs.groups[0].rules.length, 1);
+  const settings: TimeStateRuleSettings =
+    RulesetMutations.readSettings(rs, 0, 0) as TimeStateRuleSettings;
+  check('新规则带的是该类型的默认设置', settings !== undefined && settings !== null);
+  checkEqual('默认时间状态是上课中', `${settings.state}`, `${TimeState.OnClass}`);
+
+  // 未注册的 id：默认设置是 null，与桌面版一致（Activator 找不到就 null）。
+  RulesetMutations.addRule(rs, 0, 1, 'com.example.somePluginRule');
+  check('陌生 id 的设置是 null', rs.groups[0].rules[1].settings === undefined
+    || JsonValue.isNull(rs.groups[0].rules[1].settings!));
+  // 空 id 同样是 null。
+  RulesetMutations.addRule(rs, 0, 2, '');
+  check('空 id 的设置是 null', rs.groups[0].rules[2].settings === undefined
+    || JsonValue.isNull(rs.groups[0].rules[2].settings!));
+}
+
+function testMoveRuleSemantics(): void {
+  // to 是「摘掉之后」的下标 —— 与 P7 布局改动那套 insertIndex 语义一致，
+  // 两处混用会让「下移一格」变成「下移两格」。
+  const rs: Ruleset = ruleset(RulesetLogicalMode.Or, [group(RulesetLogicalMode.And, [
+    timeStateRule(TimeState.OnClass),
+    timeStateRule(TimeState.Breaking),
+    timeStateRule(TimeState.AfterSchool)
+  ])]);
+  const before: JsonNode | undefined = rs.groups[0].rules[0].settings;
+  const order: string = orderOf(rs, 0);
+
+  // to 是「摘掉之后」的下标，所以 0→1 是往后挪一格，不是两格。
+  check('往后移一位报改动', RulesetMutations.moveRule(rs, 0, 0, 1));
+  checkEqual('往后移一位后的顺序', orderOf(rs, 0), swap01(order));
+  check('设置跟着规则一起走',
+    rs.groups[0].rules[1].settings === before);
+
+  // 移到末尾：to 等于「摘掉之后」的规则数（3 条里摘掉 1 条 → 2）。
+  check('往后移到末尾', RulesetMutations.moveRule(rs, 0, 0, 2));
+  checkEqual('移到末尾后的顺序', orderOf(rs, 0), '1,4,3');
+  checkNum('规则数没变', rs.groups[0].rules.length, 3);
+
+  // 往前移回原位：3,1,4 → 摘掉下标 2（3）→ 1,4 → 插到 0 → 3,1,4，
+  // 再把下标 1（1）移到 0 才真的回到最初那个排列。少移一步就回不去，
+  // 而这正是「to 到底是移动前还是移动后的下标」写错时的症状。
+  check('往前移一位', RulesetMutations.moveRule(rs, 0, 2, 0));
+  checkEqual('先移一次', orderOf(rs, 0), '3,1,4');
+  check('再往前移一位', RulesetMutations.moveRule(rs, 0, 1, 0));
+  checkEqual('回到原位', orderOf(rs, 0), order);
+
+  // to 越界要拒。放行的话「往下移到底」会变成追加而不是报错，
+  // 界面上那就是「点一下顺序乱了」。
+  check('目标下标越界不报改动', !RulesetMutations.moveRule(rs, 0, 0, 4));
+  checkEqual('越界后顺序没变', orderOf(rs, 0), order);
+
+  check('移到原位不报改动', !RulesetMutations.moveRule(rs, 0, 0, 0));
+  check('源下标越界不报改动', !RulesetMutations.moveRule(rs, 0, 5, 0));
+  check('目标下标越界不报改动', !RulesetMutations.moveRule(rs, 0, 0, 5));
+  check('负下标不报改动', !RulesetMutations.moveRule(rs, 0, -1, 0));
+}
+
+function readState(rs: Ruleset, g: number, i: number): string {
+  const settings: TimeStateRuleSettings =
+    RulesetMutations.readSettings(rs, g, i) as TimeStateRuleSettings;
+  return `${settings.state}`;
+}
+
+/** 组内规则的顺序，逗号分隔。只认同一类规则（时间状态），够用。 */
+function orderOf(rs: Ruleset, g: number): string {
+  const out: string[] = [];
+  for (let i: number = 0; i < rs.groups[g].rules.length; i++) {
+    out.push(readState(rs, g, i));
+  }
+  return out.join(',');
+}
+
+/** 交换第 0 与第 1 项。 */
+function swap01(order: string): string {
+  const parts: string[] = order.split(',');
+  const first: string = parts[0];
+  parts[0] = parts[1];
+  parts[1] = first;
+  return parts.join(',');
+}
+
+function testSetRuleIdResetsSettings(): void {
+  // 照抄桌面版：换 id 时连带把 Settings 换成新类型的默认值。留着旧设置会让
+  // 用户在界面上看到「科目是」配着一个时间状态的值。
+  const rs: Ruleset = one(TimeState.Breaking);
+  check('换 id 报改动', RulesetMutations.setRuleId(rs, 0, 0, RuleIds.LESSONS_CURRENT_SUBJECT));
+  checkEqual('id 换了', rs.groups[0].rules[0].id, RuleIds.LESSONS_CURRENT_SUBJECT);
+  const settings: CurrentSubjectRuleSettings =
+    RulesetMutations.readSettings(rs, 0, 0) as CurrentSubjectRuleSettings;
+  check('设置换成了新类型', settings !== undefined && settings !== null);
+  check('旧的 TimeState 值没被带过去',
+    !(settings instanceof TimeStateRuleSettings));
+
+  // 换回时间状态：默认值是 OnClass，不是刚才那个 Breaking。
+  RulesetMutations.setRuleId(rs, 0, 0, RuleIds.LESSONS_TIME_STATE);
+  checkEqual('换回来是默认状态',
+    readState(rs, 0, 0), `${TimeState.OnClass}`);
+
+  // 换同一个 id 什么都不做，连设置也不动 —— 界面上重复点一次同一条规则，
+  // 用户已经填好的值不该被清掉。
+  const keep: TimeStateRuleSettings = new TimeStateRuleSettings();
+  keep.state = TimeState.AfterSchool;
+  rs.groups[0].rules[0].settings = keep.toJson();
+  check('换同一个 id 不报改动', !RulesetMutations.setRuleId(rs, 0, 0, RuleIds.LESSONS_TIME_STATE));
+  checkEqual('换同一个 id 不动设置', readState(rs, 0, 0), `${TimeState.AfterSchool}`);
+}
+
+function testSettingsRoundTripThroughMutations(): void {
+  // 七种设置都要能读出来、改回去、再读出来还是改过的那个值。少认一种的话
+  // 那条规则的设置会静默变成默认值，而求值时按默认值判，现象是「怎么配都不生效」。
+  const timeState: TimeStateRuleSettings = new TimeStateRuleSettings();
+  timeState.state = TimeState.AfterSchool;
+  const subject: CurrentSubjectRuleSettings = new CurrentSubjectRuleSettings();
+  subject.subjectId = Guid.fromCanonical(SUBJECT_SHUXUE);
+  const weather: CurrentWeatherRuleSettings = new CurrentWeatherRuleSettings();
+  weather.weatherId = 7;
+  weather.isFuzzyMatch = true;
+  const rain: RainTimeRuleSettings = new RainTimeRuleSettings();
+  rain.rainTimeMinutes = 25;
+  rain.isRemainingTime = true;
+  const sun: SunRiseSetRuleSettings = new SunRiseSetRuleSettings();
+  sun.timeMinutes = 90;
+  sun.isSunset = true;
+  const window: WindowStatusRuleSettings = new WindowStatusRuleSettings();
+  window.state = 2;
+  const text: StringMatchingSettings = new StringMatchingSettings();
+  text.text = '^Notepad';
+  text.useRegex = true;
+
+  const cases: SettingsCase[] = [];
+  cases.push(settingsCase(RuleIds.LESSONS_TIME_STATE, timeState));
+  cases.push(settingsCase(RuleIds.LESSONS_CURRENT_SUBJECT, subject));
+  cases.push(settingsCase(RuleIds.WEATHER_CURRENT, weather));
+  cases.push(settingsCase(RuleIds.WEATHER_RAIN_TIME, rain));
+  cases.push(settingsCase(RuleIds.WEATHER_SUN_RISE_SET, sun));
+  cases.push(settingsCase(RuleIds.WINDOW_STATUS, window));
+  cases.push(settingsCase(RuleIds.WINDOW_CLASS_NAME, text));
+  checkNum('七种设置', cases.length, 7);
+
+  const rs: Ruleset = ruleset(RulesetLogicalMode.Or, [group(RulesetLogicalMode.And, [])]);
+  for (let i: number = 0; i < cases.length; i++) {
+    rs.groups[0].rules.push(rule(cases[i].id, cases[i].settings));
+    const before: string = JsonWriter.writeCompact(rs.groups[0].rules[i].settings!);
+    const decoded: Object = RulesetMutations.readSettings(rs, 0, i);
+    check(`${cases[i].id} 读回的类型对`,
+      decoded.constructor === cases[i].settings.constructor,
+      `实际 ${decoded.constructor.name}`);
+    check(`${cases[i].id} 读回的值对`, deepEqual(decoded, cases[i].settings));
+    check(`${cases[i].id} 写回报改动`, RulesetMutations.writeSettings(rs, 0, i, decoded));
+    check(`${cases[i].id} 写回后 JSON 一样`,
+      JsonWriter.writeCompact(rs.groups[0].rules[i].settings!) === before);
+    check(`${cases[i].id} 写回后再读还是那个值`,
+      deepEqual(RulesetMutations.readSettings(rs, 0, i), cases[i].settings));
+  }
+}
+
+/** 拿容器的字段做一次浅比较。七种设置类都是若干标量字段，够用了。 */
+function deepEqual(a: Object, b: Object): boolean {
+  const keys: string[] = Object.keys(b as Record<string, Object>);
+  const source: Record<string, Object> = a as Record<string, Object>;
+  const target: Record<string, Object> = b as Record<string, Object>;
+  for (const key of keys) {
+    const left: Object = source[key];
+    const right: Object = target[key];
+    if (left instanceof Guid && right instanceof Guid) {
+      if (!left.equals(right)) {
+        return false;
+      }
+      continue;
+    }
+    if (`${left}` !== `${right}`) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function testWriteSettingsRejectsUnknownType(): void {
+  // 认不出来的设置类型返回 false 并保持原样 —— 宁可保留用户在桌面版配好的
+  // 东西，也不要因为这边多了一个不认识的类就把它抹掉。
+  const keep: StringMatchingSettings = new StringMatchingSettings();
+  keep.text = '保留我';
+  const rs: Ruleset = ruleset(RulesetLogicalMode.Or,
+    [group(RulesetLogicalMode.And, [rule(RuleIds.WINDOW_CLASS_NAME, keep)])]);
+  const before: JsonNode | undefined = rs.groups[0].rules[0].settings;
+  check('写不认的类型不报改动',
+    !RulesetMutations.writeSettings(rs, 0, 0, new Object()));
+  check('写不认的类型原样保留',
+    JSON.stringify(rs.groups[0].rules[0].settings) === JSON.stringify(before));
+  check('越界位置写设置不报改动', !RulesetMutations.writeSettings(rs, 9, 0, keep));
+  check('越界位置读设置不崩',
+    RulesetMutations.readSettings(rs, 9, 0) !== undefined);
+}
+
+function testMutationsKeepOpaqueSettingsForUnknownRule(): void {
+  // 插件规则（或桌面版新版本加的规则）的设置这边不认识，操作之后必须原样还在。
+  const node: JsonObject = new JsonObject();
+  node.set('WhateverField', new JsonString('插件私有'));
+  const rs: Ruleset = ruleset(RulesetLogicalMode.Or,
+    [group(RulesetLogicalMode.And, [rule('com.example.pluginRule')])]);
+  rs.groups[0].rules[0].settings = node;
+  RulesetMutations.setRuleReversed(rs, 0, 0, true);
+  RulesetMutations.moveRule(rs, 0, 0, 0);
+  RulesetMutations.addRule(rs, 0, 1, '');
+  RulesetMutations.removeRule(rs, 0, 1);
+  const kept: JsonObject | undefined =
+    JsonValue.asObject(rs.groups[0].rules[0].settings);
+  check('陌生规则的私有设置还在', kept !== undefined && kept.has('WhateverField'));
+  checkEqual('取反没有影响 id', rs.groups[0].rules[0].id, 'com.example.pluginRule');
+  check('取反生效了', rs.groups[0].rules[0].isReversed);
+}
+
+function testMutationsRoundTripThroughJson(): void {
+  // 编辑操作之后序列化再解析，内容必须完全一样。这条兜的是「改完存盘、
+  // 重开应用配置变了」这一类问题 —— 界面上完全看不出来。
+  const rs: Ruleset = ruleset(RulesetLogicalMode.And, [
+    group(RulesetLogicalMode.Or, [timeStateRule(TimeState.Breaking, true)], true, false),
+    group(RulesetLogicalMode.And, [subjectRule(RuleIds.LESSONS_CURRENT_SUBJECT, SUBJECT_SHUXUE)])
+  ], true);
+  RulesetMutations.addGroup(rs, 1);
+  RulesetMutations.addRule(rs, 1, 1, RuleIds.LESSONS_NEXT_SUBJECT);
+  const before: string = Ruleset.stringify(rs);
+  const after: string = Ruleset.stringify(Ruleset.parse(rs.toJson()));
+  checkEqual('改完往返内容不变', after, before);
+  check('往返后组数一致', Ruleset.parse(rs.toJson()).groups.length === rs.groups.length);
+}
+
+// ------------------------------------------------ C. 编辑态合成（RulesetEditor）
+
+function testEditorChoices(): void {
+  const choices: RuleChoiceRow[] = RulesetEditor.choices();
+  checkNum('14 项（含「还没挑」）', choices.length, 14);
+  checkEqual('第一项是空串', choices[0].id, '');
+  checkEqual('第一项的显示名', choices[0].displayName, '（还没挑规则）');
+  check('选项 id 不重复', new Set(choices.map((c: RuleChoiceRow) => c.id)).size === 14);
+  // 与注册表同一顺序：桌面版 App.Services.xaml.cs 的注册顺序。
+  checkEqual('第 2 项是窗口类名', choices[1].id, RuleIds.WINDOW_CLASS_NAME);
+  checkEqual('末项是日出日落', choices[13].id, RuleIds.WEATHER_SUN_RISE_SET);
+  check('不可用的选项带提示', choices[1].support !== RuleSupport.Implemented
+    && choices[1].settingsHint.length > 0);
+  // 下标 0 是「还没挑」，1..4 是四条窗口类，5 起才是课表类。
+  check('课表类选项可用', choices[5].support === RuleSupport.Implemented);
+  // 静态缓存：反复取同一个数组，界面展开下拉不必每次重拼 14 项。
+  check('选项是缓存的同一个数组', RulesetEditor.choices() === choices);
+}
+
+function testEditorBuildWithoutRuleset(): void {
+  // 没配规则集：整块编辑态是空的，求值结论恒为假。
+  const model: RulesetEditModel = RulesetEditor.build(undefined, undefined);
+  checkNum('没有组', model.groups.length, 0);
+  check('标记为空', model.isEmpty);
+  check('不成立', !model.satisfied);
+  checkEqual('原因是没配规则', model.reason, RuleReason.NoRuleset);
+  checkEqual('状态是「无」', `${model.state}`, `${STATE_NONE}`);
+}
+
+function testEditorBuildWithoutContext(): void {
+  // context 传 undefined 时不求值，所有状态都是「无」。没选课表时界面仍然
+  // 能改规则，只是看不到结论 —— 求值需要课表，没有课表就不该给一份
+  // 「全都不成立」的结论，那会被当成「你配错了」。
+  const model: RulesetEditModel =
+    RulesetEditor.build(one(TimeState.OnClass), undefined);
+  checkNum('组数照实', model.groups.length, 1);
+  checkNum('规则数照实', model.groups[0].rules.length, 1);
+  checkEqual('规则集状态是「无」', `${model.state}`, `${STATE_NONE}`);
+  checkEqual('组状态是「无」', `${model.groups[0].state}`, `${STATE_NONE}`);
+  checkEqual('规则状态是「无」', `${model.groups[0].rules[0].state}`, `${STATE_NONE}`);
+  check('状态为「无」时不算成立', !model.satisfied);
+  // 没有课表就没有结论。此时 reason 必须是空的 —— 留 notChosen / groupEmpty
+  // 之类的占位值的话，界面上会对着一个根本没算过的规则集说「没配规则」，
+  // 而用户明明配了。
+  checkEqual('没求值就不给原因', model.reason, '');
+  checkEqual('没求值时组也不给原因', model.groups[0].reason, '');
+  checkEqual('没求值时规则也不给原因', model.groups[0].rules[0].reason, '');
+}
+
+function testShortCircuitKeepsHonestReason(): void {
+  // And 模式下前面一条不成立就 break，剩下几条根本没跑。它们的状态留「无」是对的，
+  // 但原因不能是占位值 —— 否则界面上会给用户一句「还没挑规则」/「组里没挑过规则」，
+  // 用户会去重配本来没错的东西。
+  const rs: Ruleset = ruleset(RulesetLogicalMode.Or, [group(RulesetLogicalMode.And, [
+    rule('com.example.pluginRule'),   // 恒假 → And 组定论
+    rule(RuleIds.LESSONS_TIME_STATE, timeStateRuleSettingsOf(TimeState.OnClass))
+  ]), group(RulesetLogicalMode.And, [
+    rule('com.example.pluginRule')
+  ], false, false)]);
+  const context: RuleContext = contextAt(`${BASE_DAY}T08:30:00`);
+  const model: RulesetEditModel = RulesetEditor.build(rs, context);
+  checkEqual('组内被短路那条的原因',
+    model.groups[0].rules[1].reason, RuleReason.ShortCircuited);
+  checkEqual('组内被短路那条的状态是「无」',
+    `${model.groups[0].rules[1].state}`, `${STATE_NONE}`);
+  // 停用的那一组走的是另一条路：原因必须是「已停用」而不是被短路。
+  checkEqual('停用组的原因', model.groups[1].reason, RuleReason.GroupDisabled);
+  for (const row of model.groups[1].rules) {
+    checkEqual('停用组内每条都是停用', row.reason, RuleReason.ShortCircuited);
+  }
+
+  // Or 模式下组不会短路 —— 命中就 break，后面的组确实没跑。
+  const orSet: Ruleset = ruleset(RulesetLogicalMode.Or, [
+    group(RulesetLogicalMode.Or, [rule(RuleIds.LESSONS_TIME_STATE,
+      timeStateRuleSettingsOf(TimeState.OnClass))]),
+    group(RulesetLogicalMode.And, [rule(RuleIds.LESSONS_TIME_STATE,
+      timeStateRuleSettingsOf(TimeState.Breaking))])
+  ]);
+  const orModel: RulesetEditModel = RulesetEditor.build(orSet, context);
+  check('Or 命中后整集成立', orModel.satisfied);
+  checkEqual('被短路的那组原因是短路', orModel.groups[1].reason, RuleReason.ShortCircuited);
+  checkEqual('被短路的那组状态是「无」', `${orModel.groups[1].state}`, `${STATE_NONE}`);
+  checkEqual('被短路组内那条也是短路',
+    orModel.groups[1].rules[0].reason, RuleReason.ShortCircuited);
+
+  // 求值器自己也这么报，界面拿到的轨迹与编辑态一致。
+  const direct: RulesetVerdict = RuleEngine.evaluate(rs, context);
+  checkEqual('求值器与编辑态同一口径',
+    direct.groups[0].rules[1].reason, model.groups[0].rules[1].reason);
+}
+
+function testEditorBuildCarriesSameVerdict(): void {
+  // 编辑态的结论必须与直接调求值器一致。这两处不一致的话，用户在界面上
+  // 看着「现在会藏起来」而面板上组件还在，无从判断该信哪个。
+  const rs: Ruleset = ruleset(RulesetLogicalMode.Or, [
+    group(RulesetLogicalMode.And, [
+      timeStateRule(TimeState.OnClass),
+      timeStateRule(TimeState.AfterSchool)
+    ])
+  ]);
+  const cases: string[] = [
+    `${BASE_DAY}T08:30:00`,
+    `${BASE_DAY}T08:50:00`,
+    `${BASE_DAY}T12:00:00`
+  ];
+  for (const at of cases) {
+    const context: RuleContext = contextAt(at);
+    const direct: RulesetVerdict = RuleEngine.evaluate(rs, context);
+    const model: RulesetEditModel = RulesetEditor.build(rs, context);
+    checkEqual(`${at} 的结论一致`, `${model.satisfied}`, `${direct.satisfied}`);
+    checkEqual(`${at} 的状态一致`, `${model.state}`, `${direct.state}`);
+    checkEqual(`${at} 的原因一致`, model.reason, direct.reason);
+    for (let g: number = 0; g < direct.groups.length; g++) {
+      checkEqual(`${at} 第 ${g} 组状态一致`,
+        `${model.groups[g].state}`, `${direct.groups[g].state}`);
+      checkEqual(`${at} 第 ${g} 组原因一致`,
+        model.groups[g].reason, direct.groups[g].reason);
+      for (let i: number = 0; i < direct.groups[g].rules.length; i++) {
+        checkEqual(`${at} 第 ${g} 组第 ${i} 条状态一致`,
+          `${model.groups[g].rules[i].state}`, `${direct.groups[g].rules[i].state}`);
+        checkEqual(`${at} 第 ${g} 组第 ${i} 条原因一致`,
+          model.groups[g].rules[i].reason, direct.groups[g].rules[i].reason);
+      }
+    }
+  }
+}
+
+function testEditorBuildAlignsCoordinates(): void {
+  // 坐标必须与规则集一一对应。这条是编辑态存在的全部理由：界面照着这个下标
+  // 回写，对齐错了就是「删了 A 结果 B 没了」。
+  const rs: Ruleset = ruleset(RulesetLogicalMode.Or, [
+    group(RulesetLogicalMode.And, [
+      timeStateRule(TimeState.OnClass),
+      timeStateRule(TimeState.Breaking),
+      timeStateRule(TimeState.AfterSchool)
+    ]),
+    group(RulesetLogicalMode.Or, [timeStateRule(TimeState.None)]),
+    group(RulesetLogicalMode.And, [])
+  ]);
+  const model: RulesetEditModel = RulesetEditor.build(rs, undefined);
+  checkNum('组数一致', model.groups.length, 3);
+  checkNum('第 0 组规则数一致', model.groups[0].rules.length, 3);
+  checkNum('第 1 组规则数一致', model.groups[1].rules.length, 1);
+  checkNum('第 2 组（空组）规则数一致', model.groups[2].rules.length, 0);
+  for (let g: number = 0; g < model.groups.length; g++) {
+    checkEqual(`第 ${g} 组的 groupIndex`, `${model.groups[g].groupIndex}`, `${g}`);
+    checkEqual(`第 ${g} 组的模式`, `${model.groups[g].mode}`, `${rs.groups[g].mode}`);
+    checkEqual(`第 ${g} 组的启用`, `${model.groups[g].isEnabled}`, `${rs.groups[g].isEnabled}`);
+    for (let i: number; i < model.groups[g].rules.length; i++) {
+      checkEqual(`第 ${g} 组第 ${i} 条的 groupIndex`,
+        `${model.groups[g].rules[i].groupIndex}`, `${g}`);
+      checkEqual(`第 ${g} 组第 ${i} 条的 ruleIndex`,
+        `${model.groups[g].rules[i].ruleIndex}`, `${i}`);
+      checkEqual(`第 ${g} 组第 ${i} 条的 id`,
+        model.groups[g].rules[i].ruleId, rs.groups[g].rules[i].id);
+    }
+  }
+
+  // 删掉中间那条之后，编辑态的下标要重排 —— 界面按行数组渲染，不做增量维护。
+  RulesetMutations.removeRule(rs, 0, 1);
+  const after: RulesetEditModel = RulesetEditor.build(rs, undefined);
+  checkNum('删一条之后组内规则数', after.groups[0].rules.length, 2);
+  checkEqual('第一条的下标', `${after.groups[0].rules[0].ruleIndex}`, '0');
+  checkEqual('第二条的下标', `${after.groups[0].rules[1].ruleIndex}`, '1');
+  checkEqual('第 1 组规则的坐标也跟着走',
+    `${after.groups[1].rules[0].groupIndex}`, '1');
+}
+
+function testEditorFlagsUnchosenAndUnknown(): void {
+  // 两种「这条规则不太对」得在界面上分开说：
+  //   - 没挑（Id 空串）：界面上就是「（还没挑规则）」，不该显示成陌生 id
+  //   - 陌生 id：桌面版配的、这边不认识的规则，判假但设置原样保留
+  // 组模式用 Or：And 下前面那条陌生规则恒假，会把后面几条全短路掉，
+  // 于是「这条规则判成什么」根本没发生，测的就不是想测的东西了。
+  const rs: Ruleset = ruleset(RulesetLogicalMode.Or, [group(RulesetLogicalMode.Or, [
+    rule(''),
+    rule('com.example.pluginRule'),
+    rule(RuleIds.LESSONS_TIME_STATE)
+  ])]);
+  const model: RulesetEditModel = RulesetEditor.build(rs, contextAt(`${BASE_DAY}T08:30:00`));
+  const rules: RuleEditRow[] = model.groups[0].rules;
+
+  check('空 id 标成没挑', rules[0].isUnchosen);
+  checkEqual('空 id 的显示名', rules[0].displayName, '（还没挑规则）');
+  checkEqual('没挑的判定原因', rules[0].reason, RuleReason.NotChosen);
+  checkEqual('没挑的状态是「无」', `${rules[0].state}`, `${STATE_NONE}`);
+
+  check('陌生 id 不标成没挑', !rules[1].isUnchosen);
+  checkEqual('陌生 id 直接回显 id', rules[1].displayName, 'com.example.pluginRule');
+  checkEqual('陌生 id 的判定原因', rules[1].reason, RuleReason.UnknownRule);
+  check('陌生 id 不成立', rules[1].state === STATE_FALSE);
+  check('陌生 id 的设置不可编辑', !rules[1].isSettingsEditable);
+  check('陌生 id 带解释', rules[1].settingsHint.length > 0);
+
+  check('已实现的规则设置可编辑', rules[2].isSettingsEditable);
+  checkEqual('已实现的规则判定成立', rules[2].reason, RuleReason.Matched);
+  check('已实现的规则状态是真', rules[2].state === STATE_TRUE);
+}
+
+function testEditorMarksUnsupportedRulesNotEditable(): void {
+  // 9 条窗口与天气规则在当前平台没有数据。界面上照常列出、可以配（值原样落盘），
+  // 但设置控件要置灰并标出原因 —— 判成「可编辑」的话用户会以为改了有用。
+  // 同样用 Or，让两条都被真正判到（见上面那条测试的注）。
+  const rs: Ruleset = ruleset(RulesetLogicalMode.Or, [group(RulesetLogicalMode.Or, [
+    rule(RuleIds.WEATHER_RAIN_TIME, new RainTimeRuleSettings()),
+    rule(RuleIds.WINDOW_STATUS, new WindowStatusRuleSettings())
+  ])]);
+  const model: RulesetEditModel = RulesetEditor.build(rs, contextAt(`${BASE_DAY}T08:30:00`));
+  for (const row of model.groups[0].rules) {
+    check(`${row.ruleId} 的设置不可编辑`, !row.isSettingsEditable);
+    checkEqual(`${row.ruleId} 判为不成立`, row.reason, RuleReason.NotImplemented);
+    check(`${row.ruleId} 的状态是假`, row.state === STATE_FALSE);
+    check(`${row.ruleId} 带解释`, row.settingsHint.indexOf('没有') >= 0);
+  }
+  check('整组不成立', model.groups[0].state === STATE_FALSE);
+}
+
+function testEditorDecodesSettingsObjects(): void {
+  // 界面要拿强类型对象绑控件，所以每种设置都必须解出对应类型的那一个类。
+  // 解不出来时给的是空对象（不是 undefined），界面照 isSettingsEditable 判成
+  // 不可编辑，根本不会去读它 —— 但空对象也绝不能是 null。
+  const rs: Ruleset = ruleset(RulesetLogicalMode.Or, [group(RulesetLogicalMode.And, [
+    rule(RuleIds.LESSONS_TIME_STATE, timeStateRuleSettingsOf(TimeState.Breaking)),
+    rule('com.example.pluginRule')
+  ])]);
+  const model: RulesetEditModel = RulesetEditor.build(rs, undefined);
+  const settings: Object = model.groups[0].rules[0].settings;
+  check('解出的是 TimeStateRuleSettings', settings instanceof TimeStateRuleSettings);
+  checkEqual('解出来的值对',
+    `${(settings as TimeStateRuleSettings).state}`, `${TimeState.Breaking}`);
+  const opaque: Object = model.groups[0].rules[1].settings;
+  check('陌生规则的 settings 不是 null', opaque !== null && opaque !== undefined);
+  checkEqual('陌生规则的 settings 是个空对象',
+    `${Object.keys(opaque as Record<string, Object>).length}`, '0');
+}
+
+function timeStateRuleSettingsOf(state: TimeState): TimeStateRuleSettings {
+  const out: TimeStateRuleSettings = new TimeStateRuleSettings();
+  out.state = state;
+  return out;
+}
+
+function testEditorCarriesEnabledAndReversedFlags(): void {
+  // 界面上的三个开关各自对应一个字段，编辑态必须把当前值带出来 ——
+  // 带错的话用户打开一个停用的组，看到的开关是开的，一动就把别的组也改了。
+  const rs: Ruleset = ruleset(RulesetLogicalMode.And, [
+    group(RulesetLogicalMode.Or, [timeStateRule(TimeState.OnClass, true)], true, false),
+    group(RulesetLogicalMode.And, [timeStateRule(TimeState.None)])
+  ], true);
+  const model: RulesetEditModel = RulesetEditor.build(rs, undefined);
+  check('规则集整体取反带出来了', model.isReversed);
+  checkEqual('规则集模式带出来了', `${model.mode}`, `${RulesetLogicalMode.And}`);
+  check('第 0 组取反带出来了', model.groups[0].isReversed);
+  check('第 0 组停用带出来了', !model.groups[0].isEnabled);
+  check('第 0 组的规则取反带出来了', model.groups[0].rules[0].isReversed);
+  check('第 1 组启用且不取反',
+    model.groups[1].isEnabled && !model.groups[1].isReversed
+    && !model.groups[1].rules[0].isReversed);
+  checkEqual('第 1 组模式带出来了',
+    `${model.groups[1].mode}`, `${RulesetLogicalMode.And}`);
+  check('非空规则集不标为空', !model.isEmpty);
+}
+
+function testEditorIsPureData(): void {
+  // 编辑态是可重入的：同一个规则集求两次，行数据不能是同一批对象，也不能
+  // 互相污染。面板、预览、编辑器会同时拿同一份规则集去合成（面板那边
+  // 只求值不合成，但求值是纯函数这一点同样要成立）。
+  const rs: Ruleset = one(TimeState.OnClass);
+  const context: RuleContext = contextAt(`${BASE_DAY}T08:30:00`);
+  const a: RulesetEditModel = RulesetEditor.build(rs, context);
+  const b: RulesetEditModel = RulesetEditor.build(rs, context);
+  check('两次合成的组对象不是同一个', a.groups[0] !== b.groups[0]);
+  check('两次合成的规则对象不是同一个',
+    a.groups[0].rules[0] !== b.groups[0].rules[0]);
+  checkEqual('两次结论一致', `${a.satisfied}`, `${b.satisfied}`);
+  // 改一边不影响另一边。
+  (a.groups[0].rules[0].settings as TimeStateRuleSettings).state = TimeState.None;
+  checkEqual('改了一边不影响另一边',
+    `${(b.groups[0].rules[0].settings as TimeStateRuleSettings).state}`,
+    `${TimeState.OnClass}`);
+  // 原规则集也不能被合成过程改掉。
+  checkEqual('原规则集没被动过', readState(rs, 0, 0), `${TimeState.OnClass}`);
+}
+
+function testEditorHandlesGroupVerdictCarriesEnabled(): void {
+  // 停用的组状态留「无」、原因给「已停用」。界面上要靠这个原因说「这一组
+  // 已停用，不参与判定」—— 与「组内没挑过规则」是两件事，都表现为状态「无」。
+  const rs: Ruleset = ruleset(RulesetLogicalMode.Or, [
+    group(RulesetLogicalMode.And, [timeStateRule(TimeState.OnClass)], false, false),
+    group(RulesetLogicalMode.And, [rule('')], false, true)
+  ]);
+  const model: RulesetEditModel =
+    RulesetEditor.build(rs, contextAt(`${BASE_DAY}T08:30:00`));
+  checkEqual('停用组的原因', model.groups[0].reason, RuleReason.GroupDisabled);
+  checkEqual('停用组的状态是「无」', `${model.groups[0].state}`, `${STATE_NONE}`);
+  checkEqual('空组的原因', model.groups[1].reason, RuleReason.GroupEmpty);
+  checkEqual('空组的状态是「无」', `${model.groups[1].state}`, `${STATE_NONE}`);
+  // Or 模式下第一组被跳过，落到第二组；空组又不计入，所以整集恒假。
+  check('两个组都不计入 → 整集不成立', !model.satisfied);
+  check('整集状态是假', model.state === STATE_FALSE);
+  check('组数照实带出来', model.groups.length === 2);
+}
+
+function testEditorEmptyRulesetGroupsOnly(): void {
+  // Groups 为空：桌面版直接 return false，IsReversed 不参与。这条规则被
+  // 照抄了，编辑态得把「整集不成立」与「组都不成立」分开 —— 后者 reason 是
+  // GroupEmpty，前者界面上的措辞是「还没有任何一组规则」。
+  const rs: Ruleset = ruleset(RulesetLogicalMode.And, [], true);
+  const model: RulesetEditModel = RulesetEditor.build(rs, contextAt(`${BASE_DAY}T08:30:00`));
+  checkNum('组数是 0', model.groups.length, 0);
+  check('标记为空', model.isEmpty);
+  check('整体取反不救它', !model.satisfied);
+  checkEqual('原因是组空', model.reason, RuleReason.GroupEmpty);
+  check('状态是假', model.state === STATE_FALSE);
+}
 
 console.log(`规则求值 通过 ${passed} 项，失败 ${failures.length} 项`);
 if (failures.length > 0) {
