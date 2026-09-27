@@ -1,66 +1,80 @@
 {
-  "app": {
-    "signingConfigs": [],
-    "products": [
+  app: {
+    signingConfigs: [
       {
-        "name": "default",
-        "signingConfig": "default",
-        "targetSdkVersion": "26.0.0",
-        "compatibleSdkVersion": "26.0.0",
-        "runtimeOS": "HarmonyOS",
-        "buildOption": {
-          "strictMode": {
-            "caseSensitiveCheck": true,
-            "useNormalizedOHMUrl": true
-          }
-        }
-      }
+        name: 'default',
+        type: 'HarmonyOS',
+        material: {
+          certpath: '/home/yukino_fox/.ohos/config/default_ClassyHarmony_0pjfiNjbmHkiMxK4pTIPU6ZUPjIcgXpXrLpKadfDQ=.cer',
+          keyAlias: 'debugKey',
+          keyPassword: '0000001b7fd9312b352b15da38b09857a3477ee8d81289e455cddd213a0bb6170ee68f561eebdb77beccb2',
+          profile: '/home/yukino_fox/.ohos/config/default_ClassyHarmony_0pjfiNjbmHkiMxK4pTIPU6ZUPjIcgXpXrLpKadfDQ=.p7b',
+          signAlg: 'SHA256withECDSA',
+          storeFile: '/home/yukino_fox/.ohos/config/default_ClassyHarmony_0pjfiNjbmHkiMxK4pTIPU6ZUPjIcgXpXrLpKadfDQ=.p12',
+          storePassword: '0000001b7fd9312b352b15da38b09857a3477ee8d81289e455cddd213a0bb6170ee68f561eebdb77beccb2',
+        },
+      },
     ],
-    "buildModeSet": [
+    products: [
       {
-        "name": "debug",
+        name: 'default',
+        signingConfig: 'default',
+        targetSdkVersion: '26.0.0',
+        compatibleSdkVersion: '26.0.0',
+        runtimeOS: 'HarmonyOS',
+        buildOption: {
+          strictMode: {
+            caseSensitiveCheck: true,
+            useNormalizedOHMUrl: true,
+          },
+        },
+      },
+    ],
+    buildModeSet: [
+      {
+        name: 'debug',
       },
       {
-        "name": "release"
-      }
-    ]
+        name: 'release',
+      },
+    ],
   },
-  "modules": [
+  modules: [
     {
-      "name": "entry",
-      "srcPath": "./entry",
-      "targets": [
+      name: 'entry',
+      srcPath: './entry',
+      targets: [
         {
-          "name": "default",
-          "applyToProducts": [
-            "default"
-          ]
-        }
-      ]
+          name: 'default',
+          applyToProducts: [
+            'default',
+          ],
+        },
+      ],
     },
     {
-      "name": "common_shared",
-      "srcPath": "./common_shared",
-      "targets": [
+      name: 'common_shared',
+      srcPath: './common_shared',
+      targets: [
         {
-          "name": "default",
-          "applyToProducts": [
-            "default"
-          ]
-        }
-      ]
+          name: 'default',
+          applyToProducts: [
+            'default',
+          ],
+        },
+      ],
     },
     {
-      "name": "common_core",
-      "srcPath": "./common_core",
-      "targets": [
+      name: 'common_core',
+      srcPath: './common_core',
+      targets: [
         {
-          "name": "default",
-          "applyToProducts": [
-            "default"
-          ]
-        }
-      ]
-    }
-  ]
+          name: 'default',
+          applyToProducts: [
+            'default',
+          ],
+        },
+      ],
+    },
+  ],
 }
