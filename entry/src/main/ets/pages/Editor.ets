@@ -41,6 +41,7 @@ import { ClassPlanPane } from './editor/ClassPlanPane';
 import { ClassPlanGroupPane } from './editor/ClassPlanGroupPane';
 import { TempOverlayPane } from './editor/TempOverlayPane';
 import { ReminderPane } from './editor/ReminderPane';
+import { CONTENT_MAX_WIDTH } from '../components/ContentWidth';
 
 @Entry
 @ComponentV2
@@ -158,6 +159,9 @@ struct Editor {
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.start_window_background'))
+    // 宽屏封顶居中，理由见 ContentWidth.ets 头注
+    .constraintSize({ maxWidth: CONTENT_MAX_WIDTH })
+    .alignSelf(ItemAlign.Center)
   }
 
   /** 底部提示行。只在有提示文案时占位。 */

@@ -41,6 +41,8 @@ import {
   ThemeMode
 } from '../common/AppPreferences';
 import { UiFeedback } from '../common/UiFeedback';
+import { ThemeService } from '../common/ThemeService';
+import { CONTENT_MAX_WIDTH } from '../components/ContentWidth';
 
 /** 字体缩放的档位。循环切换用，不给滑块 —— 见 cycleFontScale 的注释。 */
 const FONT_SCALE_STEPS: number[] = [0.8, 0.9, 1.0, 1.1, 1.3, 1.6];
@@ -84,9 +86,19 @@ struct SettingsPage {
   /** 不加装饰器：持有它的字段不需要可观测，AppPreferences 本身是纯读写器。 */
   private prefs: AppPreferences | undefined = undefined;
 
+  /**
+   * 换配色要用 UIAbilityContext。
+   *
+   * 存下来而不是每次现取：getHostContext() 在 ArkUI 里是拿宿主 context，
+   * 拿到的对象在整个 Ability 生命周期内是同一个，存下来省掉一处类型断言，
+   * 也让「换配色」这个动作不必关心 context 从哪来。
+   */
+  private host: common.UIAbilityContext | undefined = undefined;
+
   aboutToAppear(): void {
     const context: common.UIAbilityContext = this.getUIContext().getHostContext() as
       common.UIAbilityContext;
+    this.host = context;
     this.prefs = new AppPreferences(context);
     this.reload();
     this.ready = true;
@@ -182,9 +194,22 @@ struct SettingsPage {
 
   // ------------------------------------------------------------ 交互
 
+  /**
+   * 切主题：写盘 + 立刻生效。
+   *
+   * 立刻生效而不是「下次启动生效」：配色是那种「不立刻看到就以为自己没改
+   * 成功」的东西，而生效成本只是改一个窗口属性。
+   *
+   * 顺序是先落盘再切：万一 setColorMode 失败，盘上已经是新值，用户下次
+   * 进来会看到生效；反过来先切后落盘，中间崩了就出现「屏幕上变了但重进
+   * 又变回去」的更糟状态。
+   */
   private cycleTheme(): void {
     this.theme = (this.theme + 1) % 3;
     this.writeNumber(PrefKeys.THEME, this.theme);
+    if (this.host !== undefined) {
+      ThemeService.apply(this.host, this.theme);
+    }
   }
 
   private cycleDefaultPage(): void {
@@ -247,6 +272,12 @@ struct SettingsPage {
   private resetAll(): void {
     this.prefs?.resetToDefaults();
     this.reload();
+    // 主题要重新落到窗口上：reload() 只改了 @Local，屏幕上还是重置前的配色。
+    // 其他设置项没有这个问题 —— 它们在 build 里读 @Local，reload 完就重画了；
+    // 配色是窗口级属性，不经过 build。
+    if (this.host !== undefined) {
+      ThemeService.apply(this.host, this.theme);
+    }
     UiFeedback.toast(this.getUIContext(), '已恢复默认设置');
   }
 
@@ -432,5 +463,8 @@ struct SettingsPage {
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.ch_surface_weak'))
+    // 宽屏封顶居中，理由见 ContentWidth.ets 头注
+    .constraintSize({ maxWidth: CONTENT_MAX_WIDTH })
+    .alignSelf(ItemAlign.Center)
   }
 }

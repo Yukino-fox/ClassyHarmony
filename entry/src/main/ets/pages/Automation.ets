@@ -5,6 +5,7 @@ import { AutomationViewModel } from '../viewmodel/AutomationViewModel';
 import { AutomationSettings } from '../automation/AutomationSettings';
 import { ProfileRepository } from '../data/ProfileRepository';
 import { Workflow } from 'common_shared';
+import { CONTENT_MAX_WIDTH } from '../components/ContentWidth';
 
 @Entry
 @Component
@@ -131,5 +132,8 @@ export struct Automation {
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.ch_surface_weak'))
+    // 宽屏封顶居中，理由见 ContentWidth.ets 头注
+    .constraintSize({ maxWidth: CONTENT_MAX_WIDTH })
+    .alignSelf(ItemAlign.Center)
   }
 }

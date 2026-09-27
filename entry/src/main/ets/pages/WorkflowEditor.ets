@@ -6,6 +6,7 @@ import { Workflow, TriggerSettings, ActionItem } from 'common_shared';
 import { TriggerCatalog } from 'common_core';
 import { ActionCatalog } from 'common_core';
 import { ProfileRepository } from '../data/ProfileRepository';
+import { CONTENT_MAX_WIDTH } from '../components/ContentWidth';
 
 @Entry
 @Component
@@ -196,6 +197,10 @@ export struct WorkflowEditor {
     }
     .padding({ bottom: 24 })
     .backgroundColor($r('app.color.ch_surface_weak'))
+    .width('100%')
+    // 宽屏封顶居中，理由见 ContentWidth.ets 头注
+    .constraintSize({ maxWidth: CONTENT_MAX_WIDTH })
+    .alignSelf(ItemAlign.Center)
   }
 
   // --- 触发器相关 ---

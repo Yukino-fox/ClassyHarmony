@@ -27,6 +27,7 @@ import { resolveComponentLayoutViewModel } from '../common/AppServices';
 import { UiFeedback } from '../common/UiFeedback';
 import { ComponentLayoutViewModel } from '../viewmodel/ComponentLayoutViewModel';
 import { ComponentLayoutPane } from './panel/ComponentLayoutPane';
+import { PANEL_MAX_WIDTH } from '../components/ContentWidth';
 
 /*
  * struct 叫 PanelPage 而不是 Panel：ArkUI 有个内置的 Panel 组件，@Entry 的
@@ -93,5 +94,8 @@ struct PanelPage {
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.start_window_background'))
+    // 宽屏封顶居中，理由见 ContentWidth.ets 头注
+    .constraintSize({ maxWidth: PANEL_MAX_WIDTH })
+    .alignSelf(ItemAlign.Center)
   }
 }

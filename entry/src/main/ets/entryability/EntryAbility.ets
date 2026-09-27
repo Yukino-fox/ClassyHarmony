@@ -21,6 +21,7 @@ import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { resolveClassTableViewModel, syncClassReminders } from '../common/AppServices';
+import { ThemeService } from '../common/ThemeService';
 import { ClassTableViewModel } from '../viewmodel/ClassTableViewModel';
 
 const DOMAIN: number = 0x0000;
@@ -51,6 +52,12 @@ export default class EntryAbility extends UIAbility {
         hilog.error(DOMAIN, TAG, 'loadContent failed: %{public}s', JSON.stringify(err));
         return;
       }
+      // 主题放在 loadContent 回调里而不是 onWindowStageCreate 开头：
+      // setColorMode 要求「窗口已创建且页面已加载」，提前调抛 16000011。
+      // 代价是首帧可能按系统配色闪一下再切到用户选的档位 —— 只在「用户选了
+      // 与系统相反的档位」时可见，而那本来就是用户自己设的，一帧的过渡
+      // 换不来在这里做时序绕弯的复杂度。
+      ThemeService.applyStored(this.context);
       hilog.info(DOMAIN, TAG, 'loadContent ok');
     });
   }
