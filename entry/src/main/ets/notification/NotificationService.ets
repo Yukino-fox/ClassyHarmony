@@ -106,10 +106,22 @@ export class NotificationService {
         };
         await notificationManager.addNotificationSlot(this.context, slot);
       }
-      // 申请通知权限（用户可能已授权，会直接返回）
-      await notificationManager.requestEnableNotification(this.context, (err) => {
+      // 申请通知权限。刻意**不** await，也不参与 initialized 的判定。
+      //
+      // requestEnableNotification 是回调式的，返回 void —— await 它是空转。
+      // 更要紧的是：就算它返回 Promise，等它也等于等用户点完权限弹窗，
+      // 那 initialize() 的 Promise 就要挂到用户做决定为止，initialized 一直是
+      // false，所有 await initialize() 的调用方全部卡住。用户在弹窗上犹豫十秒，
+      // 整个通知链路就停十秒。
+      //
+      // 所以语义定成「发起申请，链路继续可用」：权限没批下来时 publish 会失败，
+      // 而失败只影响那一条通知；下一轮 tick 会再试。渠道（slot）已经建好了，
+      // 权限批下来的瞬间通知就能正常发出，不需要重建任何东西。
+      notificationManager.requestEnableNotification(this.context, (err) => {
         if (err) {
-          hilog.warn(DOMAIN, TAG, 'requestEnableNotification failed: %{public}s', JSON.stringify(err));
+          // 拒绝授权也走这里，不算错误：用户的选择，不是异常
+          hilog.warn(DOMAIN, TAG,
+            'notification permission not granted: %{public}s', JSON.stringify(err));
         }
       });
       this.initialized = true;

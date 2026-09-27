@@ -4,6 +4,7 @@
     "pages/Editor",
     "pages/Panel",
     "pages/Automation",
-    "pages/WorkflowEditor"
+    "pages/WorkflowEditor",
+    "pages/Settings"
   ]
 }

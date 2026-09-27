@@ -28,9 +28,9 @@ import { PanelNodeView } from './PanelNodeView';
  * 而 Settings.cs 里 `_mainWindowLineVerticalMargin = 5`。
  *
  * 取的是桌面版**默认值**而不是用户值：这个值存在桌面版的 settings.json 里，
- * 鸿蒙侧的 AppPreferences 还没有对应项（P6 只落了提醒提前量与面板方案名）。
- * 照抄默认值至少视觉一致；等 P9 把 settings.json 的其余部分搬过来，这里换成
- * 读用户配置。
+ * 而桌面版那边的键名是 MainWindowLineVerticalMargin，鸿蒙侧的 PrefKeys 里
+ * 没有对应项（P10 加的是界面与课表那几项，这一项属于「面板自身的间距」，
+ * 归 P11 的面板打磨一起做）。照抄默认值至少视觉一致。
  */
 const LINE_GAP: number = 5;
 

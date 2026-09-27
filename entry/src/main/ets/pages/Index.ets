@@ -20,10 +20,10 @@
  * 「今天要上什么」和「这周整体怎么排」是两个不同的问题：前者适合竖排速读，
  * 后者适合横向对比。并排放不冲突，反而省掉一次切换。
  *
- * 顶栏只放两样东西
+ * 顶栏只放三样东西
  * ---------------
- * 标题与「编辑」入口。再多就会开始抢课表本身的注意力 —— 课表页的主角是课表，
- * 任何常驻控件都在跟它抢垂直空间。档案状态、导入导出这些都在编辑页里，
+ * 标题、「设置」与「编辑」。再多就会开始抢课表本身的注意力 —— 课表页的主角是
+ * 课表，任何常驻控件都在跟它抢垂直空间。档案状态、导入导出这些都在编辑页里，
  * 因为那些是「偶尔做一次」的事，不该在每天看的那个界面上占位。
  * 「面板」是唯一的例外：它只在宽形态上出现（见 openPanel 的说明）。
  */
@@ -138,6 +138,19 @@ struct Index {
   }
 
   /**
+   * 进设置页。
+   *
+   * 设置是「偶尔做一次」的事，所以入口放在编辑页而不是课表页顶栏 ——
+   * 顶栏每多一个常驻入口都在跟课表本身抢注意力（同 openPanel 的理由）。
+   */
+  private openSettings(): void {
+    const uiContext: UIContext = this.getUIContext();
+    uiContext.getRouter().pushUrl({ url: 'pages/Settings' }).catch(() => {
+      UiFeedback.toast(uiContext, '进不去设置页');
+    });
+  }
+
+  /**
    * 顶栏。
    *
    * 高度给 40vp：这个页面的垂直空间在单栏形态下最紧张，而顶栏每多占一行，
@@ -160,6 +173,13 @@ struct Index {
             this.openPanel();
           })
       }
+      Text('设置')
+        .fontSize(14)
+        .fontColor($r('app.color.ch_accent'))
+        .padding({ right: 16, top: 4, bottom: 4 })
+        .onClick(() => {
+          this.openSettings();
+        })
       Text('编辑')
         .fontSize(14)
         .fontColor($r('app.color.ch_accent'))
