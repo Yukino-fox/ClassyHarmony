@@ -80,4 +80,6 @@ export class ServiceKeys {
   static readonly CLOCK: string = 'clock';
   static readonly PROFILE_REPO: string = 'profileRepository';
   static readonly ENGINE_SETTINGS: string = 'engineSettings';
+  /** 信息面板布局仓库。 */
+  static readonly PANEL_REPO: string = 'panelRepository';
 }

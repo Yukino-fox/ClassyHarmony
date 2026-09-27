@@ -86,6 +86,22 @@ export class AppPreferences {
     }
   }
 
+  /** 读字符串。缺失、类型不符、或整个库打不开时都返回 fallback。 */
+  getString(key: string, fallback: string): string {
+    if (this.store === undefined) {
+      return fallback;
+    }
+    try {
+      const value: preferences.ValueType = this.store.getSync(key, fallback);
+      if (typeof value !== 'string') {
+        return fallback;
+      }
+      return value;
+    } catch (err) {
+      return fallback;
+    }
+  }
+
   /**
    * 写值。同步写，落盘交给 preferences 自己做。
    *
@@ -94,7 +110,7 @@ export class AppPreferences {
    * 了，界面还提示「保存失败」）。两个都是小问题，但后者会让人以为
    * 「改这个设置有风险」，于是干脆不敢改。
    */
-  put(key: string, value: boolean | number): void {
+  put(key: string, value: boolean | number | string): void {
     if (this.store === undefined) {
       return;
     }
@@ -123,4 +139,12 @@ export class PrefKeys {
    * 存数值而不是布尔，是因为「自动」与「强制折叠」都要能表达。
    */
   static readonly REMINDER_MODE: string = 'reminder.mode';
+  /**
+   * 当前使用的信息面板方案名。
+   *
+   * 桌面版把这个值放在 settings.json 的 CurrentComponentConfig。鸿蒙侧绝不能
+   * 跟着放进 profile.json（见本文件头注：档案要与桌面版字节级往返），所以
+   * 走 preferences。方案名同时是文件名的一部分，改它等于切到另一份布局。
+   */
+  static readonly PANEL_SCHEME: string = 'panel.scheme';
 }

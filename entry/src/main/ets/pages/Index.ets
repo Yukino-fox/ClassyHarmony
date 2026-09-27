@@ -25,6 +25,7 @@
  * 标题与「编辑」入口。再多就会开始抢课表本身的注意力 —— 课表页的主角是课表，
  * 任何常驻控件都在跟它抢垂直空间。档案状态、导入导出这些都在编辑页里，
  * 因为那些是「偶尔做一次」的事，不该在每天看的那个界面上占位。
+ * 「面板」是唯一的例外：它只在宽形态上出现（见 openPanel 的说明）。
  */
 
 import { common } from '@kit.AbilityKit';
@@ -123,6 +124,20 @@ struct Index {
   }
 
   /**
+   * 进信息面板。
+   *
+   * 只在平板与 2in1 上有入口。面板的价值在于常驻可见、能一眼扫到，而手机上有
+   * 小组件与临上课提醒占着常驻那一屏；再给一个要手动打开才能看的面板只是多一个
+   * 入口，还会让用户在两个「看今天上什么」的地方之间犹豫。
+   */
+  private openPanel(): void {
+    const uiContext: UIContext = this.getUIContext();
+    uiContext.getRouter().pushUrl({ url: 'pages/Panel' }).catch(() => {
+      UiFeedback.toast(uiContext, '进不去信息面板');
+    });
+  }
+
+  /**
    * 顶栏。
    *
    * 高度给 40vp：这个页面的垂直空间在单栏形态下最紧张，而顶栏每多占一行，
@@ -136,6 +151,15 @@ struct Index {
         .fontWeight(FontWeight.Medium)
         .fontColor($r('app.color.ch_text_primary'))
         .layoutWeight(1)
+      if (!this.isSingleColumn()) {
+        Text('面板')
+          .fontSize(14)
+          .fontColor($r('app.color.ch_accent'))
+          .padding({ right: 16, top: 4, bottom: 4 })
+          .onClick(() => {
+            this.openPanel();
+          })
+      }
       Text('编辑')
         .fontSize(14)
         .fontColor($r('app.color.ch_accent'))

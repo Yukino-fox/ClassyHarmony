@@ -225,18 +225,41 @@ export struct EditorToggleRow {
 export struct EditorChip {
   @Param text: string = '';
   @Param tone: number = 0;
+  /**
+   * 是否不可点。
+   *
+   * 用灰掉而不是「点了不响应」：一个点了没反应的按钮，用户要么以为程序卡了，
+   * 要么反复点。灰掉本身就是「这里不能动」的说明，省掉一次试错。
+   * 用参数而不是把回调留空，是因为留空回调在 ArkUI 里和「忘了传」长得一样。
+   */
+  @Param disabled: boolean = false;
   @Event onTap: () => void = () => {};
 
   build() {
     Text(this.text)
       .fontSize(12)
-      .fontColor(this.tone === 1 ? $r('app.color.ch_accent') : $r('app.color.ch_text_secondary'))
-      .backgroundColor(this.tone === 1 ? $r('app.color.ch_accent_soft') : $r('app.color.ch_surface_alt'))
+      .fontColor(this.chipTextColor())
+      .backgroundColor(this.chipBackground())
       .borderRadius(10)
       .padding({ left: 10, right: 10, top: 4, bottom: 4 })
+      .opacity(this.disabled ? 0.4 : 1)
       .onClick(() => {
+        if (this.disabled) {
+          return;
+        }
         this.onTap();
       })
+  }
+
+  private chipTextColor(): ResourceColor {
+    if (this.disabled) {
+      return $r('app.color.ch_text_hint');
+    }
+    return this.tone === 1 ? $r('app.color.ch_accent') : $r('app.color.ch_text_secondary');
+  }
+
+  private chipBackground(): ResourceColor {
+    return this.tone === 1 ? $r('app.color.ch_accent_soft') : $r('app.color.ch_surface_alt');
   }
 }
 

@@ -20,12 +20,16 @@ import { ClassTableViewModel } from '../viewmodel/ClassTableViewModel';
 import { ScheduleEditorViewModel } from '../viewmodel/ScheduleEditorViewModel';
 import { AppClock, SystemClock } from './AppClock';
 import { ProfileRepository } from '../data/ProfileRepository';
+import { ComponentLayoutRepository } from '../data/ComponentLayoutRepository';
+import { ComponentLayoutViewModel } from '../viewmodel/ComponentLayoutViewModel';
+import { AppPreferences, PrefKeys } from './AppPreferences';
 import { FormWidgetService } from '../widget/FormWidgetService';
 import { ReminderSyncResult, syncReminders } from '../reminder/ReminderSyncService';
 import { ServiceContainer, ServiceKeys } from './ServiceContainer';
 
 let instance: ClassTableViewModel | undefined = undefined;
 let editorInstance: ScheduleEditorViewModel | undefined = undefined;
+let panelInstance: ComponentLayoutViewModel | undefined = undefined;
 
 /**
  * 取进程内唯一的课表页 ViewModel，首次调用时装配。
@@ -116,4 +120,40 @@ export async function syncClassReminders(
 /** 丢掉编辑页 ViewModel，下次 resolve 重新装配（草稿随之丢弃）。 */
 export function resetScheduleEditorViewModel(): void {
   editorInstance = undefined;
+}
+
+/**
+ * 取进程内唯一的信息面板 ViewModel，首次调用时装配。
+ *
+ * 方案名从 preferences 读（对应桌面版 settings.json 的 CurrentComponentConfig）。
+ * 不从 profile.json 读：那份要与桌面版字节级往返，塞一个桌面版不认识的字段进去
+ * 就等于给双向同步埋一颗雷（见 AppPreferences 的头注）。
+ *
+ * @param context UIAbility 的 context，提供 filesDir 与 preferences 的落点。
+ */
+export function resolveComponentLayoutViewModel(
+  context: common.UIAbilityContext): ComponentLayoutViewModel {
+  if (panelInstance !== undefined) {
+    return panelInstance;
+  }
+  const container: ServiceContainer = new ServiceContainer();
+  container.register<ComponentLayoutRepository>(ServiceKeys.PANEL_REPO, () => {
+    return new ComponentLayoutRepository(context.filesDir);
+  });
+
+  panelInstance = new ComponentLayoutViewModel(
+    container.require<ComponentLayoutRepository>(ServiceKeys.PANEL_REPO)
+  );
+  // 方案名走 preferences，与 ReminderSettings 一样直接 new：preferences 按名字
+  // 返回进程内同一份实例，不需要容器来保证唯一性。
+  panelInstance.load(new AppPreferences(context).getString(PrefKeys.PANEL_SCHEME, ''));
+  return panelInstance;
+}
+
+/** 丢掉信息面板 ViewModel，下次 resolve 重新装配。 */
+export function resetComponentLayoutViewModel(): void {
+  if (panelInstance !== undefined) {
+    panelInstance.dispose();
+  }
+  panelInstance = undefined;
 }
