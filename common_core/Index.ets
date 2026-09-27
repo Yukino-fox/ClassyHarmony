@@ -180,3 +180,9 @@ export {
   DEFAULT_ACTION_SET_NAME,
   WorkflowMutations
 } from './src/main/ets/automation/WorkflowMutations';
+
+/* ---- 自动化运行时（P8c2）---- */
+export { AutomationSettings } from './src/main/ets/automation/AutomationSettings';
+
+/* ---- 数据仓库（P8c2）---- */
+export { ProfileRepository } from './src/main/ets/data/ProfileRepository';
