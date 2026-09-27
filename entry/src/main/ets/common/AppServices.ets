@@ -12,19 +12,25 @@
  *
  * 小组件那边不共用这个容器：FormExtensionAbility 是独立运行时，自己装配自己
  * 那一份。引擎没有跨实例可变状态，所以这样切是安全的。
+ *
+ * 唯一的例外是时钟：容器里注册的不是 SystemClock 而是 resolveExactTimeService
+ * 的结果（它实现 AppClock）。校时服务有跨调用状态 —— 10 分钟定时器、已同步
+ * 偏差、冻结标记 —— 做成两份的话两边会各自发查询、各自算偏差，课表页和编辑页
+ * 上显示的时间就对不上了。小组件那侧仍是 SystemClock，原因见该文件注释。
  */
 
 import { common } from '@kit.AbilityKit';
 import { DateTimeValue } from 'common_shared';
 import { ClassTableViewModel } from '../viewmodel/ClassTableViewModel';
 import { ScheduleEditorViewModel } from '../viewmodel/ScheduleEditorViewModel';
-import { AppClock, SystemClock } from './AppClock';
+import { AppClock } from './AppClock';
 import { ProfileRepository } from '../data/ProfileRepository';
 import { ComponentLayoutRepository } from '../data/ComponentLayoutRepository';
 import { ComponentLayoutViewModel } from '../viewmodel/ComponentLayoutViewModel';
 import { AppPreferences, PrefKeys } from './AppPreferences';
 import { FormWidgetService } from '../widget/FormWidgetService';
 import { ReminderSyncResult, syncReminders } from '../reminder/ReminderSyncService';
+import { resolveExactTimeService } from '../time/ExactTimeService';
 import { ServiceContainer, ServiceKeys } from './ServiceContainer';
 
 let instance: ClassTableViewModel | undefined = undefined;
@@ -42,7 +48,9 @@ export function resolveClassTableViewModel(context: common.UIAbilityContext): Cl
     return instance;
   }
   const container: ServiceContainer = new ServiceContainer();
-  container.registerValue<AppClock>(ServiceKeys.CLOCK, new SystemClock());
+  // 校时服务实现 AppClock。进程内单例（见 resolveExactTimeService 的说明），
+  // 所以两处 resolve 拿到的是同一个时钟，课表页与编辑页显示的时间不会差。
+  container.registerValue<AppClock>(ServiceKeys.CLOCK, resolveExactTimeService(context));
   container.register<ProfileRepository>(ServiceKeys.PROFILE_REPO, () => {
     return new ProfileRepository(context.filesDir);
   });
@@ -78,7 +86,7 @@ export function resolveScheduleEditorViewModel(
     return editorInstance;
   }
   const container: ServiceContainer = new ServiceContainer();
-  container.registerValue<AppClock>(ServiceKeys.CLOCK, new SystemClock());
+  container.registerValue<AppClock>(ServiceKeys.CLOCK, resolveExactTimeService(context));
   container.register<ProfileRepository>(ServiceKeys.PROFILE_REPO, () => {
     return new ProfileRepository(context.filesDir);
   });

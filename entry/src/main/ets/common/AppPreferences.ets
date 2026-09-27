@@ -88,6 +88,37 @@ export class PrefKeys {
   static readonly DEBUG_LOG: string = 'DebugLog';
   /** 诊断：是否开性能叠加层。 */
   static readonly PERFORMANCE_OVERLAY: string = 'PerformanceOverlay';
+
+  /*
+   * 精确时间（P11）。键名与桌面版 Settings.cs 的属性名逐字一致，且是
+   * 顶层扁平键 —— 那边用 System.Text.Json 且没有配 NamingStrategy，
+   * 所以落盘就是属性名原样，嵌套结构并不存在。
+   *
+   * 别把这几个键挪进什么「Time」子对象里：跨端读的是同一个文件，
+   * 扁平是为了让两边写出的字节也一致。
+   */
+
+  /** 精确时间：NTP 服务器。默认 ntp.aliyun.com。 */
+  static readonly EXACT_TIME_SERVER: string = 'ExactTimeServer';
+  /** 精确时间：总开关。默认开。 */
+  static readonly EXACT_TIME_ENABLED: string = 'IsExactTimeEnabled';
+  /** 精确时间：用户手动偏移秒数。默认 0。 */
+  static readonly TIME_OFFSET_SECONDS: string = 'TimeOffsetSeconds';
+  /** 精确时间：每日自动补偿开关。默认关。 */
+  static readonly TIME_AUTO_ADJUST_ENABLED: string = 'IsTimeAutoAdjustEnabled';
+  /** 精确时间：每日补偿秒数。默认 0。 */
+  static readonly TIME_AUTO_ADJUST_SECONDS: string = 'TimeAutoAdjustSeconds';
+  /** 精确时间：上次补偿的基准时刻（ISO 8601）。缺键视为首次运行。 */
+  static readonly LAST_TIME_ADJUST: string = 'LastTimeAdjustDateTime';
+  /**
+   * 精确时间：调试偏移秒数。默认 0。
+   *
+   * 名字里带 Debug，但桌面版是无条件参与运算、无条件落盘的
+   * （ExactTimeService.GetCurrentLocalDateTime 把它加在 TimeOffsetSeconds
+   * 之后）。所以这里也得读 —— 不读的话，一个在桌面版上把它调成 5 秒的用户
+   * 同步到鸿蒙侧会看到时间差 5 秒，而且没有任何线索指向原因。
+   */
+  static readonly DEBUG_TIME_OFFSET_SECONDS: string = 'DebugTimeOffsetSeconds';
 }
 
 /** 全部可识别的键。导出是为了「重置」与「导入」能遍历。 */
@@ -107,7 +138,14 @@ export const ALL_PREF_KEYS: string[] = [
   PrefKeys.CONFLICT_DETECTION,
   PrefKeys.AUTO_SELECT_CURRENT_WEEK,
   PrefKeys.DEBUG_LOG,
-  PrefKeys.PERFORMANCE_OVERLAY
+  PrefKeys.PERFORMANCE_OVERLAY,
+  PrefKeys.EXACT_TIME_SERVER,
+  PrefKeys.EXACT_TIME_ENABLED,
+  PrefKeys.TIME_OFFSET_SECONDS,
+  PrefKeys.TIME_AUTO_ADJUST_ENABLED,
+  PrefKeys.TIME_AUTO_ADJUST_SECONDS,
+  PrefKeys.LAST_TIME_ADJUST,
+  PrefKeys.DEBUG_TIME_OFFSET_SECONDS
 ];
 
 /** 主题档位。值必须与桌面版 Settings.Theme 一致（那边以整数落盘）。 */
@@ -127,6 +165,27 @@ export enum DefaultPage {
   Panel = 2,
   Automation = 3
 }
+
+/*
+ * 精确时间的默认值。必须与桌面版 Settings.cs 第 139-148 行的字段初始值
+ * 一致（那边没有 [JsonPropertyName]，也没有 DefaultValue 特性，默认值来自
+ * 字段初始化器）：
+ *
+ *   _exactTimeServer         = "ntp.aliyun.com"
+ *   _isExactTimeEnabled      = true
+ *   _timeOffsetSeconds       = 0.0
+ *   _isTimeAutoAdjustEnabled = false
+ *   _timeAutoAdjustSeconds   = 0.0
+ *   _lastTimeAdjustDateTime  = DateTime.Now
+ *   _debugTimeOffsetSeconds  = 0.0
+ *
+ * 桌面版对 IsExactTimeEnabled 的默认值是「开」。这是本项目唯一一处默认
+ * 开启联网功能的地方，不跟着改 —— 改了两端默认值就不一致了，而默认值
+ * 不一致是最难被发现的那种不一致。
+ */
+export const DEFAULT_EXACT_TIME_SERVER: string = 'ntp.aliyun.com';
+/** 手动偏移的合理范围（秒）。超出会被夹住。 */
+export const TIME_OFFSET_LIMIT: number = 86400;
 
 /** 字体缩放下界。 */
 export const FONT_SCALE_MIN: number = 0.8;

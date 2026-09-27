@@ -186,3 +186,28 @@ export { AutomationSettings } from './src/main/ets/automation/AutomationSettings
 
 /* ---- 数据仓库（P8c2）---- */
 export { ProfileRepository } from './src/main/ets/data/ProfileRepository';
+
+/* ---- 精确时间（P11a）---- */
+export {
+  NTP_EPOCH_OFFSET_SECONDS,
+  NTP_PACKET_SIZE,
+  NtpParseResult,
+  NtpReject,
+  NtpResponse,
+  buildNtpRequest,
+  ntpDelayMillis,
+  ntpOffsetMillis,
+  parseNtpResponse
+} from './src/main/ets/time/NtpProtocol';
+export {
+  BACKWARD_HOLD_LIMIT_MS,
+  ExactClock,
+  MAX_ACCEPTABLE_DELAY_MS,
+  SYSTEM_JUMP_THRESHOLD_MS,
+  SyncOutcome
+} from './src/main/ets/time/ExactClock';
+export {
+  DailyAutoAdjustPlan,
+  elapsedWholeDays,
+  planDailyAutoAdjust
+} from './src/main/ets/time/DailyAutoAdjust';

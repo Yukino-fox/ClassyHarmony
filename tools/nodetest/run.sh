@@ -22,6 +22,7 @@
 #   src/panel-driver.ts     面板渲染模型（倒计时格式 / 样式合成 / 课表边界 / 深度上限）
 #   src/ruleset-driver.ts   规则求值（三态 / 短路 / 逐层取反 / 课表处理器 / 往返）
 #   src/automation-driver.ts 自动化链路（cron / 八个触发器 / 四个判据 / 条件恢复 / 往返）
+#   src/time-driver.ts       精确时间（NTP 纪元换算 / 偏差公式 / 冻结 / 反向保持）
 set -euo pipefail
 
 DEVECO_HOME="${DEVECO_HOME:-/mnt/data/devecostudio-26.0.0.621}"
@@ -102,6 +103,9 @@ sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
 sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
      s|'../../common_core/src/main/ets/|'../core/|g" \
   "$ROOT/tools/nodetest/src/automation-driver.ts" > "$WORK/src/tools/automation-driver.ts"
+sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
+     s|'../../common_core/src/main/ets/|'../core/|g" \
+  "$ROOT/tools/nodetest/src/time-driver.ts" > "$WORK/src/tools/time-driver.ts"
 
 "$NODE" "$TSC" \
   --outDir "$WORK/out" \
@@ -124,7 +128,8 @@ sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
   "$WORK/src/tools/component-driver.ts" \
   "$WORK/src/tools/panel-driver.ts" \
   "$WORK/src/tools/ruleset-driver.ts" \
-  "$WORK/src/tools/automation-driver.ts" 2>&1 | sed 's/^/  /' || true
+  "$WORK/src/tools/automation-driver.ts" \
+  "$WORK/src/tools/time-driver.ts" 2>&1 | sed 's/^/  /' || true
 
 cp -r "$ROOT/tools/nodetest/fixtures" "$WORK/out/fixtures"
 
@@ -158,4 +163,7 @@ echo "── 规则求值 ──"
 echo ""
 echo "── 自动化链路 ──"
 "$NODE" "$WORK/out/tools/automation-driver.js" || status=1
+echo ""
+echo "── 精确时间 ──"
+"$NODE" "$WORK/out/tools/time-driver.js" || status=1
 exit $status

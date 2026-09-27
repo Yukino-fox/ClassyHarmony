@@ -22,6 +22,7 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { resolveClassTableViewModel, syncClassReminders } from '../common/AppServices';
 import { ThemeService } from '../common/ThemeService';
+import { resolveExactTimeService } from '../time/ExactTimeService';
 import { ClassTableViewModel } from '../viewmodel/ClassTableViewModel';
 
 const DOMAIN: number = 0x0000;
@@ -69,6 +70,10 @@ export default class EntryAbility extends UIAbility {
   onForeground(): void {
     // start() 幂等：定时器已在跑时不会叠加，只多一次重读档案。
     this.vm?.start();
+    // 校时同理。start() 里会重读设置、跑一次每日补偿，并在距上次同步超过
+    // 1 分钟时补一次查询。放在 onForeground 而不是 onCreate：应用在后台
+    // 可能待很久，回前台补一次才准。
+    resolveExactTimeService(this.context).start();
     hilog.info(DOMAIN, TAG, 'onForeground: polling resumed');
     // 课前提醒的周期重复挂在平台侧，不依赖本进程；这里同步是为了修正首次
     // 触发日（跨天之后它落在过去）与课表变更（可能来自设备间同步）。
@@ -98,6 +103,10 @@ export default class EntryAbility extends UIAbility {
 
   onBackground(): void {
     this.vm?.stop();
+    // 后台不查 NTP。10 分钟一次的间隔意味着最多丢 10 分钟精度，用户切回来
+    // 时 onForeground 会补查；而一个在后台还挂着的 UDP socket 既费电又可能
+    // 被系统在后台冻结时杀掉，白白产生一次「同步失败」的状态文案。
+    resolveExactTimeService(this.context).stop();
     hilog.info(DOMAIN, TAG, 'onBackground: polling stopped');
   }
 }
