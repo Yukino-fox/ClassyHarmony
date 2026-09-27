@@ -56,6 +56,20 @@ export { ClassPlanGroup } from './src/main/ets/models/ClassPlanGroup';
 export { OrderedSchedule } from './src/main/ets/models/OrderedSchedule';
 export { Profile } from './src/main/ets/models/Profile';
 export {
+  Rule,
+  RuleGroup,
+  Ruleset,
+  RulesetLogicalMode,
+  RuleIds,
+  StringMatchingSettings,
+  TimeStateRuleSettings,
+  CurrentSubjectRuleSettings,
+  CurrentWeatherRuleSettings,
+  RainTimeRuleSettings,
+  SunRiseSetRuleSettings,
+  WindowStatusRuleSettings
+} from './src/main/ets/models/Ruleset';
+export {
   ComponentProfile,
   ComponentSettings,
   MainWindowLineSettings,

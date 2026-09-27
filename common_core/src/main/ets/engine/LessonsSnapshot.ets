@@ -35,6 +35,19 @@ export class LessonsSnapshot {
   /** 下一节课的科目；无则 Subject.fallback()。 */
   nextClassSubject: Subject = Subject.fallback();
 
+  /**
+   * 上一节课的科目；无则 Subject.fallback()。
+   *
+   * 桌面版没有这个属性：PreviousSubjectHandler 每次被问起就现查一遍
+   * `layout.Layouts.Reverse().FirstOrDefault(i => i.TimeType == 0 && i.EndTime < now)`。
+   * 这里提前算好，是因为规则求值每帧都可能问，而反向扫描是 O(n)；
+   * 顺带也让小组件与面板不必各自再写一遍。
+   *
+   * 口径与桌面版的处理器一致：取**最后一个** EndTime < now 的上课时间点
+   * （严格小于，不含边界 —— 正在上的那节不算「上一节」）。
+   */
+  previousSubject: Subject = Subject.fallback();
+
   /** 下一个上课时间点；无则 TimeLayoutItem.empty()。 */
   nextClassTimeLayoutItem: TimeLayoutItem = TimeLayoutItem.empty();
 

@@ -18,6 +18,14 @@
  *   桌面版同样如此（比较的是当天 TimeOfDay），照搬。
  * - TimeState.PrepareOnClass（上课准备中）在本计算中永远不会出现，
  *   它由 P6 的提醒链路按 ClassPrepareNotifySeconds 自行判断。
+ *
+ * 一处刻意的偏离
+ * --------------
+ * 「上一节课」在桌面版是 PreviousSubjectHandler 现算的，它扫的是 TimeLayout.Layouts
+ * （原始全表），而同一个类的其余部分扫的是 ValidTimeLayoutItems（过滤掉未启用的时间点）。
+ * 同一个概念在同一份代码里用两套数据源，是桌面版的疏漏：用户把某个时间点设为未启用时，
+ * 「当前/下一节」会跳过它而「上一节」不会。这里统一按有效时间点算，与另外两个一致。
+ * 受影响的只有「关掉了时间点 + 规则问上一节科目」这个组合。
  */
 
 import {
@@ -104,6 +112,18 @@ export class LessonsEngine {
         profile, plan, plan.getClassIndex(layout.layouts.indexOf(nextClass)));
       if (subject !== undefined) {
         snapshot.nextClassSubject = subject;
+      }
+    }
+
+    // 上一节课：最后一个 TimeType==0 且 EndTime < now（严格小于）。
+    // 对应 LessonsService.PreviousSubjectHandler 里的
+    // `layout.Layouts.Reverse().FirstOrDefault(i => i.TimeType == 0 && i.EndTime < now)`。
+    const prevClass: TimeLayoutItem | undefined = LessonsEngine.findLast(validItems, nowSeconds);
+    if (prevClass !== undefined) {
+      const subject: Subject | undefined = ClassPlanResolver.subjectAt(
+        profile, plan, plan.getClassIndex(layout.layouts.indexOf(prevClass)));
+      if (subject !== undefined) {
+        snapshot.previousSubject = subject;
       }
     }
 
@@ -225,6 +245,24 @@ export class LessonsEngine {
     for (const item of items) {
       const matched: boolean = wantClass ? item.isClass() : item.isBreak();
       if (matched && item.endTime.toSeconds() >= nowSeconds) {
+        return item;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * 最后一个上课时间点，且 EndTime < now（严格小于，不含边界）。
+   *
+   * 与 findFirst 是一对镜像：那条找「接下来」，这条找「刚刚过去」。
+   * 用严格小于而不是 <= 是照抄桌面版：正在上的那节 EndTime > now，本就不该被选中；
+   * 而在课间休息时（EndTime 恰好等于 now 的那一秒）桌面版会选中刚结束的那节课，
+   * 这与「上节课」的自然含义一致，照抄。
+   */
+  private static findLast(items: TimeLayoutItem[], nowSeconds: number): TimeLayoutItem | undefined {
+    for (let i = items.length - 1; i >= 0; i--) {
+      const item: TimeLayoutItem = items[i];
+      if (item.isClass() && item.endTime.toSeconds() < nowSeconds) {
         return item;
       }
     }

@@ -125,3 +125,22 @@ export {
   PanelWidthKind,
   PanelBuilder
 } from './src/main/ets/panel/PanelModel';
+
+/* ---- 规则引擎（P8a）---- */
+export {
+  RuleInfo,
+  RuleCatalog,
+  RuleSettingsKind,
+  RuleSupport
+} from './src/main/ets/rules/RuleCatalog';
+export {
+  RuleContext,
+  RuleEngine,
+  RuleGroupVerdict,
+  RuleReason,
+  RuleVerdict,
+  RulesetVerdict,
+  STATE_NONE,
+  STATE_FALSE,
+  STATE_TRUE
+} from './src/main/ets/rules/RuleEngine';
