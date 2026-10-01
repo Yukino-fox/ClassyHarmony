@@ -106,3 +106,28 @@ export {
 
 export { encodeUtf8 } from './src/main/ets/text/Utf8';
 export { md5Hex, md5HexOfText } from './src/main/ets/crypto/Md5';
+
+/* ---- 天气（P11c）---- */
+
+export {
+  WEATHER_CODE_UNKNOWN,
+  parseWeatherNumber,
+  ValueUnitPair,
+  WindInfo,
+  CurrentWeather,
+  RangedValue,
+  StringListStatus,
+  RangedListStatus,
+  IntListStatus,
+  DoubleListStatus,
+  ForecastDaily,
+  ForecastHourly,
+  MinutelyPrecipitation,
+  Minutely,
+  AqiInfo,
+  WeatherAlert,
+  WeatherInfo,
+  CityInfo,
+  City,
+  WeatherQueryResult
+} from './src/main/ets/models/Weather';

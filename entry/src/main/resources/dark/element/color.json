@@ -43,6 +43,38 @@
     {
       "name": "ch_next",
       "value": "#4DD0C7"
+    },
+    {
+      "name": "ch_weather_rain",
+      "value": "#00BFFF"
+    },
+    {
+      "name": "ch_weather_alert",
+      "value": "#FFB74D"
+    },
+    {
+      "name": "ch_aqi_1",
+      "value": "#3CB371"
+    },
+    {
+      "name": "ch_aqi_2",
+      "value": "#FFFF00"
+    },
+    {
+      "name": "ch_aqi_3",
+      "value": "#FFA500"
+    },
+    {
+      "name": "ch_aqi_4",
+      "value": "#CD5C5C"
+    },
+    {
+      "name": "ch_aqi_5",
+      "value": "#8B0000"
+    },
+    {
+      "name": "ch_aqi_6",
+      "value": "#9370DB"
     }
   ]
 }

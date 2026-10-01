@@ -27,6 +27,14 @@ export enum NotificationCategory {
   ClassReminder = 'class_reminder',
   /** 自动化行动「显示通知」：默认优先级、可配置 */
   Automation = 'automation',
+  /**
+   * 天气提醒：自动化行动「显示天气提醒」发的预报 / 预警。
+   *
+   * 与 Automation 分开是因为来源不同，用户想静音天气提醒时不该连带把自动化
+   * 的提醒也静音掉。桌面版天气是独立的一个 NotificationProvider，这里对应
+   * 一个独立渠道。
+   */
+  Weather = 'weather',
   /** 系统级：App 更新、同步完成等，低优先级 */
   System = 'system'
 }
@@ -63,6 +71,16 @@ const SLOT_CONFIGS: Record<NotificationCategory, SlotConfig> = {
     lightEnabled: false,
     lockscreenVisibility: NotificationConstant.LockscreenVisibility.PUBLIC,
     badgeFlag: true,
+    bypassDnd: false
+  },
+  [NotificationCategory.Weather]: {
+    type: NotificationSlotType.RECOMMENDATION,
+    level: NotificationConstant.NotificationLevel.DEFAULT,
+    sound: '',
+    vibrationEnabled: false,
+    lightEnabled: false,
+    lockscreenVisibility: NotificationConstant.LockscreenVisibility.PUBLIC,
+    badgeFlag: false,
     bypassDnd: false
   },
   [NotificationCategory.System]: {

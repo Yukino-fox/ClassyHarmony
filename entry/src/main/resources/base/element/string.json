@@ -27,6 +27,10 @@
     {
       "name": "form_today_description",
       "value": "在桌面显示接下来的课程与当前状态"
+    },
+    {
+      "name": "location_permission_reason",
+      "value": "用于按当前位置自动选择天气城市"
     }
   ]
 }

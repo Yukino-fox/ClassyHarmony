@@ -26,10 +26,12 @@
  * 换序在 ColorValue.toArkUi 里做一次，界面直接拿字符串用。在界面里换的话每处都
  * 要记得调，漏一处的表现是「颜色全反了但没人报错」。
  *
- * 未实现的部分照实显示
+ * 未接入的部分照实显示
  * ------------------
- * 规则集判定是 P8，天气要联网是 P11。这两处给出明确文案而不是画个空白：用户看到
- * 「天气组件要联网，还没接」能判断该不该等，看到空白只会以为面板坏了。
+ * 规则集判定是 P8。天气的**取数**（HTTP + 定位）在 P11c 的 entry 侧，core 不碰
+ * 网络；天气组件的数据由调用方通过 `weather` 参数注入（见 PanelBuilder.build）。
+ * 没注入时（比如组件编辑页的预览）给一句「天气数据还没取到」，而不是画个空白 ——
+ * 用户看到文案能判断该不该等，看到空白只会以为面板坏了。
  */
 
 import {
@@ -74,8 +76,11 @@ import {
   RollingPayload,
   SchedulePayload,
   SlidePayload,
-  TextPayload
+  TextPayload,
+  WeatherPayload
 } from '../components/ComponentPayloads';
+import { buildWeatherBrief, WeatherBrief } from '../weather/WeatherBrief';
+import { WeatherSnapshot } from '../weather/WeatherRules';
 
 /**
  * 面板最多展平多少层容器。
@@ -268,6 +273,15 @@ export class PanelNode {
 
   /** 课程表组件的课表行。 */
   lessons: PanelLesson[] = [];
+  /**
+   * 天气简报组件的内容。kind !== WEATHER 时是一个空对象。
+   *
+   * 与 lessons 一样是「已经把该算的都算完」的纯数据：界面不再读 WeatherInfo、
+   * 不判开关、不拼字符串。这样做的理由是天气简报的每一项都有开关
+   * （ShowMainWeatherInfo / ShowRainTime / ShowAlerts）和一处容易搞错的
+   * 显示模式（模糊倒计时），全部收在 core 里才能被逐条断言。
+   */
+  weather: WeatherBrief = new WeatherBrief();
   /** 容器子节点。 */
   children: PanelNode[] = [];
   /** 滚动速度，vp/秒。 */
@@ -369,7 +383,7 @@ export class PanelBuilder {
    * @param now 当前时刻
    */
   static build(layout: ComponentProfile, profile: Profile | undefined, settings: EngineSettings,
-    now: DateTimeValue): PanelModel {
+    now: DateTimeValue, weather: WeatherSnapshot | undefined = undefined): PanelModel {
     const model: PanelModel = new PanelModel();
     // 隐藏规则整块求值一次，逐条规则喂同一份课表状态。
     // 面板每秒重算一次，所以这里不能再按节点各算一遍课表快照 ——
@@ -379,6 +393,9 @@ export class PanelBuilder {
     context.profile = profile;
     context.snapshot = profile === undefined
       ? new LessonsSnapshot() : LessonsEngine.compute(profile, settings, now);
+    // 天气快照随 context 一起传下去：隐藏规则要它（五条天气规则），
+    // 天气组件本身也要它（渲染简报）。同一份引用，不算两遍、不各拿一份。
+    context.weather = weather;
     for (let i: number = 0; i < layout.lines.length; i++) {
       const line: MainWindowLineSettings = layout.lines[i];
       if (!line.isVisible) {
@@ -499,7 +516,7 @@ export class PanelBuilder {
         PanelBuilder.fillSchedule(node, component, profile, settings, now);
         break;
       case PanelNodeKind.WEATHER:
-        node.hintText = '天气要联网取数据，鸿蒙侧还没接上。';
+        PanelBuilder.fillWeather(node, component, context);
         break;
       case PanelNodeKind.SEPARATOR:
         // 桌面版是一条 2×25 的竖线，纯装饰，没有文字。
@@ -618,6 +635,33 @@ export class PanelBuilder {
   }
 
   // ------------------------------------------------------------ 各类组件
+
+  /**
+   * 天气简报。
+   *
+   * 数据来自 `context.weather`，可能是本轮刚取的，也可能是启动时从
+   * weather.json 读回来的缓存 —— 两条路都不影响这里，因为快照里的 `info`
+   * 就是「最近一次成功拿到的天气」。
+   *
+   * 用 `info.hasData()` 而不是 `snapshot.isRefreshed` 判空：重启之后
+   * isRefreshed 是 false（与本轮是否取过有关），但缓存里的温度是能显示的，
+   * 桌面版也一样（组件绑 `Settings.LastWeatherInfo`，不绑 IsWeatherRefreshed）。
+   * 规则那边才用 isRefreshed，两处刻意不同。
+   *
+   * 没有数据时给一句提示而不是留空节点：天气是**唯一**一个数据来自网络、
+   * 与布局无关的组件，它的空态（首次启动、没网、刚清过缓存）是常态。
+   * 空节点会让这一项在行里彻底消失，用户看到的是「我配的天气组件不见了」。
+   */
+  private static fillWeather(node: PanelNode, component: ComponentSettings,
+    context: RuleContext): void {
+    const payload: WeatherPayload = ComponentCatalog.decode(component) as WeatherPayload;
+    const snapshot: WeatherSnapshot | undefined = context.weather;
+    if (snapshot === undefined || !snapshot.info.hasData()) {
+      node.hintText = '天气数据还没取到';
+      return;
+    }
+    node.weather = buildWeatherBrief(payload, snapshot.info);
+  }
 
   /**
    * 时钟。

@@ -60,6 +60,7 @@ import {
 } from 'common_shared';
 import { LessonsSnapshot } from '../engine/LessonsSnapshot';
 import { RuleCatalog, RuleInfo, RuleSupport } from './RuleCatalog';
+import { WeatherSnapshot, weatherRuleSatisfied } from '../weather/WeatherRules';
 
 /**
  * 判定状态。取值与桌面版 RulesetService.BoolToRuleObjectState 一致：
@@ -83,7 +84,7 @@ export class RuleReason {
   static readonly NotChosen: string = 'notChosen';
   /** Id 在注册表里查不到（陌生 id，或桌面版插件注册的规则）。 */
   static readonly UnknownRule: string = 'unknownRule';
-  /** 已注册，但鸿蒙侧无对应物（窗口类 / 天气类规则）。 */
+  /** 已注册，但鸿蒙侧无对应物（目前只剩 4 条窗口类规则）。 */
   static readonly NotImplemented: string = 'notImplemented';
   /** 处理器执行时抛了异常。 */
   static readonly HandlerThrew: string = 'handlerThrew';
@@ -124,6 +125,15 @@ export class RuleContext {
   snapshot: LessonsSnapshot = new LessonsSnapshot();
   /** 与 snapshot 同源的档案。给科目类规则按 id 查科目用。 */
   profile: Profile | undefined = undefined;
+  /**
+   * 天气快照。五条天气类规则靠它求值，其余规则不看它。
+   *
+   * 与 snapshot 一样是**注入**的纯数据：core 不碰网络、不读 weather.json，
+   * 由入口侧把 WeatherService 当前的那一份塞进来。undefined 表示天气模块
+   * 没起来（或这次求值不需要它，比如组件布局编辑页的预览），此时五条天气
+   * 规则全部判 false —— 与「本轮还没刷新成功」同结果。
+   */
+  weather: WeatherSnapshot | undefined = undefined;
 }
 
 /** 单条规则的判定结果。 */
@@ -341,10 +351,11 @@ export class RuleEngine {
   }
 
   /**
-   * 四条已实现规则的处理器。
+   * 已实现规则的处理器。
    *
-   * 对应 LessonsService 的 TimeStateHandler / CurrentSubjectHandler /
-   * NextSubjectHandler / PreviousSubjectHandler。
+   * 科目/时间状态四条对应 LessonsService 的 TimeStateHandler /
+   * CurrentSubjectHandler / NextSubjectHandler / PreviousSubjectHandler；
+   * 天气五条委托给 weather/WeatherRules，那边只吃 RuleContext.weather 里的快照。
    *
    * 走到末尾说明注册表把某条规则的 support 标成了 Implemented 却没给实现 ——
    * 返回 false 而不是抛，让一次疏漏表现为「这条规则不成立」，
@@ -369,6 +380,11 @@ export class RuleEngine {
     if (id === RuleIds.LESSONS_PREVIOUS_SUBJECT) {
       return RuleEngine.subjectMatches(context,
         (settings as CurrentSubjectRuleSettings).subjectId, context.snapshot.previousSubject);
+    }
+    if (id === RuleIds.WEATHER_CURRENT || id === RuleIds.WEATHER_TOMORROW ||
+      id === RuleIds.WEATHER_ALERT || id === RuleIds.WEATHER_RAIN_TIME ||
+      id === RuleIds.WEATHER_SUN_RISE_SET) {
+      return weatherRuleSatisfied(id, settings, context.weather, context.now);
     }
     return false;
   }

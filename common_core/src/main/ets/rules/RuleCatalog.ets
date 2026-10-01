@@ -13,10 +13,12 @@
  *
  * 处理器分三档
  * -----------
- *   已实现  : 4 条课表类规则，处理函数在 RuleEngine.ets
- *   恒为假  : 4 条窗口类 + 5 条天气类。鸿蒙侧没有「前台窗口」；天气要等 P11 接上
- *             联网数据。桌面版此时的行为是「找不到处理器 → 记日志 → false」，
- *             这里照抄那个结果，但用 support 显式标出来，别让读代码的人以为漏了实现。
+ *   已实现  : 4 条课表类规则（处理函数在 RuleEngine.ets）+ 5 条天气类规则
+ *             （处理函数委托给 weather/WeatherRules）。天气类规则只吃
+ *             RuleContext.weather 里的快照，取数在 entry 的 WeatherService。
+ *   恒为假  : 4 条窗口类。鸿蒙侧没有「前台窗口」，桌面版此时的行为是
+ *             「找不到处理器 → 记日志 → false」，这里照抄那个结果，但用
+ *             support 显式标出来，别让读代码的人以为漏了实现。
  *   未注册  : 用户手改文件塞进来的陌生 id，或桌面版插件注册的规则。求值同样得到 false。
  * 三档在编辑器里显示成不同提示，避免用户对着一个恒假的规则反复调参数。
  *
@@ -112,15 +114,15 @@ const REGISTRY: RuleInfo[] = [
     RuleSettingsKind.CurrentSubject),
   entry(RuleIds.LESSONS_TIME_STATE, '当前时间状态是', '', RuleSupport.Implemented,
     RuleSettingsKind.TimeState),
-  entry(RuleIds.WEATHER_CURRENT, '当前天气是', '', RuleSupport.Unsupported,
+  entry(RuleIds.WEATHER_CURRENT, '当前天气是', '', RuleSupport.Implemented,
     RuleSettingsKind.CurrentWeather),
-  entry(RuleIds.WEATHER_TOMORROW, '明天天气是', '', RuleSupport.Unsupported,
+  entry(RuleIds.WEATHER_TOMORROW, '明天天气是', '', RuleSupport.Implemented,
     RuleSettingsKind.CurrentWeather),
-  entry(RuleIds.WEATHER_ALERT, '存在气象预警', '', RuleSupport.Unsupported,
+  entry(RuleIds.WEATHER_ALERT, '存在气象预警', '', RuleSupport.Implemented,
     RuleSettingsKind.StringMatching),
-  entry(RuleIds.WEATHER_RAIN_TIME, '距离降水开始/结束还剩', '', RuleSupport.Unsupported,
+  entry(RuleIds.WEATHER_RAIN_TIME, '距离降水开始/结束还剩', '', RuleSupport.Implemented,
     RuleSettingsKind.RainTime),
-  entry(RuleIds.WEATHER_SUN_RISE_SET, '是否日出/日落', '', RuleSupport.Unsupported,
+  entry(RuleIds.WEATHER_SUN_RISE_SET, '是否日出/日落', '', RuleSupport.Implemented,
     RuleSettingsKind.SunRiseSet)
 ];
 

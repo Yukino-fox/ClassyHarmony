@@ -6,19 +6,20 @@
  * ------------
  * 与 TriggerCatalog 同一条理由。桌面版靠 DI + 特性反射，这里不能。
  *
- * 7 个行动，3 个已实现
+ * 7 个行动，5 个已实现
  * ------------------
  * 已实现：
- *   classisland.action.sleep   等 N 秒。整条链路里唯一「什么都不做」的行动，
- *                             但它是编排的关键（等 5 秒再说下一句），不能省。
- *   classisland.settings       改一项应用设置。**七个里唯一支持恢复的**
- *                             （ModifyAppSettingsAction 覆写了 OnRevert），
- *                             所以「改完再改回来」这条链在鸿蒙侧是通的。
- *   classisland.app.quit       退出应用。
+ *   classisland.action.sleep        等 N 秒。整条链路里唯一「什么都不做」的行动，
+ *                                  但它是编排的关键（等 5 秒再说下一句），不能省。
+ *   classisland.settings            改一项应用设置。**七个里唯一支持恢复的**
+ *                                  （ModifyAppSettingsAction 覆写了 OnRevert），
+ *                                  所以「改完再改回来」这条链在鸿蒙侧是通的。
+ *   classisland.app.quit            退出应用。
+ *   classisland.showNotification    显示一条本地通知。P9 已实现，P11c 才把标注
+ *                                  改对（此前一直挂着「等 P9」的旧理由）。
+ *   classisland.notification.weather 显示天气提醒。P11c 落地（预报 / 预警 / 逐时）。
  *
- * 未实现（4 个），照常列出、可以配（值原样落盘），但界面上标出来：
- *   classisland.showNotification    要先有通知系统（P9）。
- *   classisland.notification.weather 要先有天气数据（P11）。
+ * 未实现（2 个），照常列出、可以配（值原样落盘），但界面上标出来：
  *   classisland.os.run              鸿蒙应用不能拉起任意进程 / 执行命令行。
  *   classisland.app.restart         重启要走 startAbility + terminateSelf，
  *                                  进程被杀时系统可能不给回调，新起的进程也
@@ -104,10 +105,6 @@ function entry(id: string, name: string, glyph: string, kind: ActionSettingsKind
   return out;
 }
 
-const NOTIFICATION_REASON: string =
-  '鸿蒙侧还没有通知系统（规划在 P9）。等那边落地后这一条才能真的弹出来。';
-const WEATHER_REASON: string =
-  '要先有天气数据（规划在 P11），否则没有可播报的内容。';
 const OS_RUN_REASON: string =
   '鸿蒙应用不能拉起任意进程，也不能执行命令行 —— 这一条在鸿蒙上没有对应物。';
 const APP_RESTART_REASON: string =
@@ -120,12 +117,11 @@ const REGISTRY: ActionInfo[] = [
   entry(ActionIds.APP_RESTART, '重启 ClassIsland', '', ActionSettingsKind.AppRestart, false,
     APP_RESTART_REASON),
   entry(ActionIds.SETTINGS, '应用设置', '', ActionSettingsKind.ModifyAppSettings, true),
-  entry(ActionIds.SHOW_NOTIFICATION, '显示提醒', '', ActionSettingsKind.Notification, false,
-    NOTIFICATION_REASON),
+  entry(ActionIds.SHOW_NOTIFICATION, '显示提醒', '', ActionSettingsKind.Notification, false),
   entry(ActionIds.OS_RUN, '运行', '', ActionSettingsKind.Run, false, OS_RUN_REASON),
   entry(ActionIds.SLEEP, '等待时长', '', ActionSettingsKind.Sleep, false),
   entry(ActionIds.NOTIFICATION_WEATHER, '显示天气提醒', '',
-    ActionSettingsKind.WeatherNotification, false, WEATHER_REASON)
+    ActionSettingsKind.WeatherNotification, false)
 ];
 
 export class ActionCatalog {

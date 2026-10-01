@@ -26,6 +26,7 @@ import { AutomationExecutor, ExecutorContext, CauseText } from './AutomationExec
 import { WorkflowMutations } from 'common_core';
 import { ProfileRepository } from '../data/ProfileRepository';
 import { RuleContext } from 'common_core';
+import { currentWeatherSnapshot } from '../weather/WeatherService';
 
 const AUTOMATION_DIR: string = 'Automations';
 
@@ -108,6 +109,9 @@ export class AutomationTickScheduler {
     ruleContext.now = now;
     ruleContext.profile = profile;
     ruleContext.snapshot = snapshot;
+    // 天气快照注入。拿不到（天气服务没起来）就是 undefined，五条天气规则全判
+    // false —— 与「本轮还没刷新成功」同结果。
+    ruleContext.weather = currentWeatherSnapshot();
 
     const tick: AutomationTick = new AutomationTick(now);
     tick.hasTrustedProfile = true;

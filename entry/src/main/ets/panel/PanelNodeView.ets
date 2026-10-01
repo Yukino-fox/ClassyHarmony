@@ -24,7 +24,14 @@
  * 决定，面板里的分组/堆叠/滚动/轮播四层随便嵌，所以这里让 struct 引用自己。
  */
 
-import { PanelLesson, PanelNode, PanelNodeKind, PanelWidthKind } from 'common_core';
+import {
+  PanelLesson,
+  PanelNode,
+  PanelNodeKind,
+  PanelWidthKind,
+  WeatherAlertBrief,
+  WEATHER_MAIN_KIND_AQI
+} from 'common_core';
 import { HIDDEN_DIM_OPACITY, panelHiddenMark } from './HiddenMark';
 
 /**
@@ -35,6 +42,14 @@ import { HIDDEN_DIM_OPACITY, panelHiddenMark } from './HiddenMark';
  * 「相邻之间 6、容器两端 0」，与这里直接用间距等价，且不用再手工抵消。
  */
 const CHILD_GAP: number = 6;
+
+/**
+ * 天气简报里主信息、降雨倒计时、各条预警之间的横向间距（vp）。
+ *
+ * 桌面版 WeatherComponent.axaml 是 `StackPanel Orientation="Horizontal" Spacing="4"`。
+ * 那 4 是 dp，与这里 vp 同值。
+ */
+const WEATHER_GAP: number = 4;
 
 /**
  * 倒计时四段之间的间距（vp）。
@@ -195,6 +210,27 @@ function withAlpha(color: string, percent: number): string {
   const hex: string = value.toString(16).toUpperCase();
   const padded: string = hex.length === 1 ? `0${hex}` : hex;
   return `#${padded}${color.substring(3)}`;
+}
+
+/**
+ * AQI 档位对应的颜色（1..6）。
+ *
+ * 桌面版 `WeatherComponent.axaml.cs` 按 AqiLevel 从主题里取一支刷子，两套主题
+ * 各有一套取值。这里不引主题，改成两套 color.json（base / dark）里的资源，
+ * 由系统按当前配色自动选 —— 与 `ch_text_primary` 那些同一个机制。
+ *
+ * 越界 / 0（解析失败落第 1 档）归到第 1 档，与桌面版 `switch default` 的取舍
+ * 一致：宁可显示「优」的绿色，也不要因为一次解析失败画出一个没有含义的颜色。
+ */
+function aqiColor(level: number): ResourceColor {
+  switch (level) {
+    case 2: return $r('app.color.ch_aqi_2');
+    case 3: return $r('app.color.ch_aqi_3');
+    case 4: return $r('app.color.ch_aqi_4');
+    case 5: return $r('app.color.ch_aqi_5');
+    case 6: return $r('app.color.ch_aqi_6');
+    default: return $r('app.color.ch_aqi_1');
+  }
 }
 
 /**
@@ -439,6 +475,8 @@ export struct PanelNodeView {
       this.rolling()
     } else if (this.node.kind === PanelNodeKind.SLIDE) {
       this.slide()
+    } else if (this.node.kind === PanelNodeKind.WEATHER) {
+      this.weather()
     } else {
       // 未识别组件的兜底分支。正常走不到（hintText 已经拦住了），留在这里是
       // 为了 core 将来加新种类时这里不会静默画成空白。
@@ -455,6 +493,54 @@ export struct PanelNodeView {
       .fontSize(this.node.fontSize)
       .fontColor(this.node.foregroundColor)
       .maxLines(1)
+  }
+
+  /**
+   * 天气简报：主信息 + 降雨倒计时 + 各条预警，横排。
+   *
+   * 为什么不画图标
+   * ------------
+   * 桌面版有 Lucide / Fluent / SF 三套天气图标字体，本端未移植（见
+   * WeatherBrief.ets 头注）。所以这里一律显示文字：主信息是「晴 26°C」这样的
+   * 「文字 + 温度」，预警是预警类型（「暴雨」「大风」）。`WeatherIconId` 与
+   * 预警图标在界面上不完全生效 —— 这一点在设置页写明了。
+   *
+   * AQI 换色
+   * --------
+   * 只有主信息种类是 AQI 时主信息才按档位取色（桌面版就是只在这一档换了
+   * Foreground）。其余档位用组件自己的前景色，与时钟/文本一致。
+   */
+  @Builder
+  private weather() {
+    Row({ space: WEATHER_GAP }) {
+      if (this.node.weather.mainText.length > 0) {
+        Text(this.node.weather.mainText)
+          .fontSize(this.node.fontSize)
+          .fontColor(this.weatherMainColor())
+          .maxLines(1)
+      }
+      if (this.node.weather.rainText.length > 0) {
+        Text(this.node.weather.rainText)
+          .fontSize(this.node.secondaryFontSize)
+          .fontColor($r('app.color.ch_weather_rain'))
+          .maxLines(1)
+      }
+      ForEach(this.node.weather.alerts, (alert: WeatherAlertBrief) => {
+        Text(alert.type.length > 0 ? alert.type : alert.title)
+          .fontSize(this.node.secondaryFontSize)
+          .fontColor($r('app.color.ch_weather_alert'))
+          .maxLines(1)
+      }, (alert: WeatherAlertBrief) => `${alert.type}|${alert.title}`)
+    }
+    .alignItems(VerticalAlign.Center)
+  }
+
+  /** 天气主信息的颜色：AQI 档按档位取色，其余用组件前景色。 */
+  private weatherMainColor(): ResourceColor {
+    if (this.node.weather.mainKind === WEATHER_MAIN_KIND_AQI) {
+      return aqiColor(this.node.weather.aqiLevel);
+    }
+    return this.node.foregroundColor;
   }
 
   /** 分割线：2×25 的竖条。 */

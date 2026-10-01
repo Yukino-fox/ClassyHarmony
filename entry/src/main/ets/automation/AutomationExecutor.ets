@@ -1,14 +1,14 @@
 /**
  * 自动化行动的执行器（entry 侧，有 UIAbilityContext，可调用 terminateSelf）。
  *
- * 已实现的 3 个行动：
- *  - classisland.action.sleep      → 等待指定秒数
- *  - classisland.settings          → 修改应用设置（写 settings.json）
- *  - classisland.app.quit          → 退出应用（调用 terminateSelf）
- *  - classisland.showNotification  → 显示本地通知
+ * 已实现的 5 个行动：
+ *  - classisland.action.sleep        → 等待指定秒数
+ *  - classisland.settings            → 修改应用设置（写 settings.json）
+ *  - classisland.app.quit            → 退出应用（调用 terminateSelf）
+ *  - classisland.showNotification    → 显示本地通知
+ *  - classisland.notification.weather → 显示天气提醒（预报 / 预警 / 逐时）
  *
- * 未实现的 3 个行动（占位，返回 false 供上层记录失败）：
- *  - classisland.notification.weather → 等 P11 天气
+ * 未实现的 2 个行动（占位，返回 false 供上层记录失败）：
  *  - classisland.os.run            → 鸿蒙无法拉起任意进程
  *  - classisland.app.restart       → 无对应物
  */
@@ -19,11 +19,18 @@ import {
   SleepActionSettings,
   ModifyAppSettingsActionSettings,
   NotificationActionSettings,
-  ActionItem
+  WeatherNotificationActionSettings,
+  ActionItem,
+  RangedValue,
+  WeatherAlert,
+  WeatherInfo,
+  DateTimeValue
 } from 'common_shared';
+import { weatherTextByCode } from 'common_core';
 import { AutomationSettings } from './AutomationSettings';
 import { common } from '@kit.AbilityKit';
 import { NotificationService, NotificationCategory } from '../notification/NotificationService';
+import { WeatherService, resolveWeatherService } from '../weather/WeatherService';
 
 /** 执行结果：true=成功，false=失败 */
 export type ExecResult = boolean;
@@ -43,6 +50,14 @@ export class AutomationExecutor {
   private readonly ctx: ExecutorContext;
   private readonly settings: AutomationSettings;
   private readonly notificationService: NotificationService;
+  /**
+   * 已经发过的预警详情。
+   *
+   * 桌面版 WeatherNotificationProvider 上有同样一份 `ShownAlerts`，作用是
+   * 「同一条预警只弹一次」—— 否则每次触发都会把当前所有预警重弹一遍。执行器
+   * 与调度器同生命周期（进程内唯一），所以这里存得住。
+   */
+  private readonly shownAlerts: Set<string> = new Set<string>();
 
   constructor(ctx: ExecutorContext) {
     this.ctx = ctx;
@@ -62,8 +77,7 @@ export class AutomationExecutor {
       case ActionIds.SHOW_NOTIFICATION:
         return this.execShowNotification(action, causeText);
       case ActionIds.NOTIFICATION_WEATHER:
-        causeText.value = '行动「天气通知」尚未实现（等待 P11 天气）';
-        return false;
+        return this.execWeatherNotification(action, causeText);
       case ActionIds.OS_RUN:
         causeText.value = '行动「运行程序」在鸿蒙上不可用';
         return false;
@@ -198,62 +212,145 @@ export class AutomationExecutor {
     return true;
   }
 
-  /** classisland.settings：修改应用设置（写 settings.json） */
-  private async execModifySettings(action: ActionItem, causeText: CauseText): Promise<ExecResult> {
-    const s: ModifyAppSettingsActionSettings | undefined = ModifyAppSettingsActionSettings.parse(action.settings);
+  /**
+   * classisland.notification.weather：发一条天气提醒。
+   *
+   * 三种（对应桌面版 WeatherNotificationActionSettings.NotificationKind）：
+   *   0 = 三天预报（今天 / 明天 / 后天）
+   *   1 = 气象预警（逐条发：标题 + 详情）
+   *   2 = 逐小时预报（未来 6 小时）
+   *
+   * 与桌面版的差异
+   * ------------
+   * 桌面版走 WeatherNotificationProvider 的 mask + overlay 两套内容，预警带
+   * 图标、详情用滚动文本。本端只有一条普通通知，压成「标题 + 正文」。
+   * 天气预报的图标字体未移植，所以预报正文里的天气一律用中文文字
+   * （`weatherTextByCode`），不画图标。
+   */
+  private async execWeatherNotification(action: ActionItem,
+    causeText: CauseText): Promise<ExecResult> {
+    const s: WeatherNotificationActionSettings | undefined =
+      WeatherNotificationActionSettings.parse(action.settings);
     if (s === undefined) {
-      causeText.value = 'ModifyAppSettings 设置解析失败';
+      causeText.value = 'WeatherNotification 设置解析失败';
       return false;
     }
-    if (s.name === '' || s.name === undefined) {
-      return true;
-    }
-    const path: string = `${this.ctx.filesDir}/settings.json`;
-    let all: JsonObject = new JsonObject();
-    try {
-      const content: string = fs.readTextSync(path);
-      const node: JsonNode = JsonReader.parse(content);
-      if (node instanceof JsonObject) {
-        all = node;
-      }
-    } catch {
-      // 文件不存在或解析失败，按空对象处理
+
+    // 天气数据由进程内单例持有。拿不到就是「还没有数据」，不是错误 ——
+    // 用户大多是「刚开机就触发了这条自动化」，等下一次刷新就好。
+    const service: WeatherService = resolveWeatherService(this.ctx.context);
+    const info: WeatherInfo = service.lastInfo();
+    if (!info.hasData()) {
+      causeText.value = '还没有天气数据，等下一次刷新';
+      return false;
     }
 
-    switch (s.mode) {
-      case 0: // Replace
-        if (s.value !== undefined) {
-          all.set(s.name, s.value);
-        } else {
-          all.set(s.name, JsonNull.getInstance());
-        }
+    await this.notificationService.initialize();
+
+    let ok: boolean = false;
+    switch (s.notificationKind) {
+      case 0:
+        ok = await this.publishForecast(info);
         break;
-      case 1: // Merge
-        if (s.value instanceof JsonObject) {
-          const existing: JsonNode | undefined = all.tryGet(s.name);
-          if (existing !== undefined && existing instanceof JsonObject) {
-            this.mergeObject(existing, s.value);
-          } else {
-            all.set(s.name, s.value);
-          }
-        }
+      case 1:
+        ok = await this.publishAlerts(info);
         break;
-      case 2: // Delete
-        all = this.removeKey(all, s.name);
+      case 2:
+        ok = await this.publishHourly(info);
         break;
       default:
-        causeText.value = `未知的设置修改模式：${s.mode}`;
+        causeText.value = `未知的天气提醒种类：${s.notificationKind}`;
         return false;
     }
-
-    const tmp: string = `${path}.tmp.${Date.now()}`;
-    const file: fs.File = fs.openSync(tmp, fs.OpenMode.WRITE_ONLY | fs.OpenMode.CREATE | fs.OpenMode.TRUNC);
-    try {
-      fs.writeSync(file.fd, JsonWriter.writeCompact(all), { encoding: 'utf-8' });
-    } finally {
-      fs.closeSync(file);
+    if (!ok) {
+      // 三种都是「数据是空的所以没东西可发」，不是失败。
+      causeText.value = '没有可播报的天气内容';
     }
-    fs.renameSync(tmp, path);
+    return ok;
+  }
+
+  /** 三天预报：今天 / 明天 / 后天。 */
+  private async publishForecast(info: WeatherInfo): Promise<ExecResult> {
+    const labels: string[] = ['今天', '明天', '后天'];
+    const weatherValues: RangedValue[] = info.forecastDaily.weather.value;
+    const temperatureValues: RangedValue[] = info.forecastDaily.temperature.value;
+    const parts: string[] = [];
+    for (let i = 0; i < labels.length; i++) {
+      if (i >= weatherValues.length || i >= temperatureValues.length) {
+        continue;
+      }
+      parts.push(`${labels[i]} ${describeWeatherRange(weatherValues[i])}`
+        + ` ${describeTemperatureRange(temperatureValues[i])}`);
+    }
+    if (parts.length === 0) {
+      return false;
+    }
+    await this.notificationService.publish(NotificationCategory.Weather, {
+      title: '天气预报',
+      content: parts.join('  '),
+      subText: '',
+      ongoing: false,
+      color: 0xFF0077D4, // ch_accent（与自动化通知同一支）
+      speechText: parts.join('，')
+    });
+    return true;
+  }
+
+  /** 逐小时预报：从最近一个整点起的 6 个小时。 */
+  private async publishHourly(info: WeatherInfo): Promise<ExecResult> {
+    const temperatures: number[] = info.forecastHourly.temperature.value;
+    const codes: number[] = info.forecastHourly.weather.value;
+    const count: number = Math.min(6, Math.min(temperatures.length, codes.length));
+    if (count <= 0) {
+      return false;
+    }
+    // 基准时间向上取整到整点（桌面版 RoundUpToHour）：updateTime 落在 14:37
+    // 时第一格是 15:00，而不是 14:00 —— 14:00 已经过去了。
+    let base: DateTimeValue = DateTimeValue.fromLocalMillis(info.updateTime);
+    const remainder: number = base.timeOfDaySeconds() % 3600;
+    if (remainder !== 0) {
+      base = base.addSeconds(3600 - remainder);
+    }
+    const parts: string[] = [];
+    for (let i = 0; i < count; i++) {
+      const at: DateTimeValue = base.addSeconds(i * 3600);
+      const hour: number = Math.floor(at.timeOfDaySeconds() / 3600);
+      parts.push(`${pad2(hour)}:00 ${weatherTextByCode(`${codes[i]}`)} ${temperatures[i]}℃`);
+    }
+    await this.notificationService.publish(NotificationCategory.Weather, {
+      title: '天气预报',
+      content: parts.join('  '),
+      subText: '',
+      ongoing: false,
+      color: 0xFF0077D4,
+      speechText: parts.join('，')
+    });
+    return true;
+  }
+
+  /** 气象预警：每条一条通知，已发过的不重发。 */
+  private async publishAlerts(info: WeatherInfo): Promise<ExecResult> {
+    const pending: WeatherAlert[] = [];
+    for (const alert of info.alerts) {
+      if (!this.shownAlerts.has(alert.detail)) {
+        pending.push(alert);
+      }
+    }
+    if (pending.length === 0) {
+      return false;
+    }
+    for (const alert of pending) {
+      const title: string = alert.title.length > 0 ? alert.title : '气象预警';
+      await this.notificationService.publish(NotificationCategory.Weather, {
+        title: title,
+        content: alert.detail,
+        subText: '',
+        ongoing: false,
+        color: 0xFFD84315, // 预警用暖色，与普通预报区分
+        speechText: title
+      });
+      this.shownAlerts.add(alert.detail);
+    }
     return true;
   }
 
@@ -308,4 +405,30 @@ class JsonNull extends JsonNode {
   private constructor() { super(); }
   static getInstance(): JsonNull { return JsonNull.instance; }
   toString(): string { return 'null'; }
+}
+
+/** 把区间天气代码写成中文，如「晴转多云」。 */
+function describeWeatherRange(range: RangedValue): string {
+  const from: string = weatherTextByCode(range.from);
+  const to: string = weatherTextByCode(range.to);
+  if (from === to) {
+    return from;
+  }
+  return `${from}转${to}`;
+}
+
+/** 把温度区间写成「21~29℃」。两端都空时返回空串。 */
+function describeTemperatureRange(range: RangedValue): string {
+  if (range.from.length === 0 && range.to.length === 0) {
+    return '';
+  }
+  if (range.from === range.to) {
+    return `${range.from}℃`;
+  }
+  return `${range.from}~${range.to}℃`;
+}
+
+/** 两位补零。 */
+function pad2(value: number): string {
+  return value < 10 ? `0${value}` : `${value}`;
 }

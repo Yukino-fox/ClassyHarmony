@@ -37,7 +37,13 @@ import { common } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import {
   AppPreferences,
+  DEFAULT_AUTO_REFRESH_WEATHER_LOCATION,
+  DEFAULT_CITY_ID,
+  DEFAULT_CITY_NAME,
+  DEFAULT_NO_TLS_WEATHER_REQUESTS,
   DEFAULT_SYSTEM_SPEECH_PERSON,
+  DEFAULT_WEATHER_ICON_ID,
+  DEFAULT_WEATHER_LOCATION_SOURCE,
   DefaultPage,
   PrefKeys,
   ThemeMode
@@ -51,6 +57,7 @@ import { SpeechService, resolveSpeechService } from '../speech/SpeechService';
 import { PERSON_FEMALE, PERSON_MALE } from '../speech/SystemSpeechService';
 import { SPEECH_PROVIDER_SYSTEM, SPEECH_PROVIDERS, SpeechProviderInfo,
   findSpeechProvider } from 'common_core';
+import { WeatherService, resolveWeatherService } from '../weather/WeatherService';
 
 const DOMAIN: number = 0x0000;
 const TAG: string = 'Settings';
@@ -132,6 +139,27 @@ struct SettingsPage {
   /** 正在试听。用来把按钮置灰，并让按钮文字变成进行时。 */
   @Local testingSpeech: boolean = false;
 
+  // 天气
+  /** 城市 id（形如 weathercn:101010100）。跨端读写的键。 */
+  @Local cityId: string = DEFAULT_CITY_ID;
+  /** 城市显示名。 */
+  @Local cityName: string = DEFAULT_CITY_NAME;
+  /** 定位来源：0 按城市 id / 1 自动定位。 */
+  @Local weatherLocationSource: number = DEFAULT_WEATHER_LOCATION_SOURCE;
+  @Local autoRefreshWeatherLocation: boolean = DEFAULT_AUTO_REFRESH_WEATHER_LOCATION;
+  @Local noTlsWeatherRequests: boolean = DEFAULT_NO_TLS_WEATHER_REQUESTS;
+  @Local weatherIconId: string = DEFAULT_WEATHER_ICON_ID;
+  /** 排除的预警。界面上用一个「、」连接的字符串表示，落盘是数组。 */
+  @Local excludedAlertsText: string = '';
+  /** 城市编辑区是否展开。 */
+  @Local editingCity: boolean = false;
+  /** 排除预警编辑区是否展开。 */
+  @Local editingExclusions: boolean = false;
+  /** 天气状态文案。 */
+  @Local weatherStatus: string = '';
+  /** 正在刷新天气。 */
+  @Local refreshingWeather: boolean = false;
+
   // 诊断
   @Local debugLog: boolean = false;
   @Local performanceOverlay: boolean = false;
@@ -206,6 +234,20 @@ struct SettingsPage {
       this.systemPerson = speech.systemPerson();
       this.speechStatus = speech.statusText();
     }
+
+    // 天气的几个标量直接读盘。城市 id / 名称在「自动定位」命中后会被服务就地
+    // 改写，所以这里读盘拿到的就是服务刚写下的那份；状态文案则直接问服务要。
+    this.cityId = prefs.getString(PrefKeys.CITY_ID, DEFAULT_CITY_ID);
+    this.cityName = prefs.getString(PrefKeys.CITY_NAME, DEFAULT_CITY_NAME);
+    this.weatherLocationSource = prefs.getNumber(PrefKeys.WEATHER_LOCATION_SOURCE,
+      DEFAULT_WEATHER_LOCATION_SOURCE);
+    this.autoRefreshWeatherLocation = prefs.getBoolean(PrefKeys.AUTO_REFRESH_WEATHER_LOCATION,
+      DEFAULT_AUTO_REFRESH_WEATHER_LOCATION);
+    this.noTlsWeatherRequests = prefs.getBoolean(PrefKeys.NO_TLS_WEATHER_REQUESTS,
+      DEFAULT_NO_TLS_WEATHER_REQUESTS);
+    this.weatherIconId = prefs.getString(PrefKeys.WEATHER_ICON_ID, DEFAULT_WEATHER_ICON_ID);
+    this.excludedAlertsText = prefs.getStringArray(PrefKeys.EXCLUDED_WEATHER_ALERTS).join('、');
+    this.weatherStatus = this.weatherService()?.statusText() ?? '天气服务未启动';
 
     this.debugLog = prefs.getBoolean(PrefKeys.DEBUG_LOG, false);
     this.performanceOverlay = prefs.getBoolean(PrefKeys.PERFORMANCE_OVERLAY, false);
@@ -470,6 +512,110 @@ struct SettingsPage {
 
   private personLabel(): string {
     return this.systemPerson === PERSON_MALE ? '男声' : '女声';
+  }
+
+  // ------------------------------------------------------------ 天气
+
+  private weatherService(): WeatherService | undefined {
+    if (this.host === undefined) {
+      return undefined;
+    }
+    return resolveWeatherService(this.host);
+  }
+
+  private weatherLocationLabel(): string {
+    return this.weatherLocationSource === 1 ? '自动定位' : '按城市 id';
+  }
+
+  /**
+   * 换定位方式。
+   *
+   * 两个档位都不是「立刻生效」的：切到自动定位要等下一次刷新真去问系统要坐标，
+   * 切回城市 id 要等下一次刷新用 CityId 查。所以这里只写盘 + 改文案，不触发
+   * 刷新 —— 用户点「立即刷新」才是「现在就按新方式取一次」的意思。
+   */
+  private cycleWeatherLocationSource(): void {
+    const next: number = this.weatherLocationSource === 1 ? 0 : 1;
+    this.weatherLocationSource = next;
+    this.writeNumber(PrefKeys.WEATHER_LOCATION_SOURCE, next);
+  }
+
+  private toggleAutoRefreshWeatherLocation(on: boolean): void {
+    this.autoRefreshWeatherLocation = on;
+    this.writeBool(PrefKeys.AUTO_REFRESH_WEATHER_LOCATION, on);
+  }
+
+  /**
+   * 明文 HTTP。
+   *
+   * 换协议会改掉后面每一条请求的 URL，所以立刻重取一次 —— 用户拨这个开关的
+   * 动机十有八九是「地里的设备证书过期导致 https 一直失败」，拨完就想知道
+   * 通没通。
+   */
+  private toggleNoTlsWeatherRequests(on: boolean): void {
+    this.noTlsWeatherRequests = on;
+    this.writeBool(PrefKeys.NO_TLS_WEATHER_REQUESTS, on);
+    void this.refreshWeather();
+  }
+
+  private commitCityId(text: string): void {
+    const trimmed: string = text.trim();
+    const cityId: string = trimmed.length === 0 ? DEFAULT_CITY_ID : trimmed;
+    this.cityId = cityId;
+    this.prefs?.put(PrefKeys.CITY_ID, cityId);
+    this.editingCity = false;
+    void this.refreshWeather();
+  }
+
+  private commitCityName(text: string): void {
+    const trimmed: string = text.trim();
+    this.cityName = trimmed;
+    this.prefs?.put(PrefKeys.CITY_NAME, trimmed);
+  }
+
+  /**
+   * 提交排除的预警。
+   *
+   * 输入是「、」「,」「，」分隔的一段文字，落盘是字符串数组（桌面版是
+   * ObservableCollection<string>）。这里不用正则 split：ArkTS 对正则字面量
+   * 的支持不完整，逐字符扫一遍更稳，也顺手把空段丢掉。
+   */
+  private commitExcludedAlerts(text: string): void {
+    const items: string[] = [];
+    let current: string = '';
+    for (let i: number = 0; i < text.length; i++) {
+      const ch: string = text.charAt(i);
+      if (ch === '、' || ch === ',' || ch === '，' || ch === '\n') {
+        if (current.length > 0) {
+          items.push(current);
+          current = '';
+        }
+      } else {
+        current += ch;
+      }
+    }
+    if (current.length > 0) {
+      items.push(current);
+    }
+    this.excludedAlertsText = items.join('、');
+    this.prefs?.putStringArray(PrefKeys.EXCLUDED_WEATHER_ALERTS, items);
+    this.editingExclusions = false;
+    void this.refreshWeather();
+  }
+
+  private async refreshWeather(): Promise<void> {
+    const service: WeatherService | undefined = this.weatherService();
+    if (service === undefined || this.refreshingWeather) {
+      return;
+    }
+    this.refreshingWeather = true;
+    try {
+      await service.refreshNow();
+    } catch (err) {
+      hilog.warn(DOMAIN, TAG, 'refreshWeather threw: %{public}s', `${err}`);
+    }
+    this.weatherStatus = service.statusText();
+    this.refreshingWeather = false;
   }
 
   // ------------------------------------------------------------ 精确时间
@@ -858,6 +1004,83 @@ struct SettingsPage {
           this.actionRow(this.testingSpeech ? '正在试听…' : '试听', !this.testingSpeech, () => {
             this.testSpeak();
           })
+
+          // ---- 天气
+          this.groupTitle('天气')
+          this.valueRow('定位方式', this.weatherLocationLabel(), () => {
+            this.cycleWeatherLocationSource();
+          })
+          this.valueRow('城市',
+            this.cityName.length > 0 ? this.cityName : this.cityId, () => {
+              this.editingCity = !this.editingCity;
+            })
+          if (this.editingCity) {
+            ListItem() {
+              Column() {
+                EditorTextField({
+                  label: '城市 id',
+                  value: this.cityId,
+                  placeholder: DEFAULT_CITY_ID,
+                  onCommit: (text: string) => {
+                    this.commitCityId(text);
+                  }
+                })
+                Text('形如 weathercn:101010100。可从桌面版抄过来，或用「自动定位」自动填。')
+                  .fontSize(12)
+                  .fontColor($r('app.color.ch_text_hint'))
+                  .width('100%')
+                  .padding({ top: 4, bottom: 10 })
+                EditorTextField({
+                  label: '显示名',
+                  value: this.cityName,
+                  placeholder: DEFAULT_CITY_NAME,
+                  onCommit: (text: string) => {
+                    this.commitCityName(text);
+                  }
+                })
+              }
+              .width('100%')
+              .padding({ left: 16, right: 16, top: 10, bottom: 10 })
+            }
+          }
+          this.toggleRow('每次刷新重新定位', this.autoRefreshWeatherLocation, (on: boolean) => {
+            this.toggleAutoRefreshWeatherLocation(on);
+          })
+          this.toggleRow('允许明文 HTTP', this.noTlsWeatherRequests, (on: boolean) => {
+            this.toggleNoTlsWeatherRequests(on);
+          })
+          this.valueRow('排除的预警',
+            this.excludedAlertsText.length === 0 ? '不排除' : this.excludedAlertsText, () => {
+              this.editingExclusions = !this.editingExclusions;
+            })
+          if (this.editingExclusions) {
+            ListItem() {
+              Column() {
+                EditorTextField({
+                  label: '预警关键词',
+                  value: this.excludedAlertsText,
+                  placeholder: '多个词用「、」分隔',
+                  onCommit: (text: string) => {
+                    this.commitExcludedAlerts(text);
+                  }
+                })
+                Text('标题里含这些词的气象预警不发通知。留空表示全都发。')
+                  .fontSize(12)
+                  .fontColor($r('app.color.ch_text_hint'))
+                  .width('100%')
+                  .padding({ top: 4 })
+              }
+              .width('100%')
+              .padding({ left: 16, right: 16, top: 10, bottom: 10 })
+            }
+          }
+          this.noteRow('图标方案', `${this.weatherIconId}（图标字体未移植，该键只读写不生效）`)
+          this.noteRow('预警图标', '不加载：预警图标是明文 HTTP 的远程图片')
+          this.noteRow('状态', this.weatherStatus.length === 0 ? '尚未初始化' : this.weatherStatus)
+          this.actionRow(this.refreshingWeather ? '正在刷新…' : '立即刷新',
+            !this.refreshingWeather, () => {
+              this.refreshWeather();
+            })
 
           // ---- 诊断
           this.groupTitle('诊断')

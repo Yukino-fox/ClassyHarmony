@@ -720,17 +720,21 @@ function testWindowRulesAreUnsupported(): void {
   }
 }
 
-function testWeatherRulesAreUnsupported(): void {
+function testWeatherRulesAreImplemented(): void {
+  // 五条天气规则在 P11c 翻成已实现。求值需要一份天气快照，而这条驱动里没有
+  // 天气上下文，所以它们在这里一律判 false —— 但原因是 notMatched（「没匹配
+  // 上」）而不是 notImplemented（「没实现」）。这两者必须分开：前者用户配上
+  // 数据就会变真，后者永远不会。
   const ids: string[] = [
     RuleIds.WEATHER_CURRENT, RuleIds.WEATHER_TOMORROW, RuleIds.WEATHER_ALERT,
     RuleIds.WEATHER_RAIN_TIME, RuleIds.WEATHER_SUN_RISE_SET
   ];
   for (const id of ids) {
-    check(`${id} 标为未实现`, RuleCatalog.supportOf(id) === RuleSupport.Unsupported);
+    check(`${id} 标为已实现`, RuleCatalog.supportOf(id) === RuleSupport.Implemented);
     const rs: Ruleset = ruleset(RulesetLogicalMode.Or, [group(RulesetLogicalMode.And, [rule(id)])]);
     const verdict: RulesetVerdict = verdictAt(rs, `${BASE_DAY}T08:10:00`);
-    check(`${id} 求值为假`, !verdict.satisfied);
-    checkEqual(`${id} 原因是未实现`, verdict.groups[0].rules[0].reason, 'notImplemented');
+    check(`${id} 无天气数据时求值为假`, !verdict.satisfied);
+    checkEqual(`${id} 原因是没匹配上`, verdict.groups[0].rules[0].reason, RuleReason.NotMatched);
   }
 }
 
@@ -1147,7 +1151,7 @@ testPreviousSubjectExcludesOngoing();
 testPreviousSubjectSkipsDisabledTimePoints();
 testSnapshotPreviousSubjectDefaults();
 testWindowRulesAreUnsupported();
-testWeatherRulesAreUnsupported();
+testWeatherRulesAreImplemented();
 testUnknownRuleIdIsFalse();
 testUnsupportedRuleInReversedGroup();
 testUndefinedRuleset();
@@ -1700,11 +1704,12 @@ function testEditorFlagsUnchosenAndUnknown(): void {
 }
 
 function testEditorMarksUnsupportedRulesNotEditable(): void {
-  // 9 条窗口与天气规则在当前平台没有数据。界面上照常列出、可以配（值原样落盘），
-  // 但设置控件要置灰并标出原因 —— 判成「可编辑」的话用户会以为改了有用。
+  // 4 条窗口类规则在当前平台没有数据（天气类已在 P11c 翻成已实现）。
+  // 界面上照常列出、可以配（值原样落盘），但设置控件要置灰并标出原因 ——
+  // 判成「可编辑」的话用户会以为改了有用。
   // 同样用 Or，让两条都被真正判到（见上面那条测试的注）。
   const rs: Ruleset = ruleset(RulesetLogicalMode.Or, [group(RulesetLogicalMode.Or, [
-    rule(RuleIds.WEATHER_RAIN_TIME, new RainTimeRuleSettings()),
+    rule(RuleIds.WINDOW_TEXT, new StringMatchingSettings()),
     rule(RuleIds.WINDOW_STATUS, new WindowStatusRuleSettings())
   ])]);
   const model: RulesetEditModel = RulesetEditor.build(rs, contextAt(`${BASE_DAY}T08:30:00`));

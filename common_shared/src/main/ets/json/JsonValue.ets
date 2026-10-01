@@ -34,6 +34,25 @@ export class JsonValue {
   }
 
   /**
+   * 宽松取字符串：字符串取原值，数字取**原始字面量**，其它返回 fallback。
+   *
+   * 只给「对端形状不确定」的字段用（目前只有天气的 aqi：桌面版声明成 string，
+   * 但那份声明的来源是一个我们无法在此核对的第三方接口）。取原始字面量而不是
+   * 数值再格式化，是为了让 `"0.0"` 这类已经写好的字符串形态在往返里不走样。
+   *
+   * 不用在别处：严格是默认口径，宽松是例外，例外多了就等于没有类型。
+   */
+  static asStringLoose(node: JsonNode | undefined, fallback: string = ''): string {
+    if (node instanceof JsonString) {
+      return node.value;
+    }
+    if (node instanceof JsonNumber) {
+      return node.raw;
+    }
+    return fallback;
+  }
+
+  /**
    * 取出布尔。
    * 桌面版对 bool 的读取是严格类型化的，字符串 "true" 会导致 JsonException；
    * 这里保持严格（返回 fallback），不做宽松解析，以免掩盖配置损坏。

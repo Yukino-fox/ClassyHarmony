@@ -31,6 +31,7 @@
 import { fileIo as fs } from '@kit.CoreFileKit';
 import { common } from '@kit.AbilityKit';
 import {
+  JsonArray,
   JsonBoolean,
   JsonNode,
   JsonNull,
@@ -157,6 +158,36 @@ export class PrefKeys {
    * 与 PrefKeys.PANEL_SCHEME 同一种情况：扁平键里有几个是本端独有的。
    */
   static readonly SYSTEM_SPEECH_PERSON: string = 'SystemSpeechPerson';
+
+  /*
+   * 天气（P11c）。九个键名与桌面版 Settings.cs 的属性名逐字一致，且是顶层
+   * 扁平键 —— 那边 System.Text.Json 默认无 NamingStrategy，落盘就是属性名原样。
+   *
+   * LastWeatherInfo **不在这里**：那是天气缓存，本端落 weather.json 独立文件
+   * （见 entry/weather/WeatherStore.ets）。桌面版 settings.json 里那份原样保留，
+   * 本端不读不写 —— 见 WeatherStore 顶上写的三条理由。
+   *
+   * ExcludedWeatherAlerts 是数组（桌面版 ObservableCollection<string>），
+   * 用 getStringArray / putStringArray 读写，不走 put。
+   */
+  /** 天气：城市 id（`weathercn:101010100` 形式）。 */
+  static readonly CITY_ID: string = 'CityId';
+  /** 天气：城市显示名。 */
+  static readonly CITY_NAME: string = 'CityName';
+  /** 天气：手动定位经度。 */
+  static readonly WEATHER_LONGITUDE: string = 'WeatherLongitude';
+  /** 天气：手动定位纬度。 */
+  static readonly WEATHER_LATITUDE: string = 'WeatherLatitude';
+  /** 天气：定位来源（0 用城市 id / 1 自动定位）。 */
+  static readonly WEATHER_LOCATION_SOURCE: string = 'WeatherLocationSource';
+  /** 天气：是否每次刷新都重新定位。 */
+  static readonly AUTO_REFRESH_WEATHER_LOCATION: string = 'AutoRefreshWeatherLocation';
+  /** 天气：是否强制明文 HTTP。 */
+  static readonly NO_TLS_WEATHER_REQUESTS: string = 'NoTLSWeatherRequests';
+  /** 天气：图标方案 id。本端不移植图标字体，键照常读写。 */
+  static readonly WEATHER_ICON_ID: string = 'WeatherIconId';
+  /** 天气：被排除的预警（按标题 / 详情子串匹配，数组）。 */
+  static readonly EXCLUDED_WEATHER_ALERTS: string = 'ExcludedWeatherAlerts';
 }
 
 /** 全部可识别的键。导出是为了「重置」与「导入」能遍历。 */
@@ -190,7 +221,16 @@ export const ALL_PREF_KEYS: string[] = [
   PrefKeys.SELECTED_SPEECH_PROVIDER,
   PrefKeys.EDGE_TTS_VOICE_NAME,
   PrefKeys.ALLOW_NOTIFICATION_SPEECH,
-  PrefKeys.SYSTEM_SPEECH_PERSON
+  PrefKeys.SYSTEM_SPEECH_PERSON,
+  PrefKeys.CITY_ID,
+  PrefKeys.CITY_NAME,
+  PrefKeys.WEATHER_LONGITUDE,
+  PrefKeys.WEATHER_LATITUDE,
+  PrefKeys.WEATHER_LOCATION_SOURCE,
+  PrefKeys.AUTO_REFRESH_WEATHER_LOCATION,
+  PrefKeys.NO_TLS_WEATHER_REQUESTS,
+  PrefKeys.WEATHER_ICON_ID,
+  PrefKeys.EXCLUDED_WEATHER_ALERTS
 ];
 
 /** 主题档位。值必须与桌面版 Settings.Theme 一致（那边以整数落盘）。 */
@@ -255,6 +295,29 @@ export const DEFAULT_EDGE_TTS_VOICE_NAME: string = 'zh-CN-XiaoxiaoNeural';
 export const DEFAULT_ALLOW_NOTIFICATION_SPEECH: boolean = false;
 /** 系统 TTS 音色：13 = 凌晓山（女声，推荐值，无需下载）。 */
 export const DEFAULT_SYSTEM_SPEECH_PERSON: number = 13;
+
+/*
+ * 天气默认值。前八个与桌面版 Settings.cs 的字段初值逐字一致：
+ *
+ *   _cityId                   = "weathercn:101010100"
+ *   _cityName                 = "北京 (北京, 中国)"
+ *   _weatherLongitude         = 0.0
+ *   _weatherLatitude          = 0.0
+ *   _weatherLocationSource    = 0
+ *   _autoRefreshWeatherLocation = false
+ *   _noTLSWeatherRequests     = false
+ *   _weatherIconId            = "classisland.weatherIcons.lucide"
+ *   _excludedWeatherAlerts    = []
+ */
+export const DEFAULT_CITY_ID: string = 'weathercn:101010100';
+export const DEFAULT_CITY_NAME: string = '北京 (北京, 中国)';
+export const DEFAULT_WEATHER_LONGITUDE: number = 0.0;
+export const DEFAULT_WEATHER_LATITUDE: number = 0.0;
+/** 0 = 用 CityId 查；1 = 用设备定位。 */
+export const DEFAULT_WEATHER_LOCATION_SOURCE: number = 0;
+export const DEFAULT_AUTO_REFRESH_WEATHER_LOCATION: boolean = false;
+export const DEFAULT_NO_TLS_WEATHER_REQUESTS: boolean = false;
+export const DEFAULT_WEATHER_ICON_ID: string = 'classisland.weatherIcons.lucide';
 
 /** 字体缩放下界。 */
 export const FONT_SCALE_MIN: number = 0.8;
@@ -362,6 +425,38 @@ export class AppPreferences {
    */
   putClamped(key: string, value: number, min: number, max: number): void {
     this.put(key, AppPreferences.clampInt(value, min, max));
+  }
+
+  /**
+   * 读一个字符串数组。
+   *
+   * 只用于天气的 ExcludedWeatherAlerts。非数组、元素非字符串一律跳过，
+   * 不抛也不整份作废：这个键从桌面版同步过来时可能混着别的类型，丢一个
+   * 坏元素比丢掉整份排除列表更不伤。
+   */
+  getStringArray(key: string): string[] {
+    const out: string[] = [];
+    const node: JsonNode | undefined = this.readAll().tryGet(key);
+    if (node === undefined || !(node instanceof JsonArray)) {
+      return out;
+    }
+    for (const item of node.values()) {
+      if (item instanceof JsonString) {
+        out.push(item.value);
+      }
+    }
+    return out;
+  }
+
+  /** 写一个字符串数组。空数组也照写（与桌面版写 `[]` 一致）。 */
+  putStringArray(key: string, values: string[]): void {
+    const array: JsonArray = new JsonArray();
+    for (const value of values) {
+      array.push(new JsonString(value));
+    }
+    const all: JsonObject = this.readAll();
+    all.set(key, array);
+    this.writeAll(all);
   }
 
   /** 删除一个键。唯一用到它的是「重置」里那些没有默认值的键。 */
@@ -485,6 +580,18 @@ export class AppPreferences {
     out.set(PrefKeys.ALLOW_NOTIFICATION_SPEECH,
       new JsonBoolean(DEFAULT_ALLOW_NOTIFICATION_SPEECH));
     out.set(PrefKeys.SYSTEM_SPEECH_PERSON, ModelCodec.doubleNode(DEFAULT_SYSTEM_SPEECH_PERSON));
+    out.set(PrefKeys.CITY_ID, new JsonString(DEFAULT_CITY_ID));
+    out.set(PrefKeys.CITY_NAME, new JsonString(DEFAULT_CITY_NAME));
+    out.set(PrefKeys.WEATHER_LONGITUDE, ModelCodec.doubleNode(DEFAULT_WEATHER_LONGITUDE));
+    out.set(PrefKeys.WEATHER_LATITUDE, ModelCodec.doubleNode(DEFAULT_WEATHER_LATITUDE));
+    out.set(PrefKeys.WEATHER_LOCATION_SOURCE,
+      ModelCodec.doubleNode(DEFAULT_WEATHER_LOCATION_SOURCE));
+    out.set(PrefKeys.AUTO_REFRESH_WEATHER_LOCATION,
+      new JsonBoolean(DEFAULT_AUTO_REFRESH_WEATHER_LOCATION));
+    out.set(PrefKeys.NO_TLS_WEATHER_REQUESTS,
+      new JsonBoolean(DEFAULT_NO_TLS_WEATHER_REQUESTS));
+    out.set(PrefKeys.WEATHER_ICON_ID, new JsonString(DEFAULT_WEATHER_ICON_ID));
+    out.set(PrefKeys.EXCLUDED_WEATHER_ALERTS, new JsonArray());
     return out;
   }
 

@@ -24,6 +24,7 @@ import { resolveClassTableViewModel, syncClassReminders } from '../common/AppSer
 import { ThemeService } from '../common/ThemeService';
 import { resolveExactTimeService } from '../time/ExactTimeService';
 import { shutdownSpeechService } from '../speech/SpeechService';
+import { resolveWeatherService, resetWeatherService } from '../weather/WeatherService';
 import { ClassTableViewModel } from '../viewmodel/ClassTableViewModel';
 
 const DOMAIN: number = 0x0000;
@@ -37,6 +38,10 @@ export default class EntryAbility extends UIAbility {
     // 在 onCreate 就装配而不是等页面：页面首帧就能拿到已重算好的网格，
     // 不会先闪一下「正在读取课表」。
     this.vm = resolveClassTableViewModel(this.context);
+    // 天气服务也在这里建：它要在页面首帧之前就存在，否则面板第一次 refreshPreview
+    // 拿到的是 undefined 快照，天气组件会先闪一下「还没取到」。真正的刷新在
+    // onForeground 的 start()，那里才起定时器。
+    resolveWeatherService(this.context);
     hilog.info(DOMAIN, TAG, 'onCreate: viewModel ready');
   }
 
@@ -48,6 +53,8 @@ export default class EntryAbility extends UIAbility {
     // 创建的那个会让进程晚一点才能被回收 —— 不释放的话，反复冷启动几次之后
     // 别的应用也会建不出引擎。
     shutdownSpeechService();
+    // 天气定时器与进程内快照一起丢掉。
+    resetWeatherService();
     hilog.info(DOMAIN, TAG, 'onDestroy');
   }
 
@@ -79,6 +86,10 @@ export default class EntryAbility extends UIAbility {
     // 1 分钟时补一次查询。放在 onForeground 而不是 onCreate：应用在后台
     // 可能待很久，回前台补一次才准。
     resolveExactTimeService(this.context).start();
+    // 天气：读缓存 + 起 5 分钟定时器 + 立刻刷一次。退后台会停掉定时器（见
+    // onBackground），回前台这里重启 —— 天气是「看一眼」的数据，后台不刷
+    // 也看不出差别，而少一个后台网络轮询就少一份耗电与被冻结的风险。
+    resolveWeatherService(this.context).start();
     hilog.info(DOMAIN, TAG, 'onForeground: polling resumed');
     // 课前提醒的周期重复挂在平台侧，不依赖本进程；这里同步是为了修正首次
     // 触发日（跨天之后它落在过去）与课表变更（可能来自设备间同步）。
@@ -116,6 +127,9 @@ export default class EntryAbility extends UIAbility {
     // 时 onForeground 会补查；而一个在后台还挂着的 UDP socket 既费电又可能
     // 被系统在后台冻结时杀掉，白白产生一次「同步失败」的状态文案。
     resolveExactTimeService(this.context).stop();
+    // 天气同样停：定时器与快照留在单例里（回前台时 start() 会接着用），
+    // 只把 5 分钟的轮询停掉。
+    resolveWeatherService(this.context).stop();
     hilog.info(DOMAIN, TAG, 'onBackground: polling stopped');
   }
 }

@@ -86,6 +86,8 @@ import {
   RulesetLogicalMode,
   TimeStateRuleSettings
 } from '../../common_shared/src/main/ets/models/Ruleset';
+import { WeatherInfo } from '../../common_shared/src/main/ets/models/Weather';
+import { WeatherSnapshot } from '../../common_core/src/main/ets/weather/WeatherRules';
 
 let passed: number = 0;
 const failures: string[] = [];
@@ -1031,6 +1033,23 @@ function testWeather(): void {
   const model: PanelModel = build(oneOf(COMPONENT_WEATHER), `${BASE_DAY}T12:00:00`);
   checkEqual('天气种类', node0(model).kind, PanelNodeKind.WEATHER);
   check('天气给出未接入提示', node0(model).hintText.length > 0);
+  checkEqual('没数据时主信息为空', node0(model).weather.mainText, '');
+
+  // 有快照时填进 PanelNode.weather（与规则用的 isRefreshed 无关 —— 显示看的是
+  // 「有没有数据」，所以哪怕 isRefreshed=false，缓存里的温度也照显示）。
+  const info: WeatherInfo = new WeatherInfo();
+  info.updateTime = 1;
+  info.current.weather = '0';
+  info.current.temperature.value = '26';
+  info.current.temperature.unit = '°C';
+  const snapshot: WeatherSnapshot = new WeatherSnapshot();
+  snapshot.isRefreshed = false;
+  snapshot.info = info;
+  const filled: PanelModel = PanelBuilder.build(oneOf(COMPONENT_WEATHER),
+    fullWeekProfile(), engineSettings(), dt(`${BASE_DAY}T12:00:00`), snapshot);
+  checkEqual('有缓存时主信息', node0(filled).weather.mainText, '晴 26°C');
+  checkEqual('有缓存时不再给提示', node0(filled).hintText, '');
+  checkNum('有缓存时主信息种类是天气', node0(filled).weather.mainKind, 0);
 }
 
 function testUnknownComponent(): void {

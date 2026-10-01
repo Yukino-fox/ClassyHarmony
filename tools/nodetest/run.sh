@@ -110,6 +110,9 @@ sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
 sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
      s|'../../common_core/src/main/ets/|'../core/|g" \
   "$ROOT/tools/nodetest/src/speech-driver.ts" > "$WORK/src/tools/speech-driver.ts"
+sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
+     s|'../../common_core/src/main/ets/|'../core/|g" \
+  "$ROOT/tools/nodetest/src/weather-driver.ts" > "$WORK/src/tools/weather-driver.ts"
 
 "$NODE" "$TSC" \
   --outDir "$WORK/out" \
@@ -134,7 +137,8 @@ sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
   "$WORK/src/tools/ruleset-driver.ts" \
   "$WORK/src/tools/automation-driver.ts" \
   "$WORK/src/tools/time-driver.ts" \
-  "$WORK/src/tools/speech-driver.ts" 2>&1 | sed 's/^/  /' || true
+  "$WORK/src/tools/speech-driver.ts" \
+  "$WORK/src/tools/weather-driver.ts" 2>&1 | sed 's/^/  /' || true
 
 cp -r "$ROOT/tools/nodetest/fixtures" "$WORK/out/fixtures"
 
@@ -174,4 +178,7 @@ echo "── 精确时间 ──"
 echo ""
 echo "── 语音朗读 ──"
 "$NODE" "$WORK/out/tools/speech-driver.js" || status=1
+echo ""
+echo "── 天气 ──"
+"$NODE" "$WORK/out/tools/weather-driver.js" || status=1
 exit $status

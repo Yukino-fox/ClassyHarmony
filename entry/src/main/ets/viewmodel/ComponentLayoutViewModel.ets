@@ -78,6 +78,7 @@ import {
 } from '../data/ComponentLayoutRepository';
 import { ProfileRepository } from '../data/ProfileRepository';
 import { defaultEngineSettings } from '../common/AppSettings';
+import { currentWeatherSnapshot } from '../weather/WeatherService';
 
 /** 提示行显示多久（毫秒）。到点自动清空，避免旧提示一直挂着误导用户。 */
 const STATUS_TTL_MS: number = 4000;
@@ -870,6 +871,7 @@ export class ComponentLayoutViewModel {
     context.snapshot = this.previewProfile === undefined
       ? new LessonsSnapshot()
       : LessonsEngine.compute(this.previewProfile, defaultEngineSettings(now), now);
+    context.weather = currentWeatherSnapshot();
     return context;
   }
 
@@ -1101,7 +1103,8 @@ export class ComponentLayoutViewModel {
   refreshPreview(): void {
     const now: DateTimeValue = DateTimeValue.now();
     const settings: EngineSettings = defaultEngineSettings(now);
-    this.panelModel = PanelBuilder.build(this.draft, this.previewProfile, settings, now);
+    this.panelModel = PanelBuilder.build(this.draft, this.previewProfile, settings, now,
+      currentWeatherSnapshot());
   }
 
   /**

@@ -243,3 +243,43 @@ export {
   speechCachePath,
   sanitizeSegment
 } from './src/main/ets/speech/SpeechQueue';
+
+/* ---- 天气（P11c）---- */
+
+export {
+  WEATHER_TEXT_UNKNOWN,
+  WeatherCodeEntry,
+  WEATHER_CODE_TABLE,
+  weatherTextByCode,
+  expandWeatherCode,
+  isWeatherCodeMatched,
+  isUnknownWeatherCode
+} from './src/main/ets/weather/WeatherCodes';
+export {
+  SunTimes,
+  filterWeatherAlerts,
+  tryGetSunTimes,
+  minutesToApproxTime,
+  windDirectionDegrees,
+  aqiLevelName
+} from './src/main/ets/weather/WeatherLogic';
+export {
+  WeatherSnapshot,
+  currentWeatherSatisfied,
+  tomorrowWeatherSatisfied,
+  hasWeatherAlertSatisfied,
+  rainTimeSatisfied,
+  sunRiseSetSatisfied,
+  weatherRuleSatisfied
+} from './src/main/ets/weather/WeatherRules';
+export {
+  WeatherAlertBrief,
+  WeatherBrief,
+  buildWeatherBrief,
+  WEATHER_MAIN_KIND_CONDITION,
+  WEATHER_MAIN_KIND_HUMIDITY,
+  WEATHER_MAIN_KIND_WIND,
+  WEATHER_MAIN_KIND_AQI,
+  WEATHER_MAIN_KIND_PRESSURE,
+  WEATHER_MAIN_KIND_FEELS_LIKE
+} from './src/main/ets/weather/WeatherBrief';

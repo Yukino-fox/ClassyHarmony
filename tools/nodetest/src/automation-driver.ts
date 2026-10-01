@@ -367,7 +367,7 @@ function testCatalogs(): void {
   }
   checkNum('只有两个触发器能要求撤销', canRevert, 2);
 
-  // 行动：3 个已实现、4 个未实现；只有 settings 那条可恢复。
+  // 行动：5 个已实现、2 个未实现；只有 settings 那条可恢复。
   let actionImplemented: number = 0;
   for (const info of ActionCatalog.all()) {
     if (info.support === ActionSupport.Implemented) {
@@ -376,7 +376,7 @@ function testCatalogs(): void {
       check(`未实现的行动给出了原因：${info.id}`, info.unsupportedReason.length > 0);
     }
   }
-  checkNum('3 个行动已实现', actionImplemented, 3);
+  checkNum('5 个行动已实现', actionImplemented, 5);
   check('只有「应用设置」可恢复', ActionCatalog.isRevertable(ActionIds.SETTINGS));
   check('「等待时长」不可恢复', !ActionCatalog.isRevertable(ActionIds.SLEEP));
   check('「退出应用」不可恢复', !ActionCatalog.isRevertable(ActionIds.APP_QUIT));
