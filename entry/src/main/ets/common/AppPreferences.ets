@@ -119,6 +119,44 @@ export class PrefKeys {
    * 同步到鸿蒙侧会看到时间差 5 秒，而且没有任何线索指向原因。
    */
   static readonly DEBUG_TIME_OFFSET_SECONDS: string = 'DebugTimeOffsetSeconds';
+
+  /*
+   * 语音朗读（P11b）。前六个键名与桌面版 Settings.cs 的属性名逐字一致，
+   * 也是顶层扁平键 —— 那边没有配 NamingStrategy，落盘就是属性名原样。
+   *
+   * SpeechSource 是**遗留字段**：桌面版早期的选择器（0=系统 TTS / 1=EdgeTTS），
+   * 现在真正的选择器是 SelectedSpeechProvider。这里照常读写是为了跨端往返
+   * （不读的话，一个在桌面上把它改成 1 的用户同步过来的文件会被鸿蒙侧改回 0，
+   * 而那是个纯粹的信息丢失），但不拿它做路由。
+   *
+   * 桌面版的 SpeechSource setter 里有一句「!IsSystemSpeechSystemExist 时强制
+   * 置 1」—— 那是为了 Linux/macOS 上没有 Windows 的 System.Speech 而写的。
+   * 鸿蒙有系统 TTS，所以这里**不照抄**那个强制转换。
+   */
+
+  /** 语音：全局开关。桌面版默认开。 */
+  static readonly SPEECH_ENABLED: string = 'IsSpeechEnabled';
+  /** 语音：音量（0~1）。 */
+  static readonly SPEECH_VOLUME: string = 'SpeechVolume';
+  /** 语音：遗留的来源选择（0 系统 TTS / 1 EdgeTTS）。只读写，不参与路由。 */
+  static readonly SPEECH_SOURCE: string = 'SpeechSource';
+  /** 语音：提供方 id。默认与桌面版一致（classisland.speech.edgeTts）。 */
+  static readonly SELECTED_SPEECH_PROVIDER: string = 'SelectedSpeechProvider';
+  /** 语音：EdgeTTS 音色名。本端未实现 EdgeTTS，但键要留住。 */
+  static readonly EDGE_TTS_VOICE_NAME: string = 'EdgeTtsVoiceName';
+  /** 语音：是否允许通知朗读。桌面版默认**关**。 */
+  static readonly ALLOW_NOTIFICATION_SPEECH: string = 'AllowNotificationSpeech';
+  /**
+   * 语音：系统 TTS 的音色（13 女 / 21 男）。
+   *
+   * 这是**鸿蒙侧独有的键**，桌面版没有对应项：那边的系统 TTS 音色从 Windows
+   * 的语音列表里选，是一串名字，与这里的整数编号对不上，硬凑一个映射只会
+   * 让两端互相覆盖。桌面版读到这个键会忽略（System.Text.Json 默认跳过不认识的
+   * 成员），所以放在同一个文件里是安全的。
+   *
+   * 与 PrefKeys.PANEL_SCHEME 同一种情况：扁平键里有几个是本端独有的。
+   */
+  static readonly SYSTEM_SPEECH_PERSON: string = 'SystemSpeechPerson';
 }
 
 /** 全部可识别的键。导出是为了「重置」与「导入」能遍历。 */
@@ -145,7 +183,14 @@ export const ALL_PREF_KEYS: string[] = [
   PrefKeys.TIME_AUTO_ADJUST_ENABLED,
   PrefKeys.TIME_AUTO_ADJUST_SECONDS,
   PrefKeys.LAST_TIME_ADJUST,
-  PrefKeys.DEBUG_TIME_OFFSET_SECONDS
+  PrefKeys.DEBUG_TIME_OFFSET_SECONDS,
+  PrefKeys.SPEECH_ENABLED,
+  PrefKeys.SPEECH_VOLUME,
+  PrefKeys.SPEECH_SOURCE,
+  PrefKeys.SELECTED_SPEECH_PROVIDER,
+  PrefKeys.EDGE_TTS_VOICE_NAME,
+  PrefKeys.ALLOW_NOTIFICATION_SPEECH,
+  PrefKeys.SYSTEM_SPEECH_PERSON
 ];
 
 /** 主题档位。值必须与桌面版 Settings.Theme 一致（那边以整数落盘）。 */
@@ -186,6 +231,30 @@ export enum DefaultPage {
 export const DEFAULT_EXACT_TIME_SERVER: string = 'ntp.aliyun.com';
 /** 手动偏移的合理范围（秒）。超出会被夹住。 */
 export const TIME_OFFSET_LIMIT: number = 86400;
+
+/*
+ * 语音朗读的默认值。前六个同样必须与桌面版 Settings.cs 的字段初值一致：
+ *
+ *   _isSpeechEnabled          = true
+ *   _speechVolume             = 1.0
+ *   _speechSource             = 0
+ *   _selectedSpeechProvider   = "classisland.speech.edgeTts"
+ *   _edgeTtsVoiceName         = "zh-CN-XiaoxiaoNeural"
+ *   _allowNotificationSpeech  = false
+ *
+ * 注意 SelectedSpeechProvider 的默认值：那是本端**没有实现**的提供方。刻意
+ * 不改成本端的首选（系统 TTS）—— 这个键是跨端读写的，改了之后用户在桌面上
+ * 存的偏好会被鸿蒙侧的默认值覆盖。不可用由 resolveSpeechProvider 回退，
+ * 设置页会把回退说出来。
+ */
+export const DEFAULT_SPEECH_ENABLED: boolean = true;
+export const DEFAULT_SPEECH_VOLUME: number = 1.0;
+export const DEFAULT_SPEECH_SOURCE: number = 0;
+export const DEFAULT_SELECTED_SPEECH_PROVIDER: string = 'classisland.speech.edgeTts';
+export const DEFAULT_EDGE_TTS_VOICE_NAME: string = 'zh-CN-XiaoxiaoNeural';
+export const DEFAULT_ALLOW_NOTIFICATION_SPEECH: boolean = false;
+/** 系统 TTS 音色：13 = 凌晓山（女声，推荐值，无需下载）。 */
+export const DEFAULT_SYSTEM_SPEECH_PERSON: number = 13;
 
 /** 字体缩放下界。 */
 export const FONT_SCALE_MIN: number = 0.8;
@@ -407,6 +476,15 @@ export class AppPreferences {
     out.set(PrefKeys.AUTO_SELECT_CURRENT_WEEK, new JsonBoolean(true));
     out.set(PrefKeys.DEBUG_LOG, new JsonBoolean(false));
     out.set(PrefKeys.PERFORMANCE_OVERLAY, new JsonBoolean(false));
+    out.set(PrefKeys.SPEECH_ENABLED, new JsonBoolean(DEFAULT_SPEECH_ENABLED));
+    out.set(PrefKeys.SPEECH_VOLUME, ModelCodec.doubleNode(DEFAULT_SPEECH_VOLUME));
+    out.set(PrefKeys.SPEECH_SOURCE, ModelCodec.doubleNode(DEFAULT_SPEECH_SOURCE));
+    out.set(PrefKeys.SELECTED_SPEECH_PROVIDER,
+      new JsonString(DEFAULT_SELECTED_SPEECH_PROVIDER));
+    out.set(PrefKeys.EDGE_TTS_VOICE_NAME, new JsonString(DEFAULT_EDGE_TTS_VOICE_NAME));
+    out.set(PrefKeys.ALLOW_NOTIFICATION_SPEECH,
+      new JsonBoolean(DEFAULT_ALLOW_NOTIFICATION_SPEECH));
+    out.set(PrefKeys.SYSTEM_SPEECH_PERSON, ModelCodec.doubleNode(DEFAULT_SYSTEM_SPEECH_PERSON));
     return out;
   }
 

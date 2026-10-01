@@ -211,3 +211,35 @@ export {
   elapsedWholeDays,
   planDailyAutoAdjust
 } from './src/main/ets/time/DailyAutoAdjust';
+
+/* ---- 语音朗读（P11b）---- */
+
+export {
+  SPEECH_PROVIDER_SYSTEM,
+  SPEECH_PROVIDER_EDGE_TTS,
+  SPEECH_PROVIDER_GPT_SOVITS,
+  DEFAULT_SPEECH_PROVIDER,
+  DEFAULT_EDGE_TTS_VOICE,
+  SPEECH_VOLUME_MIN,
+  SPEECH_VOLUME_MAX,
+  SpeechProviderInfo,
+  SPEECH_PROVIDERS,
+  SpeechResolution,
+  findSpeechProvider,
+  speechProviderName,
+  resolveSpeechProvider,
+  implementedSpeechProviders,
+  shouldSpeakNotification,
+  clampSpeechVolume
+} from './src/main/ets/speech/SpeechProviders';
+export {
+  SPEECH_GENERATION_TIMEOUT_MS,
+  SpeechItemState,
+  SpeechStepKind,
+  SpeechItem,
+  SpeechStep,
+  SpeechQueue,
+  SpeechProviderCacheLayout,
+  speechCachePath,
+  sanitizeSegment
+} from './src/main/ets/speech/SpeechQueue';

@@ -23,6 +23,7 @@ import { window } from '@kit.ArkUI';
 import { resolveClassTableViewModel, syncClassReminders } from '../common/AppServices';
 import { ThemeService } from '../common/ThemeService';
 import { resolveExactTimeService } from '../time/ExactTimeService';
+import { shutdownSpeechService } from '../speech/SpeechService';
 import { ClassTableViewModel } from '../viewmodel/ClassTableViewModel';
 
 const DOMAIN: number = 0x0000;
@@ -43,6 +44,10 @@ export default class EntryAbility extends UIAbility {
     // 进程要退了，定时器跟着一起停，免得 onDestroy 之后再有一次 tick。
     this.vm?.stop();
     this.vm = undefined;
+    // 释放系统 TTS 引擎。引擎占着全设备三个实例名额之一，而且带 isBackStage
+    // 创建的那个会让进程晚一点才能被回收 —— 不释放的话，反复冷启动几次之后
+    // 别的应用也会建不出引擎。
+    shutdownSpeechService();
     hilog.info(DOMAIN, TAG, 'onDestroy');
   }
 
@@ -103,6 +108,10 @@ export default class EntryAbility extends UIAbility {
 
   onBackground(): void {
     this.vm?.stop();
+    // 朗读**不**停：引擎是以 isBackStage 创建的，退到后台会继续把当前这一句
+    // 念完 —— 而课前一分钟提醒最可能发生在应用不在前台的时候，那正是它该
+    // 起作用的时候。停掉引擎就等于把语音功能限制在「用户正盯着屏幕」的场景，
+    // 那个场景里用户本来也不需要有人念给他听。
     // 后台不查 NTP。10 分钟一次的间隔意味着最多丢 10 分钟精度，用户切回来
     // 时 onForeground 会补查；而一个在后台还挂着的 UDP socket 既费电又可能
     // 被系统在后台冻结时杀掉，白白产生一次「同步失败」的状态文案。

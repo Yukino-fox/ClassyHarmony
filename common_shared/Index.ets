@@ -101,3 +101,8 @@ export {
   DATE_COMPONENT_ID,
   SCHEDULE_COMPONENT_ID
 } from './src/main/ets/models/ComponentProfile';
+
+/* ---- 基础文字与摘要（P11b）---- */
+
+export { encodeUtf8 } from './src/main/ets/text/Utf8';
+export { md5Hex, md5HexOfText } from './src/main/ets/crypto/Md5';

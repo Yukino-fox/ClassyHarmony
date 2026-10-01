@@ -37,6 +37,7 @@ import { common } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import {
   AppPreferences,
+  DEFAULT_SYSTEM_SPEECH_PERSON,
   DefaultPage,
   PrefKeys,
   ThemeMode
@@ -46,6 +47,10 @@ import { ThemeService } from '../common/ThemeService';
 import { CONTENT_MAX_WIDTH } from '../components/ContentWidth';
 import { EditorTextField } from '../components/EditorWidgets';
 import { ExactTimeService, resolveExactTimeService } from '../time/ExactTimeService';
+import { SpeechService, resolveSpeechService } from '../speech/SpeechService';
+import { PERSON_FEMALE, PERSON_MALE } from '../speech/SystemSpeechService';
+import { SPEECH_PROVIDER_SYSTEM, SPEECH_PROVIDERS, SpeechProviderInfo,
+  findSpeechProvider } from 'common_core';
 
 const DOMAIN: number = 0x0000;
 const TAG: string = 'Settings';
@@ -115,6 +120,18 @@ struct SettingsPage {
   /** 正在校时。用来把按钮置灰、避免连点发出多个查询。 */
   @Local syncing: boolean = false;
 
+  // 语音朗读
+  @Local speechEnabled: boolean = true;
+  @Local allowNotificationSpeech: boolean = false;
+  /** 设置里选的提供方 id。可能是本设备没有实现的（跨端同步来的）。 */
+  @Local speechProviderId: string = '';
+  /** 系统 TTS 的音色（13 女 / 21 男）。 */
+  @Local systemPerson: number = DEFAULT_SYSTEM_SPEECH_PERSON;
+  /** 状态文案：实际用哪个引擎、有没有回退、为什么不可用。 */
+  @Local speechStatus: string = '';
+  /** 正在试听。用来把按钮置灰，并让按钮文字变成进行时。 */
+  @Local testingSpeech: boolean = false;
+
   // 诊断
   @Local debugLog: boolean = false;
   @Local performanceOverlay: boolean = false;
@@ -176,6 +193,18 @@ struct SettingsPage {
       this.timeAutoAdjustEnabled = exact.isAutoAdjustEnabled();
       this.timeAutoAdjustSeconds = exact.currentAutoAdjustSeconds();
       this.syncStatus = exact.statusText();
+    }
+
+    // 语音同样从服务读。服务是「实际会用哪个引擎」的判断者：设置里写着
+    // EdgeTTS 而实际用的是回退后的系统 TTS，直接读盘会显示成 EdgeTTS ——
+    // 用户会以为配置生效了，然后在手机上改音色改不动、也找不到原因。
+    const speech: SpeechService | undefined = this.speechService();
+    if (speech !== undefined) {
+      this.speechEnabled = speech.isEnabled();
+      this.allowNotificationSpeech = speech.allowNotificationSpeech();
+      this.speechProviderId = speech.selectedProviderId();
+      this.systemPerson = speech.systemPerson();
+      this.speechStatus = speech.statusText();
     }
 
     this.debugLog = prefs.getBoolean(PrefKeys.DEBUG_LOG, false);
@@ -333,6 +362,116 @@ struct SettingsPage {
     return resolveExactTimeService(this.host);
   }
 
+  // ------------------------------------------------------------ 语音朗读
+
+  private speechService(): SpeechService | undefined {
+    if (this.host === undefined) {
+      return undefined;
+    }
+    return resolveSpeechService(this.host);
+  }
+
+  /**
+   * 全局开关。
+   *
+   * 不调服务的 start/stop：朗读服务没有定时器，引擎是惰性创建的，开关只影响
+   * 「下一次要不要念」。所以写盘 + 重算状态文案就够。
+   */
+  private toggleSpeech(on: boolean): void {
+    this.speechEnabled = on;
+    this.writeBool(PrefKeys.SPEECH_ENABLED, on);
+    this.refreshSpeechStatus();
+  }
+
+  /**
+   * 「允许通知朗读」。
+   *
+   * 桌面版这一项的默认值是 **false**，也就是「装好了不会自己说话」。这里保持
+   * 同样的默认值：朗读是 opt-in，因为一个会突然出声的应用比一个安静的应用
+   * 更让人反感，尤其在教室里。
+   */
+  private toggleAllowNotificationSpeech(on: boolean): void {
+    this.allowNotificationSpeech = on;
+    this.writeBool(PrefKeys.ALLOW_NOTIFICATION_SPEECH, on);
+    this.refreshSpeechStatus();
+  }
+
+  /**
+   * 换提供方。在**全部**提供方里循环，包括本设备没有实现的。
+   *
+   * 为什么不跳过没实现的：这个键是跨端读写的。用户在桌面上选的是 EdgeTTS，
+   * 同步过来之后设置页要能把那件事显示出来（而不是显示成「系统 TTS」让他
+   * 以为选的就是系统 TTS）；也要能选回系统 TTS。让没实现的选项在列表里出现
+   * 并注明「本设备暂不支持」，比把它藏起来诚实。
+   */
+  private cycleSpeechProvider(): void {
+    const next: string = SettingsPage.nextProvider(this.speechProviderId);
+    this.speechProviderId = next;
+    this.prefs?.put(PrefKeys.SELECTED_SPEECH_PROVIDER, next);
+    this.refreshSpeechStatus();
+  }
+
+  private static nextProvider(current: string): string {
+    for (let i: number = 0; i < SPEECH_PROVIDERS.length; i++) {
+      if (SPEECH_PROVIDERS[i].id === current) {
+        return SPEECH_PROVIDERS[(i + 1) % SPEECH_PROVIDERS.length].id;
+      }
+    }
+    return SPEECH_PROVIDERS[0].id;
+  }
+
+  private cycleSystemPerson(): void {
+    const next: number = this.systemPerson === PERSON_FEMALE ? PERSON_MALE : PERSON_FEMALE;
+    this.systemPerson = next;
+    this.writeNumber(PrefKeys.SYSTEM_SPEECH_PERSON, next);
+    // 音色是引擎的创建参数，改不了 —— 服务会丢掉旧引擎，下次朗读重建。
+    this.speechService()?.setSystemPerson(next);
+    this.refreshSpeechStatus();
+  }
+
+  private refreshSpeechStatus(): void {
+    this.speechStatus = this.speechService()?.statusText() ?? '';
+  }
+
+  /**
+   * 试听。
+   *
+   * 用一句真话而不是「测试测试」：念出来的是应用以后真会念的那类句子（语速、
+   * 停顿、多音字都在），用户听完就能判断要不要留着。代价是这一句得手工维护，
+   * 但只有一句。
+   */
+  private async testSpeak(): Promise<void> {
+    const speech: SpeechService | undefined = this.speechService();
+    if (speech === undefined || this.testingSpeech) {
+      return;
+    }
+    this.testingSpeech = true;
+    try {
+      const failure: string = await speech.trySpeakNow('上课了，第一节课即将开始。');
+      UiFeedback.toast(this.getUIContext(),
+        failure.length === 0 ? '试听已送出' : `试听失败：${failure}`);
+    } catch (err) {
+      hilog.warn(DOMAIN, TAG, 'testSpeak threw: %{public}s', `${err}`);
+    }
+    this.testingSpeech = false;
+    this.refreshSpeechStatus();
+  }
+
+  private speechProviderLabel(): string {
+    const info: SpeechProviderInfo | undefined = findSpeechProvider(this.speechProviderId);
+    if (info === undefined) {
+      return this.speechProviderId;
+    }
+    if (!info.implemented) {
+      return `${info.displayName}（本设备暂不支持）`;
+    }
+    return info.displayName;
+  }
+
+  private personLabel(): string {
+    return this.systemPerson === PERSON_MALE ? '男声' : '女声';
+  }
+
   // ------------------------------------------------------------ 精确时间
 
   private toggleExactTime(on: boolean): void {
@@ -448,6 +587,11 @@ struct SettingsPage {
     // 它顺带会跑一次每日补偿：刚重置时 LastTimeAdjustDateTime 已被置空，
     // 天数算出来是 0，不会多补。
     this.exactService()?.start();
+
+    // 音色缓存在 SystemSpeechService 里（引擎的创建参数），重置后要一起拨回
+    // 默认值 —— 否则盘上写着 13、内存里还是 21，试听出来是男声而设置页写着
+    // 女声。
+    this.speechService()?.setSystemPerson(DEFAULT_SYSTEM_SPEECH_PERSON);
 
     this.reload();
     this.editingServer = false;
@@ -689,6 +833,31 @@ struct SettingsPage {
             this.exactTimeEnabled && !this.syncing, () => {
               this.syncNow();
             })
+
+          // ---- 语音朗读
+          this.groupTitle('语音朗读')
+          this.toggleRow('启用语音', this.speechEnabled, (on: boolean) => {
+            this.toggleSpeech(on);
+          })
+          this.toggleRow('通知朗读', this.allowNotificationSpeech, (on: boolean) => {
+            this.toggleAllowNotificationSpeech(on);
+          })
+          this.valueRow('语音引擎', this.speechProviderLabel(), () => {
+            this.cycleSpeechProvider();
+          })
+          if (this.speechProviderId === SPEECH_PROVIDER_SYSTEM) {
+            // 只在真的用系统 TTS 时才显示音色。挂在 EdgeTTS 上显示一个改不动
+            // 的音色，是一件需要解释的事。
+            this.valueRow('系统音色', this.personLabel(), () => {
+              this.cycleSystemPerson();
+            })
+          }
+          this.noteRow('朗读状态',
+            this.speechStatus.length === 0 ? '尚未初始化' : this.speechStatus)
+          this.noteRow('音量', '跟随系统媒体音量（系统 TTS 不支持单独调节）')
+          this.actionRow(this.testingSpeech ? '正在试听…' : '试听', !this.testingSpeech, () => {
+            this.testSpeak();
+          })
 
           // ---- 诊断
           this.groupTitle('诊断')

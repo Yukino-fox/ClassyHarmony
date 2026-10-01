@@ -16,6 +16,7 @@
 import { notificationManager, NotificationRequest, NotificationSlot, NotificationSlotType, NotificationConstant } from '@kit.NotificationKit';
 import { common } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
+import { resolveSpeechService } from '../speech/SpeechService';
 
 const DOMAIN: number = 0x0000;
 const TAG: string = 'NotificationService';
@@ -152,6 +153,22 @@ export class NotificationService {
     ongoing?: boolean;            // 持续性通知（不可划掉）
     color?: number;               // ARGB
     deliveryTime?: number;        // 定时投递（毫秒时间戳）
+    /**
+     * 要朗读的文本。不填则用 content。
+     *
+     * 单独留一个字段而不是直接念 content：桌面版的提醒内容里有「大字遮罩」
+     * 和「正文」两部分，各自决定要不要朗读（IsMaskSpeechEnabled /
+     * IsContentSpeechEnabled），而念的是遮罩那一句短话。详情见 execShowNotification。
+     */
+    speechText?: string;
+    /**
+     * 这一条内容自己是否允许朗读。默认 true。
+     *
+     * 对应桌面版 NotificationContent.IsSpeechEnabled —— 默认就是 true，
+     * 也就是说「能不能念」由全局那一层（AllowNotificationSpeech，默认关）
+     * 决定，而不是由内容这一层。
+     */
+    speechEnabled?: boolean;
   }): Promise<number> {
     if (!this.initialized) {
       await this.initialize();
@@ -188,7 +205,39 @@ export class NotificationService {
 
     await notificationManager.publishNotification(request);
     hilog.info(DOMAIN, TAG, 'Published notification id=%{public}d cat=%{public}s', id, category);
+
+    // 朗读。放在 publish 成功之后：通知没发出去还在那里念，用户会以为听错了。
+    //
+    // 「展示通知」这里是全应用唯一一处「一条提醒被呈现给用户」的地方（另一处
+    // 是平台侧的课前提醒，那条由系统投递、应用不在场，念不了）。所以朗读挂在
+    // 这里，与桌面版把它挂在 NotificationWorkerService 上是同一个位置。
+    this.maybeSpeak(options);
     return id;
+  }
+
+  /**
+   * 按开关决定要不要念，以及念哪一句。
+   *
+   * 抛出去会让整条通知发不出去 —— 语音是增强能力，它坏了不该把提醒也弄没。
+   */
+  private maybeSpeak(options: {
+    content: string;
+    speechText?: string;
+    speechEnabled?: boolean;
+  }): void {
+    let text: string = options.speechText ?? '';
+    if (text.length === 0) {
+      text = options.content;
+    }
+    if (text.length === 0) {
+      return;
+    }
+    const enabled: boolean = options.speechEnabled ?? true;
+    try {
+      resolveSpeechService(this.context).notifyShown(enabled, text);
+    } catch (err) {
+      hilog.warn(DOMAIN, TAG, 'speech enqueue failed: %{public}s', `${err}`);
+    }
   }
 
   /** 取消单条通知 */

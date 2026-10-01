@@ -166,12 +166,33 @@ export class AutomationExecutor {
 
     // 发布通知
     const category: NotificationCategory = NotificationCategory.Automation;
+    const mask: string = s.mask ?? '';
+    const content: string = s.content ?? '';
+    /*
+     * 念哪一句。
+     *
+     * 桌面版的提醒内容是「大字遮罩 + 正文」两部分，各自带 IsSpeechEnabled，
+     * 但 NotificationWorkerService 有一个「一个会话只发一次声」的守卫
+     * （HasSoundsPlayed），所以一条提醒只会念一段。遮罩是先出现的那个（它盖在
+     * 屏幕上），因此有遮罩就念遮罩，没有才念正文 —— 与桌面版的实际效果一致。
+     *
+     * 念短的那一句也更合理：遮罩是「上课了」这种抓注意力的话，正文是「第 1 节
+     * 语文 · 张三」这种细节。提醒的全部价值在于快。
+     */
+    const hasMask: boolean = mask.trim().length > 0;
     await this.notificationService.publish(category, {
-      title: s.mask ?? 'ClassIsland',
-      content: s.content ?? '',
+      title: hasMask ? mask : 'ClassIsland',
+      content: content,
       subText: '',
       ongoing: false,
-      color: 0xFF0077D4 // ch_accent
+      color: 0xFF0077D4, // ch_accent
+      /*
+       * 只把文本交给 publish，由 NotificationService 统一判断三个开关并入队
+       * （见那里的 maybeSpeak）。这里**不**另外调一次朗读 —— 两处都念会让
+       * 同一句话被念两遍，而且第二遍还在第一遍念完之后，听起来像回声。
+       */
+      speechText: hasMask ? mask : content,
+      speechEnabled: hasMask ? s.isMaskSpeechEnabled : s.isContentSpeechEnabled
     });
 
     return true;
