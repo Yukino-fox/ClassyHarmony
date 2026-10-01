@@ -188,6 +188,19 @@ export class PrefKeys {
   static readonly WEATHER_ICON_ID: string = 'WeatherIconId';
   /** 天气：被排除的预警（按标题 / 详情子串匹配，数组）。 */
   static readonly EXCLUDED_WEATHER_ALERTS: string = 'ExcludedWeatherAlerts';
+
+  /*
+   * 跨设备（P11d）。这两个是本端独有的键 —— 桌面版没有跨设备能力，那边的
+   * IPC 是命名管道，只在同一台机器内用。
+   *
+   * DistributedSessionId 是一条会话的标识：两端填同一个 ID 才会进同一个
+   * 会话，所以它必须落盘、可复制、可手工填。空串表示「还没生成过」，首次
+   * 开启同步时用 distributedDataObject.genSessionId() 生成后写回。
+   */
+  /** 跨设备：是否开启公开状态同步。 */
+  static readonly DISTRIBUTED_SYNC_ENABLED: string = 'DistributedSyncEnabled';
+  /** 跨设备：会话 ID（字母 / 数字 / 下划线，≤128）。 */
+  static readonly DISTRIBUTED_SESSION_ID: string = 'DistributedSessionId';
 }
 
 /** 全部可识别的键。导出是为了「重置」与「导入」能遍历。 */
@@ -230,7 +243,9 @@ export const ALL_PREF_KEYS: string[] = [
   PrefKeys.AUTO_REFRESH_WEATHER_LOCATION,
   PrefKeys.NO_TLS_WEATHER_REQUESTS,
   PrefKeys.WEATHER_ICON_ID,
-  PrefKeys.EXCLUDED_WEATHER_ALERTS
+  PrefKeys.EXCLUDED_WEATHER_ALERTS,
+  PrefKeys.DISTRIBUTED_SYNC_ENABLED,
+  PrefKeys.DISTRIBUTED_SESSION_ID
 ];
 
 /** 主题档位。值必须与桌面版 Settings.Theme 一致（那边以整数落盘）。 */
@@ -318,6 +333,14 @@ export const DEFAULT_WEATHER_LOCATION_SOURCE: number = 0;
 export const DEFAULT_AUTO_REFRESH_WEATHER_LOCATION: boolean = false;
 export const DEFAULT_NO_TLS_WEATHER_REQUESTS: boolean = false;
 export const DEFAULT_WEATHER_ICON_ID: string = 'classisland.weatherIcons.lucide';
+
+/*
+ * 跨设备默认值。默认关：这是一条会把课表状态广播给同网设备的路径，
+ * 必须显式开启（与桌面版 IPC 只在本机、不需要额外开关的情况不同）。
+ */
+export const DEFAULT_DISTRIBUTED_SYNC_ENABLED: boolean = false;
+/** 空串 = 还没生成过；首次开启时用系统 genSessionId() 生成。 */
+export const DEFAULT_DISTRIBUTED_SESSION_ID: string = '';
 
 /** 字体缩放下界。 */
 export const FONT_SCALE_MIN: number = 0.8;
@@ -592,6 +615,9 @@ export class AppPreferences {
       new JsonBoolean(DEFAULT_NO_TLS_WEATHER_REQUESTS));
     out.set(PrefKeys.WEATHER_ICON_ID, new JsonString(DEFAULT_WEATHER_ICON_ID));
     out.set(PrefKeys.EXCLUDED_WEATHER_ALERTS, new JsonArray());
+    out.set(PrefKeys.DISTRIBUTED_SYNC_ENABLED,
+      new JsonBoolean(DEFAULT_DISTRIBUTED_SYNC_ENABLED));
+    out.set(PrefKeys.DISTRIBUTED_SESSION_ID, new JsonString(DEFAULT_DISTRIBUTED_SESSION_ID));
     return out;
   }
 

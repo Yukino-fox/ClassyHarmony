@@ -40,6 +40,8 @@ import {
   DEFAULT_AUTO_REFRESH_WEATHER_LOCATION,
   DEFAULT_CITY_ID,
   DEFAULT_CITY_NAME,
+  DEFAULT_DISTRIBUTED_SESSION_ID,
+  DEFAULT_DISTRIBUTED_SYNC_ENABLED,
   DEFAULT_NO_TLS_WEATHER_REQUESTS,
   DEFAULT_SYSTEM_SPEECH_PERSON,
   DEFAULT_WEATHER_ICON_ID,
@@ -58,6 +60,10 @@ import { PERSON_FEMALE, PERSON_MALE } from '../speech/SystemSpeechService';
 import { SPEECH_PROVIDER_SYSTEM, SPEECH_PROVIDERS, SpeechProviderInfo,
   findSpeechProvider } from 'common_core';
 import { WeatherService, resolveWeatherService } from '../weather/WeatherService';
+import {
+  DistributedStateService,
+  resolveDistributedStateService
+} from '../ipc/DistributedStateService';
 
 const DOMAIN: number = 0x0000;
 const TAG: string = 'Settings';
@@ -160,6 +166,18 @@ struct SettingsPage {
   /** 正在刷新天气。 */
   @Local refreshingWeather: boolean = false;
 
+  // 跨设备
+  /** 是否开启跨设备公开状态同步。 */
+  @Local distributedEnabled: boolean = DEFAULT_DISTRIBUTED_SYNC_ENABLED;
+  /** 会话 ID。空串表示还没生成过。 */
+  @Local distributedSessionId: string = DEFAULT_DISTRIBUTED_SESSION_ID;
+  /** 本机显示名（只读，给用户认机器的）。 */
+  @Local distributedDeviceName: string = '';
+  /** 会话 ID 的编辑区是否展开。 */
+  @Local editingSessionId: boolean = false;
+  /** 同步状态文案。 */
+  @Local distributedStatus: string = '';
+
   // 诊断
   @Local debugLog: boolean = false;
   @Local performanceOverlay: boolean = false;
@@ -248,6 +266,18 @@ struct SettingsPage {
     this.weatherIconId = prefs.getString(PrefKeys.WEATHER_ICON_ID, DEFAULT_WEATHER_ICON_ID);
     this.excludedAlertsText = prefs.getStringArray(PrefKeys.EXCLUDED_WEATHER_ALERTS).join('、');
     this.weatherStatus = this.weatherService()?.statusText() ?? '天气服务未启动';
+
+    // 跨设备：开关与会话 ID 直接读盘（服务是它们的写入者，读了就是最新的），
+    // 设备名与状态问服务要 —— 设备名来自系统、状态取决于入会话成没成。
+    this.distributedEnabled = prefs.getBoolean(PrefKeys.DISTRIBUTED_SYNC_ENABLED,
+      DEFAULT_DISTRIBUTED_SYNC_ENABLED);
+    this.distributedSessionId = prefs.getString(PrefKeys.DISTRIBUTED_SESSION_ID,
+      DEFAULT_DISTRIBUTED_SESSION_ID);
+    const distributed: DistributedStateService | undefined = this.distributedService();
+    if (distributed !== undefined) {
+      this.distributedDeviceName = distributed.currentDeviceName();
+      this.distributedStatus = distributed.statusText();
+    }
 
     this.debugLog = prefs.getBoolean(PrefKeys.DEBUG_LOG, false);
     this.performanceOverlay = prefs.getBoolean(PrefKeys.PERFORMANCE_OVERLAY, false);
@@ -616,6 +646,65 @@ struct SettingsPage {
     }
     this.weatherStatus = service.statusText();
     this.refreshingWeather = false;
+  }
+
+  // ------------------------------------------------------------ 跨设备
+
+  private distributedService(): DistributedStateService | undefined {
+    if (this.host === undefined) {
+      return undefined;
+    }
+    return resolveDistributedStateService(this.host);
+  }
+
+  /**
+   * 拨同步开关。
+   *
+   * 打开时会就地建会话，如果会话 ID 还没生成过就顺手生成一个 —— 否则「打开
+   * 同步却什么也没发生」是这条路径最容易踩的坑。刚入会话时 statusText() 可能
+   * 还没变成「已加入」，因为 setSessionId 是异步的，这里先显示一份快照即可。
+   */
+  private toggleDistributed(on: boolean): void {
+    this.distributedEnabled = on;
+    const service: DistributedStateService | undefined = this.distributedService();
+    if (service === undefined) {
+      this.writeBool(PrefKeys.DISTRIBUTED_SYNC_ENABLED, on);
+      return;
+    }
+    service.setEnabled(on);
+    if (on) {
+      this.distributedSessionId = service.currentSessionId();
+    }
+    this.distributedStatus = service.statusText();
+  }
+
+  private generateDistributedSessionId(): void {
+    const service: DistributedStateService | undefined = this.distributedService();
+    if (service === undefined) {
+      return;
+    }
+    this.distributedSessionId = service.generateSessionId();
+    this.editingSessionId = false;
+    this.distributedStatus = service.statusText();
+  }
+
+  /**
+   * 提交会话 ID。
+   *
+   * 回填的是服务规范化之后的值 —— 用户输了中文或标点，服务会把它们丢掉，
+   * 界面必须显示最终生效的那个，否则用户会以为自己的输入没保存上。
+   */
+  private commitSessionId(text: string): void {
+    this.editingSessionId = false;
+    const service: DistributedStateService | undefined = this.distributedService();
+    if (service === undefined) {
+      const normalized: string = text.trim();
+      this.distributedSessionId = normalized;
+      this.prefs?.put(PrefKeys.DISTRIBUTED_SESSION_ID, normalized);
+      return;
+    }
+    this.distributedSessionId = service.setSessionId(text);
+    this.distributedStatus = service.statusText();
   }
 
   // ------------------------------------------------------------ 精确时间
@@ -1081,6 +1170,44 @@ struct SettingsPage {
             !this.refreshingWeather, () => {
               this.refreshWeather();
             })
+
+          // ---- 跨设备
+          this.groupTitle('跨设备')
+          this.toggleRow('开启跨设备同步', this.distributedEnabled, (on: boolean) => {
+            this.toggleDistributed(on);
+          })
+          this.noteRow('本机名称',
+            this.distributedDeviceName.length === 0 ? '未知设备' : this.distributedDeviceName)
+          this.valueRow('会话 ID',
+            this.distributedSessionId.length === 0 ? '未生成' : this.distributedSessionId, () => {
+              this.editingSessionId = !this.editingSessionId;
+            })
+          if (this.editingSessionId) {
+            ListItem() {
+              Column() {
+                EditorTextField({
+                  label: '会话 ID',
+                  value: this.distributedSessionId,
+                  placeholder: '字母、数字、下划线',
+                  onCommit: (text: string) => {
+                    this.commitSessionId(text);
+                  }
+                })
+                Text('两台设备填同一个会话 ID 才会互相同步。只允许字母、数字、下划线，最长 128 字符。')
+                  .fontSize(12)
+                  .fontColor($r('app.color.ch_text_hint'))
+                  .width('100%')
+                  .padding({ top: 4 })
+              }
+              .width('100%')
+              .padding({ left: 16, right: 16, top: 10, bottom: 10 })
+            }
+          }
+          this.actionRow('生成新会话 ID', true, () => {
+            this.generateDistributedSessionId();
+          })
+          this.noteRow('状态',
+            this.distributedStatus.length === 0 ? '未开启' : this.distributedStatus)
 
           // ---- 诊断
           this.groupTitle('诊断')

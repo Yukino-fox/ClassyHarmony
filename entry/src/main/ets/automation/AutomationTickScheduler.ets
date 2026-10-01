@@ -27,6 +27,10 @@ import { WorkflowMutations } from 'common_core';
 import { ProfileRepository } from '../data/ProfileRepository';
 import { RuleContext } from 'common_core';
 import { currentWeatherSnapshot } from '../weather/WeatherService';
+import {
+  DistributedStateService,
+  resolveDistributedStateService
+} from '../ipc/DistributedStateService';
 
 const AUTOMATION_DIR: string = 'Automations';
 
@@ -78,12 +82,13 @@ export class AutomationTickScheduler {
 
   /** 单次 tick */
   private async tickOnce(): Promise<void> {
-    if (!this.automationSettings.getIsAutomationEnabled()) {
-      return;
-    }
-
-    const scheme: string = this.automationSettings.getCurrentAutomationConfig();
-    if (!AutomationSettings.isValidSchemeName(scheme)) {
+    const automationOn: boolean = this.automationSettings.getIsAutomationEnabled();
+    // 跨设备发布与自动化共用同一次快照计算：两者都要「当前课表快照」，
+    // 各算一次会读两遍档案、还可能跨过秒边界拿到两个不同的 now。
+    const distributed: DistributedStateService =
+      resolveDistributedStateService(this.executorCtx.context);
+    const distributedOn: boolean = distributed.isEnabled();
+    if (!automationOn && !distributedOn) {
       return;
     }
 
@@ -94,16 +99,29 @@ export class AutomationTickScheduler {
       return;
     }
 
-    const workflows: Workflow[] = this.loadWorkflows(scheme);
-    if (workflows.length === 0) {
-      return;
-    }
-
     const now: DateTimeValue = DateTimeValue.now();
     const previous: LessonsSnapshot | undefined = this.lastSnapshot;
     const engineSettings: EngineSettings = new EngineSettings(DateTimeValue.fromLocalMillis(0));
     const snapshot: LessonsSnapshot = LessonsEngine.compute(profile, engineSettings, now, previous);
     this.lastSnapshot = snapshot;
+
+    if (distributedOn) {
+      distributed.publish(snapshot, profile);
+    }
+
+    if (!automationOn) {
+      return;
+    }
+
+    const scheme: string = this.automationSettings.getCurrentAutomationConfig();
+    if (!AutomationSettings.isValidSchemeName(scheme)) {
+      return;
+    }
+
+    const workflows: Workflow[] = this.loadWorkflows(scheme);
+    if (workflows.length === 0) {
+      return;
+    }
 
     const ruleContext: RuleContext = new RuleContext();
     ruleContext.now = now;

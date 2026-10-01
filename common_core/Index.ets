@@ -283,3 +283,21 @@ export {
   WEATHER_MAIN_KIND_PRESSURE,
   WEATHER_MAIN_KIND_FEELS_LIKE
 } from './src/main/ets/weather/WeatherBrief';
+export {
+  PublicNotifyIds,
+  PublicWantActions,
+  PublicWantKeys,
+  DISTRIBUTED_SESSION_ID_MAX_LENGTH,
+  normalizeDistributedSessionId,
+  isValidDistributedSessionId
+} from './src/main/ets/ipc/PublicProtocol';
+export {
+  PublicStateSource,
+  PublicLessonState,
+  PublicProfileBrief,
+  eventIdForTransition,
+  buildPublicLessonState,
+  buildPublicProfileBrief,
+  isPublicStateStale,
+  PublicStateCodec
+} from './src/main/ets/ipc/PublicState';

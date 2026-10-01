@@ -25,6 +25,11 @@ import { ThemeService } from '../common/ThemeService';
 import { resolveExactTimeService } from '../time/ExactTimeService';
 import { shutdownSpeechService } from '../speech/SpeechService';
 import { resolveWeatherService, resetWeatherService } from '../weather/WeatherService';
+import {
+  resolveDistributedStateService,
+  resetDistributedStateService
+} from '../ipc/DistributedStateService';
+import { buildPublicQueryResult, isPublicQuery } from '../ipc/PublicQueryService';
 import { ClassTableViewModel } from '../viewmodel/ClassTableViewModel';
 
 const DOMAIN: number = 0x0000;
@@ -35,6 +40,13 @@ export default class EntryAbility extends UIAbility {
   private vm: ClassTableViewModel | undefined = undefined;
 
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    // 外部应用用 startAbilityForResult 查询公开状态时，是本应用**冷启动**
+    // 走到这里。此时不做页面装配，直接回答后退出：查询是「一问一答」，
+    // 弹出一个空窗口再自己关掉只会闪一下。
+    if (isPublicQuery(want)) {
+      this.respondToPublicQuery(want);
+      return;
+    }
     // 在 onCreate 就装配而不是等页面：页面首帧就能拿到已重算好的网格，
     // 不会先闪一下「正在读取课表」。
     this.vm = resolveClassTableViewModel(this.context);
@@ -42,7 +54,41 @@ export default class EntryAbility extends UIAbility {
     // 拿到的是 undefined 快照，天气组件会先闪一下「还没取到」。真正的刷新在
     // onForeground 的 start()，那里才起定时器。
     resolveWeatherService(this.context);
+    // 跨设备同步服务也在 onCreate 建：设置页与自动化 tick 都按单例去取，
+    // 不在这里建的话，第一次读它的人会拿到一个还没 reload 过的实例。
+    // 真正的入会话在 onForeground 的 start()。
+    resolveDistributedStateService(this.context);
     hilog.info(DOMAIN, TAG, 'onCreate: viewModel ready');
+  }
+
+  /**
+   * 应用已经在运行时又收到一个 Want（外部应用再次发起查询）。
+   *
+   * 非公开查询的 Want 一律不接管 —— 只回答我们声明的那两个 action，
+   * 别的交给系统默认行为，免得把普通唤起也吞掉。
+   */
+  onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    if (isPublicQuery(want)) {
+      this.respondToPublicQuery(want);
+    }
+  }
+
+  /**
+   * 回答一条公开查询并退出。
+   *
+   * `terminateSelfWithResult` 把结果 Want 送回调用方的
+   * `startAbilityForResult` 回调。失败只记日志：调用方要么超时、要么收到
+   * 我们构造的失败结果（见 buildPublicQueryResult），两条路都不会崩。
+   */
+  private respondToPublicQuery(want: Want): void {
+    const result: Want | undefined = buildPublicQueryResult(this.context, want);
+    if (result === undefined) {
+      return;
+    }
+    this.context.terminateSelfWithResult({ resultCode: 0, want: result })
+      .catch((err: Error) => {
+        hilog.warn(DOMAIN, TAG, 'terminateSelfWithResult failed: %{public}s', err.message);
+      });
   }
 
   onDestroy(): void {
@@ -55,6 +101,8 @@ export default class EntryAbility extends UIAbility {
     shutdownSpeechService();
     // 天气定时器与进程内快照一起丢掉。
     resetWeatherService();
+    // 退出分布式会话并丢掉单例。
+    resetDistributedStateService();
     hilog.info(DOMAIN, TAG, 'onDestroy');
   }
 
@@ -90,6 +138,9 @@ export default class EntryAbility extends UIAbility {
     // onBackground），回前台这里重启 —— 天气是「看一眼」的数据，后台不刷
     // 也看不出差别，而少一个后台网络轮询就少一份耗电与被冻结的风险。
     resolveWeatherService(this.context).start();
+    // 跨设备：进前台才入会话。退后台会 stop()（见 onBackground）—— 后台既不
+    // 推状态也没人看，挂着一个分布式会话只会费电。
+    resolveDistributedStateService(this.context).start();
     hilog.info(DOMAIN, TAG, 'onForeground: polling resumed');
     // 课前提醒的周期重复挂在平台侧，不依赖本进程；这里同步是为了修正首次
     // 触发日（跨天之后它落在过去）与课表变更（可能来自设备间同步）。
@@ -130,6 +181,9 @@ export default class EntryAbility extends UIAbility {
     // 天气同样停：定时器与快照留在单例里（回前台时 start() 会接着用），
     // 只把 5 分钟的轮询停掉。
     resolveWeatherService(this.context).stop();
+    // 跨设备同步同样退后台就停：对方要的是「现在上什么课」，而这台设备都退到
+    // 后台了，继续广播也没有观众。回前台 start() 会重新入会话。
+    resolveDistributedStateService(this.context).stop();
     hilog.info(DOMAIN, TAG, 'onBackground: polling stopped');
   }
 }

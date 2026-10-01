@@ -31,6 +31,10 @@
     {
       "name": "location_permission_reason",
       "value": "用于按当前位置自动选择天气城市"
+    },
+    {
+      "name": "distributed_permission_reason",
+      "value": "用于在可信设备间同步当前课表状态（默认关闭，需手动开启）"
     }
   ]
 }
