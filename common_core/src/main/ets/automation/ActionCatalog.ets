@@ -52,6 +52,12 @@ import {
   ActionIds,
   ActionItem
 } from 'common_shared';
+import {
+  PluginActionPlan,
+  planPluginAction,
+  settingsOfActionExtension
+} from '../plugins/PluginActionEval';
+import { ExtensionRegistry } from '../plugins/ExtensionRegistry';
 
 /** 行动实现状态。决定编辑器给它打什么标。 */
 export enum ActionSupport {
@@ -71,7 +77,12 @@ export enum ActionSettingsKind {
   Notification = 3,
   Run = 4,
   Sleep = 5,
-  WeatherNotification = 6
+  WeatherNotification = 6,
+  /**
+   * 声明式扩展提供的行动（P12）。Settings 原样承载一份动作描述
+   * （见 plugins/PluginActionEval.planPluginAction），解成 PluginActionPlan。
+   */
+  Plugin = 7
 }
 
 /** 一个行动的注册信息。对应桌面版 ActionInfo。 */
@@ -125,8 +136,16 @@ const REGISTRY: ActionInfo[] = [
 ];
 
 export class ActionCatalog {
+  /** 扩展注册的行动（P12）。与 REGISTRY 分开，理由同 TriggerCatalog。 */
+  private static pluginEntries: ActionInfo[] = [];
+
   static find(id: string): ActionInfo | undefined {
     for (const each of REGISTRY) {
+      if (each.id === id) {
+        return each;
+      }
+    }
+    for (const each of ActionCatalog.pluginEntries) {
       if (each.id === id) {
         return each;
       }
@@ -134,9 +153,53 @@ export class ActionCatalog {
     return undefined;
   }
 
-  /** 全部内置行动，按注册顺序。 */
+  /** 全部已注册行动：先内置、后扩展。编辑器的新增菜单按这个顺序排。 */
   static all(): ActionInfo[] {
-    return REGISTRY;
+    const out: ActionInfo[] = [];
+    for (const each of REGISTRY) {
+      out.push(each);
+    }
+    for (const each of ActionCatalog.pluginEntries) {
+      out.push(each);
+    }
+    return out;
+  }
+
+  /** 注册一条扩展行动。重复 id 抛错，与 ComponentCatalog.register 同一口径。 */
+  static register(info: ActionInfo): void {
+    if (ActionCatalog.find(info.id) !== undefined) {
+      throw new Error(`行动 id ${info.id} 已被占用`);
+    }
+    ActionCatalog.pluginEntries.push(info);
+  }
+
+  /** 注册一条扩展行动，冲突时返回 false 而不是抛（装载一批扩展用）。 */
+  static registerPlugin(info: ActionInfo): boolean {
+    if (ActionCatalog.find(info.id) !== undefined) {
+      return false;
+    }
+    ActionCatalog.pluginEntries.push(info);
+    return true;
+  }
+
+  /** 注销一条扩展行动。内置的不受影响。 */
+  static unregister(id: string): boolean {
+    const next: ActionInfo[] = [];
+    let found: boolean = false;
+    for (const each of ActionCatalog.pluginEntries) {
+      if (each.id === id) {
+        found = true;
+        continue;
+      }
+      next.push(each);
+    }
+    ActionCatalog.pluginEntries = next;
+    return found;
+  }
+
+  /** 只清扩展注册项。装载前调一次。 */
+  static unregisterAll(): void {
+    ActionCatalog.pluginEntries = [];
   }
 
   static supportOf(id: string): ActionSupport {
@@ -191,6 +254,9 @@ export class ActionCatalog {
     if (found.settingsKind === ActionSettingsKind.WeatherNotification) {
       return WeatherNotificationActionSettings.parse(raw);
     }
+    if (found.settingsKind === ActionSettingsKind.Plugin) {
+      return planPluginAction(raw, ExtensionRegistry.writableSettingKeys);
+    }
     return undefined;
   }
 
@@ -217,6 +283,11 @@ export class ActionCatalog {
     }
     if (found.settingsKind === ActionSettingsKind.WeatherNotification) {
       return new WeatherNotificationActionSettings();
+    }
+    if (found.settingsKind === ActionSettingsKind.Plugin) {
+      // 声明式行动的默认设置 = 扩展声明的那份描述（模板变量原样留着，执行时渲染）。
+      const entry = ExtensionRegistry.findActionExtension(found.id);
+      return entry === undefined ? new PluginActionPlan() : settingsOfActionExtension(entry);
     }
     return undefined;
   }

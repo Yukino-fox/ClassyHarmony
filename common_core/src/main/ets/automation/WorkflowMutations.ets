@@ -22,6 +22,7 @@ import {
   ActionSetStatus,
   CronTriggerSettings,
   Guid,
+  JsonArray,
   JsonNode,
   JsonObject,
   ModifyAppSettingsActionSettings,
@@ -271,6 +272,18 @@ export class WorkflowMutations {
    * 的「无反射」纪律破掉，而它换来的是每次多写一个 case。
    */
   static settingsToNode(value: Object): JsonNode {
+    // 已经是节点树的原样带走（复制一份）。
+    //
+    // 声明式触发器与行动的默认设置就是裸 JsonObject（TriggerCatalog.defaultSettingsOf
+    // 与 ActionCatalog.defaultSettingsOf 的 Plugin 分支直接返回清单条目转出来的节点）。
+    // 不接这一支的话，新增一个声明式触发器会写进一个**空对象** —— 用户在编辑器里
+    // 看到的是「没设日程」，而清单里明明写了每天 7 点。
+    if (value instanceof JsonObject) {
+      return value;
+    }
+    if (value instanceof JsonArray) {
+      return value;
+    }
     if (value instanceof CronTriggerSettings) {
       return value.toJson();
     }

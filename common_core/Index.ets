@@ -311,3 +311,109 @@ export {
   planKeepAlive,
   keepAliveErrorText
 } from './src/main/ets/background/KeepAlivePolicy';
+
+/* ---- 声明式插件系统（P12）---- */
+
+export {
+  PLUGIN_API_VERSION,
+  PLUGIN_API_MIN_VERSION,
+  SemVer,
+  ApiCompatibility,
+  checkPluginApiVersion,
+  isValidPluginId
+} from './src/main/ets/plugins/PluginApi';
+export {
+  ExtensionKind,
+  PluginActionKind,
+  PluginScheduleKind,
+  EXTENSION_KINDS,
+  extensionKindField,
+  PLUGIN_COMPONENT_KINDS,
+  TriggerExtension,
+  ActionExtension,
+  NotificationProviderExtension,
+  ThemeExtension,
+  ComponentExtension,
+  ExtensionManifest,
+  ExtensionManifestCodec,
+  ComponentExtensionCodec,
+  TriggerExtensionCodec,
+  ActionExtensionCodec,
+  NotificationProviderExtensionCodec,
+  ThemeExtensionCodec
+} from './src/main/ets/plugins/PluginManifest';
+export {
+  PluginIssueCode,
+  PluginIssueSeverity,
+  MAX_ENTRIES_PER_KIND,
+  MAX_MANIFEST_TEXT_LENGTH,
+  PLUGIN_THEME_MODES,
+  PluginIssue,
+  PluginSandbox,
+  defaultPluginSandbox,
+  validateManifest,
+  validateManifestTextLength,
+  hasBlockingIssues,
+  blockingIssues,
+  summarizeIssues,
+  isHexColor,
+  scheduleProblem
+} from './src/main/ets/plugins/PluginValidation';
+export {
+  PLUGIN_REASON_FIRED,
+  PLUGIN_REASON_NOT_YET,
+  PLUGIN_REASON_BAD_SETTINGS,
+  MAX_EVERY_MINUTES,
+  SECONDS_PER_DAY,
+  PluginSchedule,
+  PluginScheduleVerdict,
+  evaluatePluginSchedule,
+  scheduleSettingsProblem,
+  parsePluginSchedule,
+  parseScheduleKindText,
+  scheduleOfExtension,
+  scheduleText,
+  formatSecondOfDay,
+  settingsOfTriggerExtension
+} from './src/main/ets/plugins/PluginSchedule';
+export {
+  PluginTriggerVerdict,
+  judgePluginTrigger
+} from './src/main/ets/plugins/PluginTriggerEval';
+export {
+  PLUGIN_CATEGORIES,
+  PLUGIN_CATEGORY_AUTOMATION,
+  PLUGIN_CATEGORY_CLASS_REMINDER,
+  PLUGIN_CATEGORY_WEATHER,
+  PLUGIN_CATEGORY_SYSTEM,
+  PluginNotificationPlan,
+  PluginSettingPlan,
+  PluginActionPlan,
+  planPluginAction,
+  parseActionKindText,
+  normalizeCategory,
+  settingsOfActionExtension
+} from './src/main/ets/plugins/PluginActionEval';
+export {
+  PLUGIN_TEMPLATE_PLACEHOLDERS,
+  PluginTemplateContext,
+  renderPluginTemplate,
+  pluginTemplatePlaceholders,
+  unresolvedPlaceholders
+} from './src/main/ets/plugins/PluginTemplate';
+export {
+  ExtensionEntryRecord,
+  PluginRecord,
+  ExtensionRegistry
+} from './src/main/ets/plugins/ExtensionRegistry';
+export {
+  PluginInstallResult,
+  installPlugin,
+  uninstallPlugin,
+  uninstallAllPlugins,
+  defaultSettingsOfPluginTrigger,
+  defaultSettingsOfPluginAction,
+  PLUGIN_INACTIVE_REMINDER,
+  inactiveReminder
+} from './src/main/ets/plugins/PluginInstaller';
+export { componentDecoderOfKind } from './src/main/ets/components/ComponentCatalog';

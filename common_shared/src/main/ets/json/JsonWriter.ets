@@ -9,7 +9,16 @@
  * 证据：源项目 ClassIsland/Assets/default-subjects.json 中 "语文" 被写作 "语文"。
  */
 
-import { JsonArray, JsonBoolean, JsonNode, JsonNull, JsonNumber, JsonObject, JsonString, JsonWriterFormat } from './JsonNode';
+import {
+  JsonArray,
+  JsonBoolean,
+  JsonMember,
+  JsonNode,
+  JsonNull,
+  JsonNumber,
+  JsonObject,
+  JsonString
+} from './JsonNode';
 
 export class JsonWriter {
   private indentSize: number;
@@ -70,19 +79,27 @@ export class JsonWriter {
     const pretty: boolean = this.indentSize > 0;
     parts.push('{');
     const inner: number = depth + 1;
-    for (const member of obj.entries()) {
+    const members: JsonMember[] = obj.entries();
+    for (let i = 0; i < members.length; i++) {
+      // 压缩与缩进两种形态都得在成员之间落逗号。
+      //
+      // 这里曾经只在压缩形态落逗号，缩进形态一个逗号都不写 —— 而桌面版
+      // ConfigureFileHelper 的 WriteIndented 默认就是 true，也就是说所有落盘
+      // 文件都缺分隔符。症状极难定位：写出当时没有任何异常，读回来报的是
+      // 「对象中期望 ',' 或 '}'」，看上去像解析器坏了而不是文件坏了。
+      if (i > 0) {
+        parts.push(',');
+      }
       if (pretty) {
         parts.push(this.newline);
         this.pushIndent(parts, inner);
-      } else if (parts.length > 0 && parts[parts.length - 1] !== '{') {
-        parts.push(',');
       }
-      parts.push(this.quote(member.name));
+      parts.push(this.quote(members[i].name));
       parts.push(':');
       if (pretty) {
         parts.push(' ');
       }
-      this.writeInto(member.value, parts, inner);
+      this.writeInto(members[i].value, parts, inner);
     }
     if (pretty) {
       parts.push(this.newline);

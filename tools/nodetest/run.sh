@@ -27,6 +27,7 @@
 #   src/weather-driver.ts    天气（码表 / 预警筛选 / 日出日落 / 规则 / 简报）
 #   src/ipc-driver.ts        跨设备公开状态（会话 ID / 事件映射 / 快照 / 编解码）
 #   src/keepalive-driver.ts  后台保活（长时任务类型选择 / 错误码翻译）
+#   src/plugin-driver.ts     声明式插件（版本闸 / 校验 / 日程 / 模板 / 装卸 / 引擎端到端）
 set -euo pipefail
 
 DEVECO_HOME="${DEVECO_HOME:-/mnt/data/devecostudio-26.0.0.621}"
@@ -122,6 +123,9 @@ sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
 sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
      s|'../../common_core/src/main/ets/|'../core/|g" \
   "$ROOT/tools/nodetest/src/keepalive-driver.ts" > "$WORK/src/tools/keepalive-driver.ts"
+sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
+     s|'../../common_core/src/main/ets/|'../core/|g" \
+  "$ROOT/tools/nodetest/src/plugin-driver.ts" > "$WORK/src/tools/plugin-driver.ts"
 
 "$NODE" "$TSC" \
   --outDir "$WORK/out" \
@@ -149,7 +153,8 @@ sed "s|'../../common_shared/src/main/ets/|'../shared/|g; \
   "$WORK/src/tools/speech-driver.ts" \
   "$WORK/src/tools/weather-driver.ts" \
   "$WORK/src/tools/ipc-driver.ts" \
-  "$WORK/src/tools/keepalive-driver.ts" 2>&1 | sed 's/^/  /' || true
+  "$WORK/src/tools/keepalive-driver.ts" \
+  "$WORK/src/tools/plugin-driver.ts" 2>&1 | sed 's/^/  /' || true
 
 cp -r "$ROOT/tools/nodetest/fixtures" "$WORK/out/fixtures"
 
@@ -198,4 +203,7 @@ echo "── 跨设备 ──"
 echo ""
 echo "── 后台保活 ──"
 "$NODE" "$WORK/out/tools/keepalive-driver.js" || status=1
+echo ""
+echo "── 插件系统 ──"
+"$NODE" "$WORK/out/tools/plugin-driver.js" || status=1
 exit $status

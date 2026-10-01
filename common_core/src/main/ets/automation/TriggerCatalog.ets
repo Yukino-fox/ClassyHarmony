@@ -46,6 +46,40 @@ import {
   TrayMenuTriggerSettings,
   UriTriggerSettings
 } from 'common_shared';
+import {
+  PluginSchedule,
+  parsePluginSchedule,
+  scheduleOfExtension
+} from '../plugins/PluginSchedule';
+import { ExtensionRegistry, PluginRecord } from '../plugins/ExtensionRegistry';
+import { ExtensionKind, ExtensionManifest } from '../plugins/PluginManifest';
+
+/**
+ * 扩展触发器的默认设置：把它声明的那份日程原样给出去。
+ *
+ * 「原样给出去」而不是给一份空的：用户在编辑器里新建一条扩展触发器时，看到的
+ * 应该是扩展作者声明的那一行日程（比如「每天 07:00」），而不是空白需要他自己
+ * 回忆规则填一遍。找不到扩展（被卸载/被关掉）时给一份空日程，此时求值恒不触发，
+ * 与「未实现」的既有口径一致。
+ */
+function defaultPluginScheduleOf(triggerId: string): PluginSchedule {
+  const providerId: string | undefined = ExtensionRegistry.providerOf(ExtensionKind.Trigger,
+    triggerId);
+  if (providerId === undefined) {
+    return new PluginSchedule();
+  }
+  const record: PluginRecord | undefined = ExtensionRegistry.findPlugin(providerId);
+  if (record === undefined || record.manifest === undefined) {
+    return new PluginSchedule();
+  }
+  const manifest: ExtensionManifest = record.manifest;
+  for (const entry of manifest.triggers) {
+    if (entry.id === triggerId) {
+      return scheduleOfExtension(entry);
+    }
+  }
+  return new PluginSchedule();
+}
 
 /** 触发器实现状态。决定编辑器给它打什么标。 */
 export enum TriggerSupport {
@@ -64,7 +98,13 @@ export enum TriggerSettingsKind {
   PreTimePoint = 2,
   Signal = 3,
   TrayMenu = 4,
-  Uri = 5
+  Uri = 5,
+  /**
+   * 声明式扩展提供的触发器（P12）。Settings 原样承载一份日程
+   * （见 plugins/PluginSchedule.parsePluginSchedule），不解成强类型 ——
+   * 它的形状由扩展自己定，应用只认那四个日程字段。
+   */
+  Plugin = 6
 }
 
 /** 一个触发器的注册信息。对应桌面版 TriggerInfo。 */
@@ -147,6 +187,16 @@ const REGISTRY: TriggerInfo[] = [
 ];
 
 export class TriggerCatalog {
+  /**
+   * 声明式扩展注册的触发器（P12）。与 REGISTRY 分开存。
+   *
+   * 分开而不是 push 进 REGISTRY：REGISTRY 是 const 数组，被 builtins 那个
+   * 顶层初始化表达式引用；而插件注册发生在应用启动之后，那时 REGISTRY 已经建好。
+   * 混在一起就得把 const 改成可变的静态字段，而「12 个内置触发器」这个不变量
+   * 一旦可写，就再也没法断言它是 12 个了。
+   */
+  private static pluginEntries: TriggerInfo[] = [];
+
   /** 查一条触发器的注册信息。未知 id 返回 undefined。 */
   static find(id: string): TriggerInfo | undefined {
     for (const each of REGISTRY) {
@@ -154,12 +204,73 @@ export class TriggerCatalog {
         return each;
       }
     }
+    for (const each of TriggerCatalog.pluginEntries) {
+      if (each.id === id) {
+        return each;
+      }
+    }
     return undefined;
   }
 
-  /** 全部内置触发器，按注册顺序。编辑器的新增菜单按这个顺序排。 */
+  /**
+   * 全部已注册触发器：先内置、后扩展，按各自的注册顺序。
+   *
+   * 编辑器的新增菜单按这个顺序排，所以扩展给的触发器会排在 12 个内置之后。
+   */
   static all(): TriggerInfo[] {
-    return REGISTRY;
+    const out: TriggerInfo[] = [];
+    for (const each of REGISTRY) {
+      out.push(each);
+    }
+    for (const each of TriggerCatalog.pluginEntries) {
+      out.push(each);
+    }
+    return out;
+  }
+
+  /**
+   * 注册一条扩展触发器。重复 id 抛错，与 ComponentCatalog.register 同一口径。
+   *
+   * 抛而不覆盖的理由也在那边：同一个 id 解析出两种实现时，症状是「同一类触发器
+   * 时而触发时而不触发」，而日志里什么也没有。
+   */
+  static register(info: TriggerInfo): void {
+    if (TriggerCatalog.find(info.id) !== undefined) {
+      throw new Error(`触发器 id ${info.id} 已被占用`);
+    }
+    TriggerCatalog.pluginEntries.push(info);
+  }
+
+  /** 注册一条扩展触发器，冲突时返回 false 而不是抛（装载一批扩展用）。 */
+  static registerPlugin(info: TriggerInfo): boolean {
+    if (TriggerCatalog.find(info.id) !== undefined) {
+      return false;
+    }
+    TriggerCatalog.pluginEntries.push(info);
+    return true;
+  }
+
+  /** 注销一条扩展触发器。内置的不受影响（内置不在 pluginEntries 里）。 */
+  static unregister(id: string): boolean {
+    for (let i = 0; i < TriggerCatalog.pluginEntries.length; i++) {
+      if (TriggerCatalog.pluginEntries[i].id === id) {
+        // 换序无关紧要（这里只删不改序），但仍走整体重写以免留下野引用。
+        const next: TriggerInfo[] = [];
+        for (let j = 0; j < TriggerCatalog.pluginEntries.length; j++) {
+          if (j !== i) {
+            next.push(TriggerCatalog.pluginEntries[j]);
+          }
+        }
+        TriggerCatalog.pluginEntries = next;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** 只清扩展注册项。装载前调一次，保证重装后不残留上一次的条目。 */
+  static unregisterAll(): void {
+    TriggerCatalog.pluginEntries = [];
   }
 
   /** 这条触发器现在能不能算。 */
@@ -207,6 +318,12 @@ export class TriggerCatalog {
     if (found.settingsKind === TriggerSettingsKind.Uri) {
       return UriTriggerSettings.parse(raw);
     }
+    if (found.settingsKind === TriggerSettingsKind.Plugin) {
+      // 声明式日程解成 PluginSchedule：形状固定为四个字段（不是扩展自定义的），
+      // 所以这里可以解成强类型而不必把裸节点漏给界面。求值走
+      // PluginTriggerEval.judgePluginTrigger，它吃裸节点即可。
+      return parsePluginSchedule(raw);
+    }
     return undefined;
   }
 
@@ -230,6 +347,10 @@ export class TriggerCatalog {
     }
     if (found.settingsKind === TriggerSettingsKind.Uri) {
       return new UriTriggerSettings();
+    }
+    if (found.settingsKind === TriggerSettingsKind.Plugin) {
+      // 声明式触发器的默认设置就是扩展声明的那份日程，从注册表取。
+      return defaultPluginScheduleOf(found.id);
     }
     return undefined;
   }

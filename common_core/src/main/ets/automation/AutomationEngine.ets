@@ -66,6 +66,10 @@ import { LessonsSnapshot } from '../engine/LessonsSnapshot';
 import { RuleContext, RuleEngine } from '../rules/RuleEngine';
 import { CronExpression } from './CronExpression';
 import { TriggerCatalog, TriggerInfo, TriggerSettingsKind, TriggerSupport } from './TriggerCatalog';
+import { PLUGIN_REASON_BAD_SETTINGS, PLUGIN_REASON_FIRED } from '../plugins/PluginSchedule';
+import { PluginTriggerVerdict, judgePluginTrigger } from '../plugins/PluginTriggerEval';
+import { ExtensionKind } from '../plugins/PluginManifest';
+import { ExtensionRegistry } from '../plugins/ExtensionRegistry';
 
 /** 判定原因代码。界面按它翻译文案，这一层不写界面文案。 */
 export class AutomationReason {
@@ -364,6 +368,9 @@ export class AutomationEngine {
     if (info.settingsKind === TriggerSettingsKind.Cron) {
       return AutomationEngine.evaluateCron(trigger, input, verdict, slot);
     }
+    if (info.settingsKind === TriggerSettingsKind.Plugin) {
+      return AutomationEngine.evaluatePluginTrigger(trigger, input, verdict, slot);
+    }
     if (info.settingsKind === TriggerSettingsKind.PreTimePoint) {
       return AutomationEngine.evaluatePreTimePoint(trigger, input, verdict, slot);
     }
@@ -430,6 +437,45 @@ export class AutomationEngine {
    */
   private static lessonsUsable(input: AutomationTick): boolean {
     return input.hasTrustedProfile && input.snapshot !== undefined;
+  }
+
+  /**
+   * 声明式触发器（P12）。
+   *
+   * 复用内置 cron 触发器那同一个 TriggerSlot 的 cron 缓存：声明式触发器里也
+   * 有 cron 类别，两个缓存各存一份等于同一份表达式解两次，而且两份的失效判据
+   * 得保持同步 —— 所以直接共用。缓存失效判据是「表达式文本变了」（见
+   * judgePluginTrigger），与内置那份一致。
+   *
+   * 扩展被关掉 / 被卸载时判 notYet
+   * -----------------------------
+   * 判 NotYet 而不是 NotImplemented：后者的含义是「这个功能在这台设备上不存在」，
+   * 而关掉一个扩展是用户的临时决定，它随时可能被打开 —— 说成「这台设备不支持」
+   * 会让用户以为重装也没用。所以这里只说「还没到点」，而真正的问题是「它不会响」，
+   * 这一点由设置页的扩展列表显示（那里能看到「已关掉」）。
+   */
+  private static evaluatePluginTrigger(trigger: TriggerSettings, input: AutomationTick,
+    verdict: TriggerVerdict, slot: TriggerSlot): TriggerVerdict {
+    if (ExtensionRegistry.isEntryInactive(ExtensionKind.Trigger, trigger.id)) {
+      return AutomationEngine.mark(verdict, false);
+    }
+    const decoded: PluginTriggerVerdict = judgePluginTrigger(trigger.settings, input.now,
+      slot.cron, slot.cronText);
+    if (decoded.cron !== undefined) {
+      slot.cron = decoded.cron;
+      slot.cronText = decoded.cronText;
+    }
+    if (decoded.reason === PLUGIN_REASON_BAD_SETTINGS) {
+      verdict.reason = AutomationReason.BadSettings;
+      verdict.detail = decoded.detail;
+      return verdict;
+    }
+    verdict.fired = decoded.reason === PLUGIN_REASON_FIRED;
+    verdict.reason = decoded.reason === PLUGIN_REASON_FIRED
+      ? AutomationReason.Fired
+      : AutomationReason.NotYet;
+    verdict.detail = decoded.detail;
+    return verdict;
   }
 
   /**

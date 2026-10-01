@@ -417,8 +417,59 @@ function testJsonKernel(): void {
     JsonWriter.writeCompact(JsonReader.parse('{"z":1,"a":2}')), '{"z":1,"a":2}');
 }
 
+/**
+ * 缩进输出。
+ *
+ * 这一段是被 P12 的清单往返逼出来的：那里第一次用 writeText(manifest, 2)，
+ * 读回来报「对象中期望 ',' 或 '}'」，而写出当时毫无异常。根因是 JsonWriter 的
+ * 缩进分支从头到尾没写过逗号 —— 压缩分支有、缩进分支没有。
+ *
+ * 之所以一直没被发现：工程内所有落盘点都走压缩输出（Profile.stringify /
+ * ComponentProfile.stringify 默认 indentSize=0），缩进分支实际上从没被走到过。
+ * 所以这里不只钉住「有逗号」，还要钉住缩进输出**能被自己的读回器读回来** ——
+ * 只比对字符串的话，下次再少写一个括号照样全绿。
+ */
+function testJsonIndented(): void {
+  const source: string = '{"a":1,"b":{"c":2,"d":[3,4]},"e":[{"f":5},{"g":6}],"h":{},"i":[]}';
+  const node = JsonReader.parse(source);
+  const indented: string = JsonWriter.write(node, 2);
+  check('缩进输出含逗号', indented.indexOf(',') >= 0, indented);
+  checkEqual('缩进输出能读回来（单层）',
+    JsonWriter.writeCompact(JsonReader.parse(indented)), source);
+  check('缩进两空格', indented.indexOf('\n  "a": 1') >= 0, indented);
+  check('缩进嵌套四空格', indented.indexOf('\n    "c": 2') >= 0, indented);
+
+  // 顶层单成员：没有逗号可写，也不该凭空多一个
+  const single: string = JsonWriter.write(JsonReader.parse('{"only":1}'), 2);
+  check('单成员对象没有多余逗号', single.indexOf(',') < 0, single);
+  checkEqual('单成员对象读回一致',
+    JsonWriter.writeCompact(JsonReader.parse(single)), '{"only":1}');
+
+  // 单元素数组
+  const arr: string = JsonWriter.write(JsonReader.parse('{"a":[1],"b":[2,3]}'), 2);
+  checkEqual('数组缩进读回一致',
+    JsonWriter.writeCompact(JsonReader.parse(arr)), '{"a":[1],"b":[2,3]}');
+
+  // 空容器不受影响
+  checkEqual('空对象缩进', JsonWriter.write(JsonReader.parse('{"a":{}}'), 2), '{\n  "a": {}\n}');
+  checkEqual('空数组缩进', JsonWriter.write(JsonReader.parse('{"a":[]}'), 2), '{\n  "a": []\n}');
+
+  // 深度嵌套（缩进分支按深度加前缀，逗号必须每层都落）
+  let deep: string = '1';
+  for (let i = 0; i < 12; i++) {
+    deep = `{"k${i}":${deep},"j${i}":${i}}`;
+  }
+  const deepOut: string = JsonWriter.write(JsonReader.parse(deep), 2);
+  checkEqual('深层嵌套读回一致', JsonWriter.writeCompact(JsonReader.parse(deepOut)), deep);
+
+  // 非 2 空格缩进也要能读回来（设置页导出用 4 空格）
+  const four: string = JsonWriter.write(JsonReader.parse(source), 4);
+  checkEqual('四空格缩进读回一致', JsonWriter.writeCompact(JsonReader.parse(four)), source);
+}
+
 // ---------------------------------------------------------------- 入口
 
+testJsonIndented();
 testGoldenProfile();
 testLegacyArtifact();
 testFullProfileFixedPoint();

@@ -26,7 +26,7 @@
  * 面板里少了个东西，却不知道它去了哪。
  */
 
-import { ComponentSettings, JsonObject, JsonValue } from 'common_shared';
+import { ComponentSettings, JsonObject, JsonValue, ModelCodec } from 'common_shared';
 import {
   ClockPayload,
   ComponentPayload,
@@ -73,9 +73,22 @@ export class ComponentDescriptor {
   decode: (node: JsonObject | undefined) => ComponentPayload = (): ComponentPayload => {
     return new ComponentPayload();
   };
+  /**
+   * 新建实例时先铺进去的设置（P12 清单里的 settings）。
+   *
+   * 内置组件恒为 undefined —— 它们的新建实例一律是「解码器的默认值写回去」，
+   * 也就是桌面版 LoadComponentSettings 那个 new T()。扩展组件有值：作者在清单里
+   * 声明的默认值必须真的生效，否则字段就成了摆设（作者写了、往返测试也过，
+   * 但用户新建出来的东西不是他写的那样）。
+   *
+   * 铺在解码之前：解码器的 applyTo 会把没给的键补成自己的默认值，作者显式给的值
+   * 因为已经在节点里而被保住。
+   */
+  defaultSettings: JsonObject | undefined = undefined;
 
   static create(guid: string, name: string, description: string, hasSettings: boolean,
-    isContainer: boolean, decode: (node: JsonObject | undefined) => ComponentPayload): ComponentDescriptor {
+    isContainer: boolean, decode: (node: JsonObject | undefined) => ComponentPayload,
+    defaultSettings?: JsonObject): ComponentDescriptor {
     const out: ComponentDescriptor = new ComponentDescriptor();
     out.guid = guid;
     out.name = name;
@@ -83,6 +96,9 @@ export class ComponentDescriptor {
     out.hasSettings = hasSettings;
     out.isContainer = isContainer;
     out.decode = decode;
+    if (defaultSettings !== undefined) {
+      out.defaultSettings = defaultSettings;
+    }
     return out;
   }
 }
@@ -91,6 +107,8 @@ export class ComponentCatalog {
   private static descriptors: Map<string, ComponentDescriptor> = new Map<string, ComponentDescriptor>();
   /** 面板「添加组件」列表的顺序，与桌面版 ComponentsService 的注册顺序一致。 */
   private static order: string[] = [];
+  /** 扩展注册的 GUID（P12）。unregister 只认这里面的，其余一律拒。 */
+  private static pluginGuids: Set<string> = new Set<string>();
 
   /**
    * 注册一个组件。重复 GUID 抛错。
@@ -105,6 +123,39 @@ export class ComponentCatalog {
     }
     ComponentCatalog.descriptors.set(descriptor.guid, descriptor);
     ComponentCatalog.order.push(descriptor.guid);
+  }
+
+  /**
+   * 注册一个扩展带来的组件（P12）。
+   *
+   * 与 register 的区别只在两处：失败时**返回 false 而不是抛**，以及记下这个 GUID
+   * 是扩展来的（好让 unregister 能认）。
+   *
+   * 为什么不抛：装载一批扩展时，一条冲突不该让整个装载过程中断。冲突的那一条
+   * 跳过并报 issue，剩下的照装 —— 用户装了三个扩展，两个能用比三个都因为
+   * 「第二个的 id 撞了」而装不上要好。
+   */
+  static registerPlugin(descriptor: ComponentDescriptor): boolean {
+    if (ComponentCatalog.descriptors.has(descriptor.guid)) {
+      return false;
+    }
+    ComponentCatalog.pluginGuids.add(descriptor.guid);
+    ComponentCatalog.descriptors.set(descriptor.guid, descriptor);
+    ComponentCatalog.order.push(descriptor.guid);
+    return true;
+  }
+
+  /** 这个组件是不是扩展注册的。 */
+  static isPlugin(guid: string): boolean {
+    return ComponentCatalog.pluginGuids.has(guid.toLowerCase());
+  }
+
+  /** 摘掉全部扩展注册的组件。装载前调一次。 */
+  static unregisterAllPlugins(): void {
+    for (const guid of Array.from(ComponentCatalog.pluginGuids)) {
+      ComponentCatalog.unregister(guid);
+    }
+    ComponentCatalog.pluginGuids.clear();
   }
 
   static find(guid: string): ComponentDescriptor | undefined {
@@ -171,11 +222,17 @@ export class ComponentCatalog {
     }
     out.nameCache = descriptor.name;
     if (descriptor.hasSettings) {
-      const node: JsonObject = new JsonObject();
+      // 起点是扩展声明的默认值（内置组件没有，从空节点起）。
+      // 复制而不是直接用同一个 JsonObject：descriptor 是进程级静态的，
+      // 共享同一个节点的话第一个用户改设置就会改到后来所有用户的组件上。
+      const node: JsonObject = descriptor.defaultSettings === undefined
+        ? new JsonObject()
+        : ModelCodec.cloneNode(descriptor.defaultSettings) as JsonObject;
       // Children 先写：容器设置类的 C# 字段声明顺序都是 Children 打头
       // （GroupComponentSettings 只有它，Rolling/Slide 是 Children, Speed…, …）。
       // JsonObject.set 对新键是追加，所以顺序由这里的调用次序决定。
-      if (descriptor.isContainer) {
+      // 声明里已经给了 Children 的（扩展作者可能预置子组件）不覆盖。
+      if (descriptor.isContainer && !node.has('Children')) {
         ContainerPayload.writeChildren(node, []);
       }
       descriptor.decode(node).applyTo(node);
@@ -185,6 +242,33 @@ export class ComponentCatalog {
   }
 
   /** 读出强类型设置视图。组件未注册或没有设置时返回空 payload。 */
+  /**
+   * 注销一个组件（P12 卸载扩展用）。内置组件不在这里。
+   *
+   * 没有「已注册但要留着标记」的中间态：卸载意味着这个组件不该再能被解析出来，
+   * 面板上那些位置会立刻显示成「未识别组件（GUID 前 8 位）」。这与桌面版
+   * 卸载插件后的表现一致 —— 用户看得出少了什么，而不是面板静默少一块。
+   */
+  static unregister(guid: string): boolean {
+    const key: string = guid.toLowerCase();
+    // 只允许摘扩展注册的。内置组件被摘掉之后没有任何东西会把它装回来，
+    // 而这个函数是导出给插件卸载用的 —— 让它有能力拆掉内置 11 个，
+    // 一次误用就足以让应用在没有扩展的环境里坏掉。
+    if (!ComponentCatalog.pluginGuids.has(key)) {
+      return false;
+    }
+    ComponentCatalog.pluginGuids.delete(key);
+    ComponentCatalog.descriptors.delete(key);
+    const next: string[] = [];
+    for (const each of ComponentCatalog.order) {
+      if (each !== key) {
+        next.push(each);
+      }
+    }
+    ComponentCatalog.order = next;
+    return true;
+  }
+
   static decode(settings: ComponentSettings): ComponentPayload {
     const descriptor: ComponentDescriptor | undefined = ComponentCatalog.find(settings.id);
     if (descriptor === undefined || !descriptor.hasSettings) {
@@ -268,6 +352,34 @@ export class ComponentCatalog {
   }
 }
 
+/**
+ * 渲染类别名 → 解码器（P12 声明式组件的接入点）。
+ *
+ * 键就是 PLUGIN_COMPONENT_KINDS 那十个名字。清单里写 `payloadKind: "countdown"`
+ * 就走这里取 CountDownPayload.decode。
+ *
+ * 为什么与内置注册分开列
+ * --------------------
+ * 内置那 11 条是「guid → 描述符」，声明式要的是「类别名 → 解码器」：前者带
+ * GUID 与显示名（每条都不同），后者的解码器其实只有 8 种（date / separator 无设置，
+ * 共用空 payload；group / stack 共用 ContainerPayload）。硬要把两边统一成一张表，
+ * 就得让内置那 11 条也带上类别名 —— 而那个名字目前只存在于插件格式里，
+ * 往内置模型上加工反而会让「类别」变成内置注册表要维护的不变量。
+ */
+const DECODER_BY_KIND: Map<string, (node: JsonObject | undefined) => ComponentPayload> =
+  new Map<string, (node: JsonObject | undefined) => ComponentPayload>();
+
+/** 登记一个渲染类别（P12 用）。内置那 11 条的类别在文件末尾统一登记。 */
+function registerDecoderOfKind(kind: string,
+  decode: (node: JsonObject | undefined) => ComponentPayload): void {
+  DECODER_BY_KIND.set(kind, decode);
+}
+
+/** 取某类渲染类别的解码器。未知类别返回 undefined。 */
+export function componentDecoderOfKind(kind: string): ((node: JsonObject | undefined) => ComponentPayload) | undefined {
+  return DECODER_BY_KIND.get(kind);
+}
+
 /** 一次性注册 11 个内置组件。 */
 ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_CLOCK, '时钟',
   '显示现在的时间，支持精确到秒。', true, false, (node: JsonObject | undefined): ComponentPayload => {
@@ -305,3 +417,34 @@ ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_WEATHER, '天气�
   '显示当前的天气概况和气象预警。', true, false, (node: JsonObject | undefined): ComponentPayload => {
     return WeatherPayload.decode(node ?? new JsonObject());
   }));
+
+/**
+ * 十个渲染类别的登记（P12 声明式组件的借用表）。
+ *
+ * 顺序与 PLUGIN_COMPONENT_KINDS 一致，便于对照。
+ * date 与 separator 在内置里是「无设置」，这里给的解码器返回一个空 payload ——
+ * 声明式组件一律带 settings 节点，解出空 payload 的效果与内置一致（面板按
+ * payloadKind 分支渲染，不读字段）。
+ */
+registerDecoderOfKind('text', (node: JsonObject | undefined): ComponentPayload => {
+  return TextPayload.decode(node ?? new JsonObject());
+});
+registerDecoderOfKind('clock', (node: JsonObject | undefined): ComponentPayload => {
+  return ClockPayload.decode(node ?? new JsonObject());
+});
+registerDecoderOfKind('countdown', (node: JsonObject | undefined): ComponentPayload => {
+  return CountDownPayload.decode(node ?? new JsonObject());
+});
+registerDecoderOfKind('date', (): ComponentPayload => new ComponentPayload());
+registerDecoderOfKind('separator', (): ComponentPayload => new ComponentPayload());
+registerDecoderOfKind('schedule', (node: JsonObject | undefined): ComponentPayload => {
+  return SchedulePayload.decode(node ?? new JsonObject());
+});
+registerDecoderOfKind('rolling', (node: JsonObject | undefined): ComponentPayload => {
+  return RollingPayload.decode(node ?? new JsonObject());
+});
+registerDecoderOfKind('slide', (node: JsonObject | undefined): ComponentPayload => {
+  return SlidePayload.decode(node ?? new JsonObject());
+});
+registerDecoderOfKind('group', (): ComponentPayload => new ContainerPayload());
+registerDecoderOfKind('stack', (): ComponentPayload => new ContainerPayload());
