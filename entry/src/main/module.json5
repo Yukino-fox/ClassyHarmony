@@ -42,6 +42,10 @@
           ],
           "when": "inuse"
         }
+      },
+      {
+        // 系统权限（system_grant / normal），声明即生效，不需要 reason 与 usedScene。
+        "name": "ohos.permission.KEEP_BACKGROUND_RUNNING"
       }
     ],
     "abilities": [
@@ -54,6 +58,13 @@
         "startWindowIcon": "$media:startIcon",
         "startWindowBackground": "$color:start_window_background",
         "exported": true,
+        // 连续任务（长时任务）声明的使用场景，取值与 BackgroundMode 一一对应。
+        // multiDeviceConnection：跨设备同步开启时用（手机上也允许）。
+        // taskKeeping：自动化在后台继续跑（2in1 自 API 21 免 ACL，手机上普通应用申请不到）。
+        "backgroundModes": [
+          "multiDeviceConnection",
+          "taskKeeping"
+        ],
         "skills": [
           {
             "entities": [

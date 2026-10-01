@@ -301,3 +301,13 @@ export {
   isPublicStateStale,
   PublicStateCodec
 } from './src/main/ets/ipc/PublicState';
+
+/* ---- 后台保活（P11e）---- */
+
+export {
+  KEEP_ALIVE_MODE_MULTI_DEVICE,
+  KEEP_ALIVE_MODE_TASK_KEEPING,
+  KeepAlivePlan,
+  planKeepAlive,
+  keepAliveErrorText
+} from './src/main/ets/background/KeepAlivePolicy';

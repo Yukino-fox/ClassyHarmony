@@ -38,6 +38,7 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import {
   AppPreferences,
   DEFAULT_AUTO_REFRESH_WEATHER_LOCATION,
+  DEFAULT_BACKGROUND_KEEP_ALIVE,
   DEFAULT_CITY_ID,
   DEFAULT_CITY_NAME,
   DEFAULT_DISTRIBUTED_SESSION_ID,
@@ -64,6 +65,10 @@ import {
   DistributedStateService,
   resolveDistributedStateService
 } from '../ipc/DistributedStateService';
+import {
+  BackgroundTaskService,
+  resolveBackgroundTaskService
+} from '../background/BackgroundTaskService';
 
 const DOMAIN: number = 0x0000;
 const TAG: string = 'Settings';
@@ -178,6 +183,12 @@ struct SettingsPage {
   /** 同步状态文案。 */
   @Local distributedStatus: string = '';
 
+  // 后台保活
+  /** 是否申请长时任务。 */
+  @Local backgroundKeepAlive: boolean = DEFAULT_BACKGROUND_KEEP_ALIVE;
+  /** 保活状态文案（申请中 / 运行中 / 申请失败原因）。 */
+  @Local backgroundKeepAliveStatus: string = '';
+
   // 诊断
   @Local debugLog: boolean = false;
   @Local performanceOverlay: boolean = false;
@@ -277,6 +288,15 @@ struct SettingsPage {
     if (distributed !== undefined) {
       this.distributedDeviceName = distributed.currentDeviceName();
       this.distributedStatus = distributed.statusText();
+    }
+
+    // 后台保活：开关读盘，状态问服务要。服务是异步申请长时任务的，刚进
+    // 设置页时可能还停在「未启动」，用户拨一下开关才会变成运行中 / 失败原因。
+    this.backgroundKeepAlive = prefs.getBoolean(PrefKeys.BACKGROUND_KEEP_ALIVE,
+      DEFAULT_BACKGROUND_KEEP_ALIVE);
+    const background: BackgroundTaskService | undefined = this.backgroundService();
+    if (background !== undefined) {
+      this.backgroundKeepAliveStatus = background.statusText();
     }
 
     this.debugLog = prefs.getBoolean(PrefKeys.DEBUG_LOG, false);
@@ -676,6 +696,9 @@ struct SettingsPage {
       this.distributedSessionId = service.currentSessionId();
     }
     this.distributedStatus = service.statusText();
+    // 跨设备一开，保活就该从「任务保持」切到「多设备互联」（手机上前者几乎
+    // 申请不到），所以顺手让保活服务重算一次。
+    this.refreshKeepAlive();
   }
 
   private generateDistributedSessionId(): void {
@@ -705,6 +728,48 @@ struct SettingsPage {
     }
     this.distributedSessionId = service.setSessionId(text);
     this.distributedStatus = service.statusText();
+  }
+
+  // ------------------------------------------------------------ 后台保活
+
+  private backgroundService(): BackgroundTaskService | undefined {
+    if (this.host === undefined) {
+      return undefined;
+    }
+    return resolveBackgroundTaskService(this.host);
+  }
+
+  /**
+   * 拨保活开关。
+   *
+   * 立刻调 start()/stop() 而不是等下次进前台：用户拨完开关就会看状态那一行，
+   * 停到下次进前台才申请的话，这里会一直显示「未启动」，用户以为拨了没用。
+   */
+  private toggleBackgroundKeepAlive(on: boolean): void {
+    this.backgroundKeepAlive = on;
+    const service: BackgroundTaskService | undefined = this.backgroundService();
+    if (service === undefined) {
+      this.writeBool(PrefKeys.BACKGROUND_KEEP_ALIVE, on);
+      this.backgroundKeepAliveStatus = on ? '未启动' : '已关闭';
+      return;
+    }
+    service.setEnabled(on);
+    this.backgroundKeepAliveStatus = service.statusText();
+  }
+
+  /**
+   * 重新评估保活类型。
+   *
+   * 跨设备同步 / 自动化开关会改变「该申请哪一种长时任务」的结论（见 core 的
+   * planKeepAlive），所以这两个开关拨完要顺手让保活服务重算一次。
+   */
+  private refreshKeepAlive(): void {
+    const service: BackgroundTaskService | undefined = this.backgroundService();
+    if (service === undefined) {
+      return;
+    }
+    service.start();
+    this.backgroundKeepAliveStatus = service.statusText();
   }
 
   // ------------------------------------------------------------ 精确时间
@@ -1018,6 +1083,7 @@ struct SettingsPage {
           this.toggleRow('启用自动化', this.automationEnabled, (on: boolean) => {
             this.automationEnabled = on;
             this.writeBool(PrefKeys.AUTOMATION_ENABLED, on);
+            this.refreshKeepAlive();
           })
           this.valueRow('自动化方案', this.automationConfig, () => {
             this.goAutomation();
@@ -1208,6 +1274,22 @@ struct SettingsPage {
           })
           this.noteRow('状态',
             this.distributedStatus.length === 0 ? '未开启' : this.distributedStatus)
+
+          // ---- 后台保活
+          this.groupTitle('后台保活')
+          this.toggleRow('允许后台运行', this.backgroundKeepAlive, (on: boolean) => {
+            this.toggleBackgroundKeepAlive(on);
+          })
+          this.noteRow('状态',
+            this.backgroundKeepAliveStatus.length === 0 ? '未启动' : this.backgroundKeepAliveStatus)
+          ListItem() {
+            Text('开启后应用退到后台仍会继续算课表并按时提醒。部分手机不允许普通应用长时间驻留，' +
+              '这类设备上会自动回落成「仅前台」，其余功能不受影响。')
+              .fontSize(12)
+              .fontColor($r('app.color.ch_text_hint'))
+              .width('100%')
+              .padding({ left: 16, right: 16, top: 6, bottom: 12 })
+          }
 
           // ---- 诊断
           this.groupTitle('诊断')

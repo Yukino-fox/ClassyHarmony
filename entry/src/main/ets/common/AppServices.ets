@@ -32,10 +32,12 @@ import { FormWidgetService } from '../widget/FormWidgetService';
 import { ReminderSyncResult, syncReminders } from '../reminder/ReminderSyncService';
 import { resolveExactTimeService } from '../time/ExactTimeService';
 import { ServiceContainer, ServiceKeys } from './ServiceContainer';
+import { AutomationTickScheduler } from '../automation/AutomationTickScheduler';
 
 let instance: ClassTableViewModel | undefined = undefined;
 let editorInstance: ScheduleEditorViewModel | undefined = undefined;
 let panelInstance: ComponentLayoutViewModel | undefined = undefined;
+let automationScheduler: AutomationTickScheduler | undefined = undefined;
 
 /**
  * 取进程内唯一的课表页 ViewModel，首次调用时装配。
@@ -167,4 +169,33 @@ export function resetComponentLayoutViewModel(): void {
     panelInstance.dispose();
   }
   panelInstance = undefined;
+}
+
+/**
+ * 取进程内唯一的自动化 tick 调度器，首次调用时装配。
+ *
+ * 调度器只在这一处装配：它每秒读档案、算快照、跑规则，多一份实例就会
+ * 把同一条自动化的行动执行两遍（弹两条通知、念两遍语音）。
+ *
+ * 生命周期跟着 Ability 走：前台 start、后台按「保活是否生效」决定停不停
+ * （见 EntryAbility.onBackground）。与 ViewModel 分开持有 —— ViewModel 是
+ * 「页面要显示什么」，调度器是「该不该弹通知」，后者在页面不可见时仍有意义。
+ */
+export function resolveAutomationScheduler(
+  context: common.UIAbilityContext): AutomationTickScheduler {
+  if (automationScheduler !== undefined) {
+    return automationScheduler;
+  }
+  automationScheduler = new AutomationTickScheduler(
+    context.filesDir,
+    { context: context, filesDir: context.filesDir },
+    new ProfileRepository(context.filesDir)
+  );
+  return automationScheduler;
+}
+
+/** 丢掉自动化调度器；调用方负责先 stop（onDestroy 与 onBackground 各自会停）。 */
+export function resetAutomationScheduler(): void {
+  automationScheduler?.stop();
+  automationScheduler = undefined;
 }

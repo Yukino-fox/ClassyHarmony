@@ -201,6 +201,17 @@ export class PrefKeys {
   static readonly DISTRIBUTED_SYNC_ENABLED: string = 'DistributedSyncEnabled';
   /** 跨设备：会话 ID（字母 / 数字 / 下划线，≤128）。 */
   static readonly DISTRIBUTED_SESSION_ID: string = 'DistributedSessionId';
+
+  /*
+   * 后台保活（P11e）。本端独有：桌面版是常驻进程，没有「要不要保活」的问题。
+   *
+   * 默认开 —— 课前一分钟提醒、上下课通知最常发生在应用不在前台的时候，
+   * 不开的话这些功能只剩「用户正看着屏幕」那一种场景。申请不到长时任务的
+   * 设备（手机上的「任务保持」类型需要受限权限）会回落成「仅前台」，
+   * 不影响其余功能，设置页会把回落原因写出来。
+   */
+  /** 后台保活：是否申请长时任务。 */
+  static readonly BACKGROUND_KEEP_ALIVE: string = 'BackgroundKeepAlive';
 }
 
 /** 全部可识别的键。导出是为了「重置」与「导入」能遍历。 */
@@ -245,7 +256,8 @@ export const ALL_PREF_KEYS: string[] = [
   PrefKeys.WEATHER_ICON_ID,
   PrefKeys.EXCLUDED_WEATHER_ALERTS,
   PrefKeys.DISTRIBUTED_SYNC_ENABLED,
-  PrefKeys.DISTRIBUTED_SESSION_ID
+  PrefKeys.DISTRIBUTED_SESSION_ID,
+  PrefKeys.BACKGROUND_KEEP_ALIVE
 ];
 
 /** 主题档位。值必须与桌面版 Settings.Theme 一致（那边以整数落盘）。 */
@@ -341,6 +353,13 @@ export const DEFAULT_WEATHER_ICON_ID: string = 'classisland.weatherIcons.lucide'
 export const DEFAULT_DISTRIBUTED_SYNC_ENABLED: boolean = false;
 /** 空串 = 还没生成过；首次开启时用系统 genSessionId() 生成。 */
 export const DEFAULT_DISTRIBUTED_SESSION_ID: string = '';
+
+/*
+ * 后台保活默认开。理由：课前一分钟提醒、上下课通知最常发生在应用不在
+ * 前台的时候；默认关等于把「提醒」限制在用户正看着屏幕的场景，那正是最
+ * 不需要提醒的场景。申请不到长时任务的设备会回落成仅前台，不报错。
+ */
+export const DEFAULT_BACKGROUND_KEEP_ALIVE: boolean = true;
 
 /** 字体缩放下界。 */
 export const FONT_SCALE_MIN: number = 0.8;
@@ -618,6 +637,7 @@ export class AppPreferences {
     out.set(PrefKeys.DISTRIBUTED_SYNC_ENABLED,
       new JsonBoolean(DEFAULT_DISTRIBUTED_SYNC_ENABLED));
     out.set(PrefKeys.DISTRIBUTED_SESSION_ID, new JsonString(DEFAULT_DISTRIBUTED_SESSION_ID));
+    out.set(PrefKeys.BACKGROUND_KEEP_ALIVE, new JsonBoolean(DEFAULT_BACKGROUND_KEEP_ALIVE));
     return out;
   }
 

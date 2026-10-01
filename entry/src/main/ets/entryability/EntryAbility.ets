@@ -20,7 +20,8 @@
 import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
-import { resolveClassTableViewModel, syncClassReminders } from '../common/AppServices';
+import { resolveClassTableViewModel, resetAutomationScheduler, resolveAutomationScheduler,
+  syncClassReminders } from '../common/AppServices';
 import { ThemeService } from '../common/ThemeService';
 import { resolveExactTimeService } from '../time/ExactTimeService';
 import { shutdownSpeechService } from '../speech/SpeechService';
@@ -29,6 +30,11 @@ import {
   resolveDistributedStateService,
   resetDistributedStateService
 } from '../ipc/DistributedStateService';
+import {
+  BackgroundTaskService,
+  resetBackgroundTaskService,
+  resolveBackgroundTaskService
+} from '../background/BackgroundTaskService';
 import { buildPublicQueryResult, isPublicQuery } from '../ipc/PublicQueryService';
 import { ClassTableViewModel } from '../viewmodel/ClassTableViewModel';
 
@@ -58,6 +64,11 @@ export default class EntryAbility extends UIAbility {
     // 不在这里建的话，第一次读它的人会拿到一个还没 reload 过的实例。
     // 真正的入会话在 onForeground 的 start()。
     resolveDistributedStateService(this.context);
+    // 自动化调度器在这里建（但不 start）：它每秒读档案算快照，必须与
+    // ViewModel 分开持有 —— 页面的生命周期与「该不该弹通知」无关。
+    resolveAutomationScheduler(this.context);
+    // 后台保活服务同理：设置页要读它的状态，先建出来。
+    resolveBackgroundTaskService(this.context);
     hilog.info(DOMAIN, TAG, 'onCreate: viewModel ready');
   }
 
@@ -103,6 +114,10 @@ export default class EntryAbility extends UIAbility {
     resetWeatherService();
     // 退出分布式会话并丢掉单例。
     resetDistributedStateService();
+    // 自动化调度器与后台保活一起收掉：保活会挂一条常驻通知，进程都要退了
+    // 还留着那条通知是错的。
+    resetAutomationScheduler();
+    resetBackgroundTaskService();
     hilog.info(DOMAIN, TAG, 'onDestroy');
   }
 
@@ -141,6 +156,11 @@ export default class EntryAbility extends UIAbility {
     // 跨设备：进前台才入会话。退后台会 stop()（见 onBackground）—— 后台既不
     // 推状态也没人看，挂着一个分布式会话只会费电。
     resolveDistributedStateService(this.context).start();
+    // 自动化：前台开始每秒 tick。退后台是否继续跑由保活决定（见 onBackground）。
+    resolveAutomationScheduler(this.context).start();
+    // 保活：在**前台**就申请长时任务。系统要求「申请时应用可见」，
+    // 退到后台再申请会被拒。申请不成功只影响状态文案，不影响其余功能。
+    resolveBackgroundTaskService(this.context).start();
     hilog.info(DOMAIN, TAG, 'onForeground: polling resumed');
     // 课前提醒的周期重复挂在平台侧，不依赖本进程；这里同步是为了修正首次
     // 触发日（跨天之后它落在过去）与课表变更（可能来自设备间同步）。
@@ -169,7 +189,20 @@ export default class EntryAbility extends UIAbility {
   }
 
   onBackground(): void {
+    const keepAlive: BackgroundTaskService = resolveBackgroundTaskService(this.context);
+    if (keepAlive.shouldKeepAlive()) {
+      // 有长时任务撑着，进程不会被冻结：所有轮询继续跑。这正是保活的目的 ——
+      // 上下课通知、课前朗读都发生在应用不在前台的时候。申请失败（手机上
+      // 的「任务保持」需要受限权限）时这里仍然继续跑，只是进程会被系统冻结，
+      // 冻结期间定时器不触发，回前台时 start() 幂等重启 —— 不做特判是因为
+      // 「申请中」与「申请失败」在这里分不出来，而两者都该保持同一套语义。
+      hilog.info(DOMAIN, TAG, 'onBackground: keep-alive active, polling continues');
+      return;
+    }
+    // 没有值得后台跑的功能，或用户关了保活：按老规矩全停，省电也省得被冻结。
+    keepAlive.stop();
     this.vm?.stop();
+    resolveAutomationScheduler(this.context).stop();
     // 朗读**不**停：引擎是以 isBackStage 创建的，退到后台会继续把当前这一句
     // 念完 —— 而课前一分钟提醒最可能发生在应用不在前台的时候，那正是它该
     // 起作用的时候。停掉引擎就等于把语音功能限制在「用户正盯着屏幕」的场景，

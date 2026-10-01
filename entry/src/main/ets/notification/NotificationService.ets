@@ -1,31 +1,39 @@
 /**
- * 通知/推送服务封装（entry 侧）。
+ * 通知服务封装（entry 侧）。
  *
  * 职责：
  *  1. 申请通知权限（requestEnableNotification）
- *  2. 发布本地通知（publishNotification）——给课前提醒、自动化行动用
- *  3. 管理通知渠道（NotificationSlot）——分类：提醒、自动化、系统
- *  4. 取消/更新通知
- *  5. 推送通道（Push Kit）——后续 P11+ 接入
+ *  2. 发布本地通知（publish）——给自动化行动用
+ *  3. 按分类选通知渠道类型（SlotType）
+ *  4. 取消通知
  *
- * 为什么不直接在各处调用 notificationManager：
- *  - 权限申请、渠道创建是一次性初始化，集中管理避免重复
- *  - 通知 ID 分配、分组、优先级映射需要统一策略
- *  - 方便后续接入 Push Kit 时只改这里
+ * 为什么不直接在各处调用 notificationManager
+ * ----------------------------------------
+ *  - 权限申请、渠道注册是一次性初始化，集中管理避免重复；
+ *  - 通知 ID 分配、分类到渠道的映射需要统一策略；
+ *  - 朗读挂载点唯一（见 maybeSpeak），散出去会变成「同一句话念两遍」。
+ *
+ * 渠道为什么只能选类型
+ * ------------------
+ * API 10 起应用不能再自定义渠道的响铃/震动/锁屏可见性（那是系统权限
+ * ohos.permission.NOTIFICATION_CONTROLLER），`addSlot()` 也只收一个
+ * SlotType。所以这里做的是「按语义挑一个最接近的类型」，具体声响表现交给
+ * 用户的通知设置，应用不越权。
  */
-import { notificationManager, NotificationRequest, NotificationSlot, NotificationSlotType, NotificationConstant } from '@kit.NotificationKit';
-import { common } from '@kit.AbilityKit';
+import { notificationManager } from '@kit.NotificationKit';
+import { common, wantAgent, WantAgent } from '@kit.AbilityKit';
+import { BusinessError } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { resolveSpeechService } from '../speech/SpeechService';
 
 const DOMAIN: number = 0x0000;
 const TAG: string = 'NotificationService';
 
-/** 通知分类，决定渠道、优先级、图标、震动等 */
+/** 通知分类，决定渠道类型。 */
 export enum NotificationCategory {
-  /** 课前提醒：高优先级、响铃、震动、锁屏显示 */
+  /** 课前提醒：响铃、震动、锁屏显示。 */
   ClassReminder = 'class_reminder',
-  /** 自动化行动「显示通知」：默认优先级、可配置 */
+  /** 自动化行动「显示通知」。 */
   Automation = 'automation',
   /**
    * 天气提醒：自动化行动「显示天气提醒」发的预报 / 预警。
@@ -35,214 +43,192 @@ export enum NotificationCategory {
    * 一个独立渠道。
    */
   Weather = 'weather',
-  /** 系统级：App 更新、同步完成等，低优先级 */
+  /** 系统级：App 更新、同步完成等。 */
   System = 'system'
 }
 
-/** 通知渠道配置 */
-interface SlotConfig {
-  type: NotificationSlotType;
-  level: NotificationConstant.NotificationLevel;
-  sound: string;
-  vibrationEnabled: boolean;
-  lightEnabled: boolean;
-  lockscreenVisibility: NotificationConstant.LockscreenVisibility;
-  badgeFlag: boolean;
-  bypassDnd: boolean;
+/** 发布通知的参数。 */
+export interface NotificationOptions {
+  /** 标题。 */
+  title: string;
+  /** 正文。 */
+  content: string;
+  /** 附加说明（副文本），可省。 */
+  subText?: string;
+  /** 持续性通知：不可划掉。默认 false。 */
+  ongoing?: boolean;
+  /** 着色（ARGB）。不填则由系统着色。 */
+  color?: number;
+  /**
+   * 要朗读的文本。不填则用 content。
+   *
+   * 单独留一个字段而不是直接念 content：桌面版的提醒内容有「大字遮罩」与
+   * 「正文」两部分，各自决定要不要朗读，而念的是遮罩那一句短话。
+   */
+  speechText?: string;
+  /**
+   * 这一条内容自己是否允许朗读。默认 true。
+   *
+   * 对应桌面版 NotificationContent.IsSpeechEnabled —— 默认就是 true，也就是说
+   * 「能不能念」由全局那一层（AllowNotificationSpeech，默认关）决定。
+   */
+  speechEnabled?: boolean;
 }
 
-/** 预定义渠道配置（与桌面版 NotificationChannel 对齐） */
-const SLOT_CONFIGS: Record<NotificationCategory, SlotConfig> = {
-  [NotificationCategory.ClassReminder]: {
-    type: NotificationSlotType.SOCIAL,
-    level: NotificationConstant.NotificationLevel.HIGH,
-    sound: '',
-    vibrationEnabled: true,
-    lightEnabled: true,
-    lockscreenVisibility: NotificationConstant.LockscreenVisibility.PUBLIC,
-    badgeFlag: true,
-    bypassDnd: true
-  },
-  [NotificationCategory.Automation]: {
-    type: NotificationSlotType.RECOMMENDATION,
-    level: NotificationConstant.NotificationLevel.DEFAULT,
-    sound: '',
-    vibrationEnabled: true,
-    lightEnabled: false,
-    lockscreenVisibility: NotificationConstant.LockscreenVisibility.PUBLIC,
-    badgeFlag: true,
-    bypassDnd: false
-  },
-  [NotificationCategory.Weather]: {
-    type: NotificationSlotType.RECOMMENDATION,
-    level: NotificationConstant.NotificationLevel.DEFAULT,
-    sound: '',
-    vibrationEnabled: false,
-    lightEnabled: false,
-    lockscreenVisibility: NotificationConstant.LockscreenVisibility.PUBLIC,
-    badgeFlag: false,
-    bypassDnd: false
-  },
-  [NotificationCategory.System]: {
-    type: NotificationSlotType.SERVICE,
-    level: NotificationConstant.NotificationLevel.LOW,
-    sound: '',
-    vibrationEnabled: false,
-    lightEnabled: false,
-    lockscreenVisibility: NotificationConstant.LockscreenVisibility.SECRET,
-    badgeFlag: false,
-    bypassDnd: false
+/**
+ * 分类 → 渠道类型。
+ *
+ * 取值是「语义最接近」而不是「完全对应」：应用改不了渠道的声光表现，只能挑
+ * 一个系统预设类型。SOCIAL_COMMUNICATION 会响铃震动（提醒用），
+ * SERVICE_INFORMATION / CONTENT_INFORMATION 是普通信息（自动化 / 天气），
+ * OTHER_TYPES 是最低干扰（系统）。
+ */
+function slotTypeFor(category: NotificationCategory): notificationManager.SlotType {
+  switch (category) {
+    case NotificationCategory.ClassReminder:
+      return notificationManager.SlotType.SOCIAL_COMMUNICATION;
+    case NotificationCategory.Automation:
+      return notificationManager.SlotType.SERVICE_INFORMATION;
+    case NotificationCategory.Weather:
+      return notificationManager.SlotType.CONTENT_INFORMATION;
+    default:
+      return notificationManager.SlotType.OTHER_TYPES;
   }
-};
+}
 
 export class NotificationService {
   private readonly context: common.UIAbilityContext;
   private initialized: boolean = false;
-  private notificationIdCounter: number = 1000; // 避免与系统保留 ID 冲突
+  private notificationIdCounter: number = 1000; // 避开系统保留 ID
+  /** 已注册过的渠道类型，避免重复 addSlot。 */
+  private readonly createdSlots: Set<number> = new Set<number>();
+  /** 点击通知回到本 Ability 用的 WantAgent；内容固定，建一次即可。 */
+  private agent: WantAgent | undefined = undefined;
 
   constructor(context: common.UIAbilityContext) {
     this.context = context;
   }
 
-  /** 初始化：创建渠道、申请权限（幂等） */
+  /** 初始化：申请权限（幂等）。 */
   async initialize(): Promise<void> {
     if (this.initialized) {
       return;
     }
-    try {
-      // 创建所有渠道
-      for (const [cat, cfg] of Object.entries(SLOT_CONFIGS)) {
-        const slot: NotificationSlot = {
-          slotType: cfg.type,
-          level: cfg.level,
-          sound: cfg.sound,
-          vibrationEnabled: cfg.vibrationEnabled,
-          lightEnabled: cfg.lightEnabled,
-          lockscreenVisibility: cfg.lockscreenVisibility,
-          badgeFlag: cfg.badgeFlag,
-          bypassDnd: cfg.bypassDnd,
-          description: `ClassIsland ${cat} 通知`
-        };
-        await notificationManager.addNotificationSlot(this.context, slot);
+    // 先置位再干活：本方法是 async 的，两个并发调用会在第一个 await 之前各跑
+    // 一遍守卫。置位放前面，第二次调用直接返回。
+    this.initialized = true;
+    // 刻意**不** await，也不参与 initialized 的判定。
+    //
+    // requestEnableNotification 返回 void（回调式）。就算它返回 Promise，等它
+    // 也等于等用户点完权限弹窗，那所有 await initialize() 的调用方都要卡到用户
+    // 做决定为止。用户犹豫十秒，整条通知链路就停十秒。
+    //
+    // 语义定成「发起申请，链路继续可用」：权限没批下来时 publish 会失败，而失败
+    // 只影响那一条通知；下一轮 tick 会再试。权限批下来的瞬间通知就能正常发出。
+    notificationManager.requestEnableNotification(this.context, (err: BusinessError) => {
+      if (err) {
+        // 拒绝授权也走这里，不算错误：用户的选择，不是异常。
+        hilog.warn(DOMAIN, TAG,
+          'notification permission not granted: %{public}s', JSON.stringify(err));
       }
-      // 申请通知权限。刻意**不** await，也不参与 initialized 的判定。
-      //
-      // requestEnableNotification 是回调式的，返回 void —— await 它是空转。
-      // 更要紧的是：就算它返回 Promise，等它也等于等用户点完权限弹窗，
-      // 那 initialize() 的 Promise 就要挂到用户做决定为止，initialized 一直是
-      // false，所有 await initialize() 的调用方全部卡住。用户在弹窗上犹豫十秒，
-      // 整个通知链路就停十秒。
-      //
-      // 所以语义定成「发起申请，链路继续可用」：权限没批下来时 publish 会失败，
-      // 而失败只影响那一条通知；下一轮 tick 会再试。渠道（slot）已经建好了，
-      // 权限批下来的瞬间通知就能正常发出，不需要重建任何东西。
-      notificationManager.requestEnableNotification(this.context, (err) => {
-        if (err) {
-          // 拒绝授权也走这里，不算错误：用户的选择，不是异常
-          hilog.warn(DOMAIN, TAG,
-            'notification permission not granted: %{public}s', JSON.stringify(err));
-        }
-      });
-      this.initialized = true;
-      hilog.info(DOMAIN, TAG, 'NotificationService initialized');
-    } catch (err) {
-      hilog.error(DOMAIN, TAG, 'initialize failed: %{public}s', `${err}`);
-      throw err;
-    }
+    });
+    hilog.info(DOMAIN, TAG, 'NotificationService initialized');
   }
 
-  /** 生成唯一通知 ID */
+  /** 生成唯一通知 ID。 */
   private nextId(): number {
     return this.notificationIdCounter++;
   }
 
-  /** 发布通知（核心方法） */
-  async publish(category: NotificationCategory, options: {
-    title: string;
-    content: string;
-    subText?: string;
-    actionText?: string;          // 点击打开的页面路由
-    actionParams?: Record<string, Object>;
-    wantAgent?: any;              // 自定义 WantAgent
-    smallIcon?: number;           // 资源 ID
-    largeIcon?: number;
-    progress?: number;            // 进度条（0-100）
-    count?: number;               // 叠加计数
-    ongoing?: boolean;            // 持续性通知（不可划掉）
-    color?: number;               // ARGB
-    deliveryTime?: number;        // 定时投递（毫秒时间戳）
-    /**
-     * 要朗读的文本。不填则用 content。
-     *
-     * 单独留一个字段而不是直接念 content：桌面版的提醒内容里有「大字遮罩」
-     * 和「正文」两部分，各自决定要不要朗读（IsMaskSpeechEnabled /
-     * IsContentSpeechEnabled），而念的是遮罩那一句短话。详情见 execShowNotification。
-     */
-    speechText?: string;
-    /**
-     * 这一条内容自己是否允许朗读。默认 true。
-     *
-     * 对应桌面版 NotificationContent.IsSpeechEnabled —— 默认就是 true，
-     * 也就是说「能不能念」由全局那一层（AllowNotificationSpeech，默认关）
-     * 决定，而不是由内容这一层。
-     */
-    speechEnabled?: boolean;
-  }): Promise<number> {
+  /** 确保渠道已注册。注册失败不抛：publish 时系统也会按 notificationSlotType 兜底。 */
+  private async ensureSlot(slotType: notificationManager.SlotType): Promise<void> {
+    const key: number = slotType;
+    if (this.createdSlots.has(key)) {
+      return;
+    }
+    this.createdSlots.add(key);
+    try {
+      await notificationManager.addSlot(slotType);
+    } catch (err) {
+      const be: BusinessError = err as BusinessError;
+      hilog.warn(DOMAIN, TAG, 'addSlot(%{public}d) failed: %{public}d',
+        key, be.code);
+    }
+  }
+
+  /** 点击通知回到本 Ability 的 WantAgent（懒建）。 */
+  private async ensureWantAgent(): Promise<WantAgent> {
+    if (this.agent !== undefined) {
+      return this.agent;
+    }
+    const info: wantAgent.WantAgentInfo = {
+      wants: [
+        {
+          bundleName: this.context.abilityInfo.bundleName,
+          abilityName: this.context.abilityInfo.name
+        }
+      ],
+      actionType: wantAgent.OperationType.START_ABILITY,
+      requestCode: 0,
+      actionFlags: [wantAgent.WantAgentFlags.UPDATE_PRESENT_FLAG]
+    };
+    this.agent = await wantAgent.getWantAgent(info);
+    return this.agent;
+  }
+
+  /** 发布通知（核心方法），返回通知 ID。 */
+  async publish(category: NotificationCategory, options: NotificationOptions): Promise<number> {
     if (!this.initialized) {
       await this.initialize();
     }
     const id: number = this.nextId();
-    const slotName: string = category;
-    const slotType: NotificationSlotType = SLOT_CONFIGS[category].type;
+    const slotType: notificationManager.SlotType = slotTypeFor(category);
+    await this.ensureSlot(slotType);
 
-    const request: NotificationRequest = {
-      id,
-      slotName,
-      slotType,
-      content: {
-        contentType: NotificationConstant.ContentType.NOTIFICATION_CONTENT_BASIC_TEXT,
-        normal: {
-          title: options.title,
-          text: options.content,
-          additionalText: options.subText ?? ''
-        }
-      },
-      deliveryTime: options.deliveryTime ?? Date.now(),
-      color: options.color,
-      progress: options.progress,
-      count: options.count ?? 1,
-      ongoing: options.ongoing ?? false,
-      removalAllowed: !options.ongoing
+    const normal: notificationManager.NotificationBasicContent = {
+      title: options.title,
+      text: options.content,
+      additionalText: options.subText ?? ''
     };
-
-    // 点击跳转
-    if (options.actionText) {
-      // 这里需要根据 actionText 构建 Want，简化：传给主页面处理
-      // 实际可用 wantAgent
+    const content: notificationManager.NotificationContent = {
+      notificationContentType: notificationManager.ContentType.NOTIFICATION_CONTENT_BASIC_TEXT,
+      normal: normal
+    };
+    const request: notificationManager.NotificationRequest = {
+      id: id,
+      notificationSlotType: slotType,
+      content: content,
+      deliveryTime: Date.now(),
+      wantAgent: await this.ensureWantAgent()
+    };
+    if (options.ongoing === true) {
+      request.isOngoing = true;
+    }
+    if (options.color !== undefined) {
+      request.color = options.color;
+      request.colorEnabled = true;
     }
 
-    await notificationManager.publishNotification(request);
-    hilog.info(DOMAIN, TAG, 'Published notification id=%{public}d cat=%{public}s', id, category);
+    await notificationManager.publish(request);
+    hilog.info(DOMAIN, TAG, 'Published notification id=%{public}d cat=%{public}s',
+      id, category);
 
-    // 朗读。放在 publish 成功之后：通知没发出去还在那里念，用户会以为听错了。
+    // 朗读放在 publish 成功之后：通知没发出去还在那里念，用户会以为听错了。
     //
-    // 「展示通知」这里是全应用唯一一处「一条提醒被呈现给用户」的地方（另一处
-    // 是平台侧的课前提醒，那条由系统投递、应用不在场，念不了）。所以朗读挂在
-    // 这里，与桌面版把它挂在 NotificationWorkerService 上是同一个位置。
+    // 「展示通知」是全应用唯一一处「一条提醒被呈现给用户」的地方（另一处是
+    // 平台侧的课前提醒，那条由系统投递、应用不在场，念不了）。所以朗读挂在这里，
+    // 与桌面版把它挂在 NotificationWorkerService 上是同一个位置。
     this.maybeSpeak(options);
     return id;
   }
 
   /**
-   * 按开关决定要不要念，以及念哪一句。
+   * 按开关决定要不要念、以及念哪一句。
    *
-   * 抛出去会让整条通知发不出去 —— 语音是增强能力，它坏了不该把提醒也弄没。
+   * 吞掉异常：抛出去会让整条通知发不出去 —— 语音是增强能力，它坏了不该把提醒
+   * 也弄没。
    */
-  private maybeSpeak(options: {
-    content: string;
-    speechText?: string;
-    speechEnabled?: boolean;
-  }): void {
+  private maybeSpeak(options: NotificationOptions): void {
     let text: string = options.speechText ?? '';
     if (text.length === 0) {
       text = options.content;
@@ -258,39 +244,37 @@ export class NotificationService {
     }
   }
 
-  /** 取消单条通知 */
+  /** 取消单条通知。 */
   async cancel(id: number): Promise<void> {
-    await notificationManager.cancelNotificationById(id);
-  }
-
-  /** 取消某分类下所有通知 */
-  async cancelCategory(category: NotificationCategory): Promise<void> {
-    await notificationManager.cancelAllNotifications();
-    // 这里只能全取消，NotificationKit 暂不支持按 slot 取消
-    // 如需精细控制需记录已发 ID
-  }
-
-  /** 更新通知（同 ID 重新 publish） */
-  async update(id: number, options: Parameters<NotificationService['publish']>[1]): Promise<void> {
-    // NotificationKit 的 publish 同 ID 即为更新
-    await this.publish(NotificationCategory.System, { ...options, title: options.title, content: options.content });
-  }
-
-  /** 检查通知权限 */
-  async hasPermission(): Promise<boolean> {
-    // 简化：尝试发一个测试通知
     try {
-      const testId = this.nextId();
-      await notificationManager.publishNotification({
-        id: testId,
-        slotName: NotificationCategory.System,
-        slotType: NotificationSlotType.SERVICE,
-        content: { contentType: NotificationConstant.ContentType.NOTIFICATION_CONTENT_BASIC_TEXT, normal: { title: 't', text: 't' } },
-        deliveryTime: Date.now()
-      });
-      await this.cancel(testId);
-      return true;
-    } catch {
+      await notificationManager.cancel(id);
+    } catch (err) {
+      const be: BusinessError = err as BusinessError;
+      hilog.warn(DOMAIN, TAG, 'cancel(%{public}d) failed: %{public}d', id, be.code);
+    }
+  }
+
+  /**
+   * 取消某分类下所有通知。
+   *
+   * NotificationKit 不支持按渠道取消，只能全清。这里保留方法名是为了让调用点
+   * 表达意图；真要精细控制得自己记录已发 ID。
+   */
+  async cancelCategory(category: NotificationCategory): Promise<void> {
+    try {
+      await notificationManager.cancelAll();
+    } catch (err) {
+      const be: BusinessError = err as BusinessError;
+      hilog.warn(DOMAIN, TAG, 'cancelAll failed for %{public}s: %{public}d',
+        category, be.code);
+    }
+  }
+
+  /** 通知权限是否已开。 */
+  hasPermission(): boolean {
+    try {
+      return notificationManager.isNotificationEnabledSync();
+    } catch (err) {
       return false;
     }
   }

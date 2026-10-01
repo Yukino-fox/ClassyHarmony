@@ -13,7 +13,7 @@
  *  - classisland.app.restart       → 无对应物
  */
 import { fileIo as fs } from '@kit.CoreFileKit';
-import { JsonNode, JsonObject, JsonReader, JsonWriter } from 'common_shared';
+import { JsonMember, JsonNode, JsonNull, JsonObject, JsonReader, JsonWriter } from 'common_shared';
 import { ActionIds } from 'common_shared';
 import {
   SleepActionSettings,
@@ -92,7 +92,7 @@ export class AutomationExecutor {
 
   /** classisland.action.sleep：等待 Value 秒（支持小数） */
   private async execSleep(action: ActionItem, causeText: CauseText): Promise<ExecResult> {
-    const s: SleepActionSettings | undefined = SleepActionSettings.parse(action.settings);
+    const s: SleepActionSettings | undefined = SleepActionSettings.parse(action.settings ?? new JsonObject());
     if (s === undefined) {
       causeText.value = 'Sleep 设置解析失败';
       return false;
@@ -110,7 +110,7 @@ export class AutomationExecutor {
 
   /** classisland.settings：修改应用设置（写 settings.json） */
   private async execModifySettings(action: ActionItem, causeText: CauseText): Promise<ExecResult> {
-    const s: ModifyAppSettingsActionSettings | undefined = ModifyAppSettingsActionSettings.parse(action.settings);
+    const s: ModifyAppSettingsActionSettings | undefined = ModifyAppSettingsActionSettings.parse(action.settings ?? new JsonObject());
     if (s === undefined) {
       causeText.value = 'ModifyAppSettings 设置解析失败';
       return false;
@@ -135,7 +135,7 @@ export class AutomationExecutor {
         if (s.value !== undefined) {
           all.set(s.name, s.value);
         } else {
-          all.set(s.name, JsonNull.getInstance());
+          all.set(s.name, new JsonNull());
         }
         break;
       case 1: // Merge
@@ -169,7 +169,7 @@ export class AutomationExecutor {
 
   /** classisland.showNotification：显示本地通知 */
   private async execShowNotification(action: ActionItem, causeText: CauseText): Promise<ExecResult> {
-    const s: NotificationActionSettings | undefined = NotificationActionSettings.parse(action.settings);
+    const s: NotificationActionSettings | undefined = NotificationActionSettings.parse(action.settings ?? new JsonObject());
     if (s === undefined) {
       causeText.value = 'Notification 设置解析失败';
       return false;
@@ -230,7 +230,7 @@ export class AutomationExecutor {
   private async execWeatherNotification(action: ActionItem,
     causeText: CauseText): Promise<ExecResult> {
     const s: WeatherNotificationActionSettings | undefined =
-      WeatherNotificationActionSettings.parse(action.settings);
+      WeatherNotificationActionSettings.parse(action.settings ?? new JsonObject());
     if (s === undefined) {
       causeText.value = 'WeatherNotification 设置解析失败';
       return false;
@@ -356,7 +356,7 @@ export class AutomationExecutor {
 
   /** 深合并两个 JsonObject（src 覆盖 dst） */
   private mergeObject(dst: JsonObject, src: JsonObject): void {
-    const members: readonly { name: string; value: JsonNode }[] = src.entries();
+    const members: JsonMember[] = src.entries();
     for (let i = 0; i < members.length; i++) {
       const key: string = members[i].name;
       const val: JsonNode = members[i].value;
@@ -372,7 +372,7 @@ export class AutomationExecutor {
   /** 移除键（JsonObject 无 delete，重建） */
   private removeKey(obj: JsonObject, key: string): JsonObject {
     const out: JsonObject = new JsonObject();
-    const members: readonly { name: string; value: JsonNode }[] = obj.entries();
+    const members: JsonMember[] = obj.entries();
     for (let i = 0; i < members.length; i++) {
       if (members[i].name !== key) {
         out.set(members[i].name, members[i].value);
@@ -384,27 +384,18 @@ export class AutomationExecutor {
   /** classisland.app.quit：退出应用 */
   private async execQuit(action: ActionItem, causeText: CauseText): Promise<ExecResult> {
     try {
-      const ctx: common.UIAbilityContext = this.ctx.context;
-      const terminateSelf = (ctx as unknown as { terminateSelf?: () => void }).terminateSelf;
-      if (terminateSelf) {
-        terminateSelf();
-        return true;
-      }
-      causeText.value = '无法获取 terminateSelf 能力';
-      return false;
+      // terminateSelf() 返回 Promise，失败只可能是「进程已经在退」这类不可挽回的
+      // 情况，重试没有意义，所以不 await、也不把失败反馈给上层 —— 进程都没了，
+      // 反馈给谁看。
+      this.ctx.context.terminateSelf().catch(() => {
+        // 进程正在退出，忽略。
+      });
+      return true;
     } catch {
       causeText.value = '退出应用失败';
       return false;
     }
   }
-}
-
-/** JsonNull 单例（用于表示 JSON null） */
-class JsonNull extends JsonNode {
-  private static instance: JsonNull = new JsonNull();
-  private constructor() { super(); }
-  static getInstance(): JsonNull { return JsonNull.instance; }
-  toString(): string { return 'null'; }
 }
 
 /** 把区间天气代码写成中文，如「晴转多云」。 */
