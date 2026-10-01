@@ -34,6 +34,9 @@ const DEFAULT_FILE_NAME: string = 'profile.json';
 /** 档案内的时间都是字符串，UTF-8 足够。 */
 const ENCODING: string = 'utf-8';
 
+/** 导入时默认只放行 .json。 */
+const DEFAULT_OPEN_FILTERS: string[] = ['JSON|.json'];
+
 export class TransferOutcome {
   /** 选中的 URI。取消时为空串。 */
   uri: string = '';
@@ -71,8 +74,10 @@ export class ProfileTransfer {
     const view: picker.DocumentViewPicker = new picker.DocumentViewPicker(context);
     const options: picker.DocumentSaveOptions = new picker.DocumentSaveOptions();
     options.newFileNames = [fileName];
-    // .json 收窄可选项。写错后缀在桌面上无所谓，桌面上是自由路径
-    const suffixes: string[] = ['JSON|.json'];
+    // 导出后缀由 fileName 决定，所以过滤条件也从它推，而不是写死 .json ——
+    // 导出扩展清单时用户要能看到 .json，写死会让弹窗把 .cipx 之外的东西也列出来，
+    // 而用户挑一个别的后缀导出，得到的是一个名字与内容对不上的文件。
+    const suffixes: string[] = [`文件|.${suffixOf(fileName)}`];
     options.fileSuffixChoices = suffixes;
     try {
       const uris: string[] = await view.save(options);
@@ -89,14 +94,20 @@ export class ProfileTransfer {
   /**
    * 让用户挑一个要导入的文件。
    *
+   * 扩展导入也走这里（传 .cipx / .json 两种后缀），所以后缀是可配的。写成参数
+   * 而不是让调用方各写一份 picker：取消与失败的处理只有一份是对的（见文件头
+   * 「取消与失败是两回事」），复制一份就等于把那套判断复制出去。
+   *
    * @param context UIAbility 的 context
+   * @param suffixes 后缀过滤，形如 `类型名|后缀1;后缀2`。默认只放行 .json
    * @returns 选好的 URI；用户取消时 canceled 为 true
    * @throws 打开系统弹窗失败（框架异常）
    */
-  static async pickOpenUri(context: common.UIAbilityContext): Promise<TransferOutcome> {
+  static async pickOpenUri(context: common.UIAbilityContext,
+    suffixes: string[] = DEFAULT_OPEN_FILTERS): Promise<TransferOutcome> {
     const view: picker.DocumentViewPicker = new picker.DocumentViewPicker(context);
     const options: picker.DocumentSelectOptions = new picker.DocumentSelectOptions();
-    const filters: string[] = ['JSON|.json'];
+    const filters: string[] = suffixes;
     options.fileSuffixFilters = filters;
     // 单选：档案是整体替换语义，选多个的话「到底是哪一份」说不清
     options.maxSelectNumber = 1;
@@ -226,7 +237,19 @@ function closeQuietly(file: fs.File): void {
  *
  * 不去读 `code` 字段：BusinessError 的 code 在不同 kit 里含义不同，把一串裸
  * 数字摆到用户面前既看不懂也不能自助解决，message 反而是人话。
+ *
+ * 导出是因为「导入失败」这句话在好几个页面都要拼，而每个页面各写一份的话，
+ * 将来有人改了口径（比如决定把 code 也带上）就会漏掉别处。
  */
-function describe(err: Error): string {
+export function describe(err: Error): string {
   return err.message.length > 0 ? err.message : '未知原因';
+}
+
+/** 文件名的小写后缀（不含点）。没有点时给 json：picker 的过滤器不接受空后缀。 */
+function suffixOf(fileName: string): string {
+  const dot: number = fileName.lastIndexOf('.');
+  if (dot < 0 || dot === fileName.length - 1) {
+    return 'json';
+  }
+  return fileName.substring(dot + 1).toLowerCase();
 }

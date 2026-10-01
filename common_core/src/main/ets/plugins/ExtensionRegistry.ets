@@ -27,6 +27,7 @@ import {
   ExtensionManifest,
   TriggerExtension
 } from './PluginManifest';
+import { PluginIssue } from './PluginValidation';
 
 /** 一个已登记的扩展条目。 */
 export class ExtensionEntryRecord {
@@ -73,6 +74,14 @@ export class PluginRecord {
   attachedComponents: string[] = [];
   attachedTriggers: string[] = [];
   attachedActions: string[] = [];
+  /**
+   * 装载时发现的问题（校验 + 冲突）。
+   *
+   * 挂在记录上而不是让调用方自己存一份：问题分两批产生（validateManifest 与
+   * installComponents 逐条跳过时的 conflicts），而「哪个问题属于哪个扩展」这件事
+   * 只有 core 知道 —— entry 那边拿到的只是一个 ExtensionManifest。
+   */
+  issues: PluginIssue[] = [];
 }
 
 /**

@@ -7,13 +7,25 @@
  *  - classisland.app.quit            → 退出应用（调用 terminateSelf）
  *  - classisland.showNotification    → 显示本地通知
  *  - classisland.notification.weather → 显示天气提醒（预报 / 预警 / 逐时）
+ *  - 扩展声明的行动（P12）→ 同样只有「发通知」与「改设置」两种，见 execPlugin
  *
  * 未实现的 2 个行动（占位，返回 false 供上层记录失败）：
  *  - classisland.os.run            → 鸿蒙无法拉起任意进程
  *  - classisland.app.restart       → 无对应物
  */
 import { fileIo as fs } from '@kit.CoreFileKit';
-import { JsonMember, JsonNode, JsonNull, JsonObject, JsonReader, JsonWriter } from 'common_shared';
+import {
+  JsonBoolean,
+  JsonMember,
+  JsonNode,
+  JsonNull,
+  JsonNumber,
+  JsonObject,
+  JsonReader,
+  JsonString,
+  JsonValue,
+  JsonWriter
+} from 'common_shared';
 import { ActionIds } from 'common_shared';
 import {
   SleepActionSettings,
@@ -27,6 +39,22 @@ import {
   DateTimeValue
 } from 'common_shared';
 import { weatherTextByCode } from 'common_core';
+import { LessonsSnapshot } from 'common_core';
+import {
+  ActionCatalog,
+  ActionInfo,
+  ActionSettingsKind,
+  ExtensionRegistry,
+  PLUGIN_CATEGORY_CLASS_REMINDER,
+  PLUGIN_CATEGORY_SYSTEM,
+  PLUGIN_CATEGORY_WEATHER,
+  PluginActionKind,
+  PluginActionPlan,
+  PluginTemplateContext,
+  planPluginAction,
+  renderPluginTemplate
+} from 'common_core';
+import { AppPreferences } from '../common/AppPreferences';
 import { AutomationSettings } from './AutomationSettings';
 import { common } from '@kit.AbilityKit';
 import { NotificationService, NotificationCategory } from '../notification/NotificationService';
@@ -59,10 +87,37 @@ export class AutomationExecutor {
    */
   private readonly shownAlerts: Set<string> = new Set<string>();
 
+  /**
+   * 渲染声明式模板要用的取值。由调度器在每次 tick 执行前塞进来。
+   *
+   * 不用构造参数传：那一处是「每秒重新算一次」的快照，而执行器是常驻的。
+   * 塞进构造参数就得连快照一起传一份进去，然后每次 tick 重建执行器 ——
+   * 而执行器持有 NotificationService，重建会丢掉它的已初始化状态。
+   *
+   * 留空时模板原样输出（占位符不被替换）：宁可让作者一眼看出「这个占位符没
+   * 替换」，也不要用一份可能过期的快照拼出一条看着通顺但内容错的提醒。
+   */
+  private templateContext: PluginTemplateContext | undefined = undefined;
+
   constructor(ctx: ExecutorContext) {
     this.ctx = ctx;
     this.settings = new AutomationSettings(ctx.filesDir);
     this.notificationService = new NotificationService(ctx.context);
+  }
+
+  /**
+   * 塞入本次 tick 的模板取值（声明式动作的 {time} / {subject} 等占位符靠它）。
+   *
+   * stateText 刻意留空，让 core 按快照上的状态自己取（见 PluginTemplate）。
+   * 调度器没有理由知道作者管「课间休息」叫「课间」还是「休息」，而猜一个
+   * 就等于让提醒文案与课表页上的说法不一致。
+   */
+  setTemplateContext(now: DateTimeValue, snapshot: LessonsSnapshot, profileName: string): void {
+    const ctx: PluginTemplateContext = new PluginTemplateContext();
+    ctx.now = now;
+    ctx.snapshot = snapshot;
+    ctx.profileName = profileName;
+    this.templateContext = ctx;
   }
 
   /** 执行单个行动 */
@@ -85,9 +140,150 @@ export class AutomationExecutor {
         causeText.value = '行动「重启应用」无对应实现';
         return false;
       default:
+        // 扩展声明的行动 id 是作者自己起的，不可能出现在上面这张表里，所以
+        // 「表里没有」不等于「不认得」。先问一次目录再判未知，否则一个正常
+        // 装着的扩展会每秒在自动化里留下一条「未知行动 id」。
+        if (this.isPluginAction(action.id)) {
+          return this.execPlugin(action, causeText);
+        }
         causeText.value = `未知行动 id：${action.id}`;
         return false;
     }
+  }
+
+  /** 这个行动 id 是不是扩展声明的行动。 */
+  private isPluginAction(actionId: string): boolean {
+    const info: ActionInfo | undefined = ActionCatalog.find(actionId);
+    return info !== undefined && info.settingsKind === ActionSettingsKind.Plugin;
+  }
+
+  /**
+   * 扩展声明的行动。
+   *
+   * 只有两种能跑：发通知、改设置。判定在 core（planPluginAction），这里只做
+   * 「拿到决定之后真的去做」：渲染模板、发通知 / 落盘。
+   *
+   * 朗读不另外接：通知走 NotificationService.publish，那里有统一的开关判断与
+   * 入队。两处都念会让同一句话被念两遍，而且第二遍在第一遍念完之后，像回声。
+   */
+  private async execPlugin(action: ActionItem, causeText: CauseText): Promise<ExecResult> {
+    const plan: PluginActionPlan =
+      planPluginAction(action.settings, ExtensionRegistry.writableSettingKeys);
+    if (plan.reason.length > 0) {
+      causeText.value = plan.reason;
+      return false;
+    }
+    if (plan.kind === PluginActionKind.Notification) {
+      return this.execPluginNotification(plan, causeText);
+    }
+    if (plan.kind === PluginActionKind.ModifySetting) {
+      return this.execPluginSetting(plan, causeText);
+    }
+    // kind 为 None 时 reason 是空的（core 只在「配置读不出来」或「越权」时给
+    // reason），但这个行动确实什么也做不了 —— 照样要说一句，否则自动化里的
+    // 失败原因会空着，用户看不懂为什么这条没动静。
+    causeText.value = '这条扩展行动什么都没做（清单里没写清楚要做什么）。';
+    return false;
+  }
+
+  /** 扩展的发通知行动。 */
+  private async execPluginNotification(plan: PluginActionPlan,
+    causeText: CauseText): Promise<ExecResult> {
+    const title: string = this.renderTemplate(plan.notification.title);
+    const content: string = this.renderTemplate(plan.notification.content);
+    if (title.length === 0 && content.length === 0) {
+      causeText.value = '扩展的通知标题与正文都是空的，没有可发的内容。';
+      return false;
+    }
+    const category: NotificationCategory =
+      pluginCategoryOf(plan.notification.category);
+    await this.notificationService.publish(category, {
+      title: title.length > 0 ? title : 'ClassIsland',
+      content: content,
+      subText: '',
+      ongoing: false,
+      // 不给 color：内置行动的那些色值是按「这属于哪一类提醒」挑的，而扩展
+      // 声明的分类是作者自己写的，套用其中任一个色值都是在替它表态。
+      speechText: content.length > 0 ? content : title
+    });
+    return true;
+  }
+
+  /** 扩展的改设置行动。值是文本，按设置键自己说的类型解释。 */
+  private execPluginSetting(plan: PluginActionPlan, causeText: CauseText): ExecResult {
+    const key: string = plan.setting.key;
+    if (key.length === 0) {
+      causeText.value = '扩展的改设置行动没写设置键。';
+      return false;
+    }
+    const prefs: AppPreferences = new AppPreferences(this.ctx.context);
+    const current: JsonNode | undefined = prefs.rawValueOf(key);
+    const value: JsonNode | undefined = this.pluginSettingValue(plan.setting.value, current);
+    if (value === undefined) {
+      causeText.value = `无法把「${plan.setting.value}」解释成设置项 ${key} 的值。`;
+      return false;
+    }
+    if (current !== undefined && value !== undefined &&
+      JsonWriter.writeCompact(current) === JsonWriter.writeCompact(value)) {
+      // 已经是这个值了，算成功。不这么做的话一条「到点就静音」的动作每到点
+      // 都会失败一次，自动化里堆满从没出错的失败记录，而那些记录会让真正的
+      // 失败再也找不到。
+      return true;
+    }
+    if (value instanceof JsonBoolean) {
+      prefs.put(key, value.value);
+      return true;
+    }
+    if (value instanceof JsonNumber) {
+      prefs.put(key, value.value);
+      return true;
+    }
+    prefs.put(key, JsonValue.asString(value, ''));
+    return true;
+  }
+
+  /**
+   * 把清单里的文本值翻译成 JSON 节点。
+   *
+   * 按**现在那个值**的类型走，而不是给一份「哪些键是布尔」的名单：那份名单会
+   * 和 AppPreferences 对不上，而对不上时的症状是「改了没反应」。读到的旧值
+   * 不存在时（本端独有键第一次被扩展写）按文本猜：认得 on/true/1 当布尔，
+   * 认得数字当数字，其它一律当字符串。
+   *
+   * @returns 解释不了时 undefined。
+   */
+  private pluginSettingValue(text: string, current: JsonNode | undefined): JsonNode | undefined {
+    if (current instanceof JsonBoolean) {
+      return new JsonBoolean(textToBool(text, current.value));
+    }
+    if (current instanceof JsonNumber) {
+      const asNumber: number = Number(text);
+      return isFinite(asNumber) ? JsonNumber.of(asNumber) : undefined;
+    }
+    if (current instanceof JsonString) {
+      return new JsonString(text);
+    }
+    const normalized: string = text.trim().toLowerCase();
+    if (normalized === 'true' || normalized === 'on' || normalized === '1') {
+      return new JsonBoolean(true);
+    }
+    if (normalized === 'false' || normalized === 'off' || normalized === '0') {
+      return new JsonBoolean(false);
+    }
+    const asNumber: number = Number(text);
+    if (isFinite(asNumber) && text.trim().length > 0) {
+      return JsonNumber.of(asNumber);
+    }
+    return new JsonString(text);
+  }
+
+  /** 渲染一段模板。取不到上下文时原样输出占位符，不猜。 */
+  private renderTemplate(template: string): string {
+    const ctx: PluginTemplateContext | undefined = this.templateContext;
+    if (ctx === undefined) {
+      return template;
+    }
+    return renderPluginTemplate(template, ctx);
   }
 
   /** classisland.action.sleep：等待 Value 秒（支持小数） */
@@ -422,4 +618,44 @@ function describeTemperatureRange(range: RangedValue): string {
 /** 两位补零。 */
 function pad2(value: number): string {
   return value < 10 ? `0${value}` : `${value}`;
+}
+
+/**
+ * 扩展声明的通知分类 → 本端的通知渠道。
+ *
+ * 认不出来的落 automation：声明式动作是用户自己配的东西，用 automation
+ * 渠道（默认优先级、用户可静音）比落 class_reminder（响铃震动）安全 ——
+ * 归错方向的代价是不该响的东西响了。
+ *
+ * 归一其实 core 已经做过（normalizeCategory），这里仍留一个 default：
+ * 分类是外部数据，`default` 分支的可达性不该由「调用方记得先归一」来保证。
+ */
+function pluginCategoryOf(text: string): NotificationCategory {
+  if (text === PLUGIN_CATEGORY_CLASS_REMINDER) {
+    return NotificationCategory.ClassReminder;
+  }
+  if (text === PLUGIN_CATEGORY_WEATHER) {
+    return NotificationCategory.Weather;
+  }
+  if (text === PLUGIN_CATEGORY_SYSTEM) {
+    return NotificationCategory.System;
+  }
+  return NotificationCategory.Automation;
+}
+
+/**
+ * 清单里的开关文本 → 布尔。
+ *
+ * 认不出来的保留旧值：写「静音」不会让开关变 true，而会什么都没发生 ——
+ * 静默失败比报错难查得多。
+ */
+function textToBool(text: string, current: boolean): boolean {
+  const normalized: string = text.trim().toLowerCase();
+  if (normalized === 'true' || normalized === 'on' || normalized === '1' || normalized === '是') {
+    return true;
+  }
+  if (normalized === 'false' || normalized === 'off' || normalized === '0' || normalized === '否') {
+    return false;
+  }
+  return current;
 }

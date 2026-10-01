@@ -346,6 +346,7 @@ export {
   PluginIssueCode,
   PluginIssueSeverity,
   MAX_ENTRIES_PER_KIND,
+  MAX_ENTRY_ID_LENGTH,
   MAX_MANIFEST_TEXT_LENGTH,
   PLUGIN_THEME_MODES,
   PluginIssue,
@@ -396,16 +397,35 @@ export {
 } from './src/main/ets/plugins/PluginActionEval';
 export {
   PLUGIN_TEMPLATE_PLACEHOLDERS,
+  TIME_STATE_LABELS,
   PluginTemplateContext,
   renderPluginTemplate,
   pluginTemplatePlaceholders,
-  unresolvedPlaceholders
+  unresolvedPlaceholders,
+  timeStateLabel
 } from './src/main/ets/plugins/PluginTemplate';
 export {
   ExtensionEntryRecord,
   PluginRecord,
   ExtensionRegistry
 } from './src/main/ets/plugins/ExtensionRegistry';
+export {
+  DESKTOP_FIELD_API_VERSION,
+  DESKTOP_FIELD_AUTHOR,
+  DESKTOP_FIELD_DESCRIPTION,
+  DESKTOP_FIELD_ENTRANCE_ASSEMBLY,
+  DESKTOP_FIELD_ID,
+  DESKTOP_FIELD_NAME,
+  DESKTOP_FIELD_URL,
+  DESKTOP_FIELD_VERSION,
+  DESKTOP_IMPORT_NOTE,
+  FALLBACK_DESKTOP_PLUGIN_ID,
+  DesktopPluginMeta,
+  parseDesktopPluginYaml,
+  desktopPluginManifest,
+  desktopImportNote,
+  normalizeDesktopPluginId
+} from './src/main/ets/plugins/PluginPackage';
 export {
   PluginInstallResult,
   installPlugin,

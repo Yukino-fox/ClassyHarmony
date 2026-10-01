@@ -69,6 +69,10 @@ import {
   BackgroundTaskService,
   resolveBackgroundTaskService
 } from '../background/BackgroundTaskService';
+import { describe, ProfileTransfer } from '../data/ProfileTransfer';
+import { PluginListRow } from '../plugin/PluginListRow';
+import { PluginPackageImporter, pickPluginFile } from '../plugin/PluginPackageImporter';
+import { PluginLoadIssue, PluginService, resolvePluginService } from '../plugin/PluginService';
 
 const DOMAIN: number = 0x0000;
 const TAG: string = 'Settings';
@@ -193,6 +197,20 @@ struct SettingsPage {
   @Local debugLog: boolean = false;
   @Local performanceOverlay: boolean = false;
 
+  /*
+   * 扩展分组（P12）。
+   *
+   * 行数组整体替换，不逐行改：PluginRecord 是进程级静态状态，而「哪几条被跳过、
+   * 为什么」只有重新问一次 ExtensionRegistry 才知道。逐行改的话，改完那一行与
+   * 注册表里的记录就可能对不上，而那种不一致在界面上看不出来（名字还在、
+   * 开关还在，只是条目数不对）。
+   */
+  @Local pluginRows: PluginListRow[] = [];
+  @Local pluginSummary: string = '';
+  @Local importing: boolean = false;
+  /** 最近一次导入没成功的原因。空串表示没有。 */
+  @Local pluginImportError: string = '';
+
   /** 不加装饰器：持有它的字段不需要可观测，AppPreferences 本身是纯读写器。 */
   private prefs: AppPreferences | undefined = undefined;
 
@@ -294,6 +312,8 @@ struct SettingsPage {
     // 设置页时可能还停在「未启动」，用户拨一下开关才会变成运行中 / 失败原因。
     this.backgroundKeepAlive = prefs.getBoolean(PrefKeys.BACKGROUND_KEEP_ALIVE,
       DEFAULT_BACKGROUND_KEEP_ALIVE);
+
+    this.reloadPlugins();
     const background: BackgroundTaskService | undefined = this.backgroundService();
     if (background !== undefined) {
       this.backgroundKeepAliveStatus = background.statusText();
@@ -772,6 +792,170 @@ struct SettingsPage {
     this.backgroundKeepAliveStatus = service.statusText();
   }
 
+  // ------------------------------------------------------------ 扩展
+
+  /** 取扩展服务。没装配好时返回 undefined（此时分组显示「未启动」）。 */
+  private pluginService(): PluginService | undefined {
+    const host: common.UIAbilityContext | undefined = this.host;
+    if (host === undefined) {
+      return undefined;
+    }
+    return resolvePluginService(host);
+  }
+
+  /** 从登记表重读一遍扩展行。整体替换，理由见 pluginRows 的注释。 */
+  private reloadPlugins(): void {
+    const service: PluginService | undefined = this.pluginService();
+    if (service === undefined) {
+      this.pluginRows = [];
+      this.pluginSummary = '扩展服务未启动';
+      return;
+    }
+    const issues: Map<string, PluginLoadIssue> = new Map<string, PluginLoadIssue>();
+    for (const issue of service.loadIssues()) {
+      issues.set(issue.pluginId, issue);
+    }
+    const rows: PluginListRow[] = [];
+    for (const record of service.records()) {
+      rows.push(PluginListRow.from(record, issues.get(record.pluginId)));
+    }
+    this.pluginRows = rows;
+    this.pluginSummary = service.summaryText();
+  }
+
+  /** 拨某个扩展的开关。落盘失败时把开关拨回去，别让界面与盘上不一致。 */
+  private togglePlugin(row: PluginListRow): void {
+    const service: PluginService | undefined = this.pluginService();
+    if (service === undefined) {
+      return;
+    }
+    try {
+      service.setEnabled(row.pluginId, !row.enabled);
+    } catch (err) {
+      UiFeedback.toast(this.getUIContext(), `保存失败：${describe(err)}`);
+      return;
+    }
+    this.reloadPlugins();
+  }
+
+  private uninstallPlugin(row: PluginListRow): void {
+    UiFeedback.confirm(this.getUIContext(), '卸载扩展',
+      `会删掉「${row.displayName()}」的清单与开关状态。它声明的组件、触发器、行动会一起从面板与自动化里消失。`,
+      '卸载', () => {
+        const service: PluginService | undefined = this.pluginService();
+        if (service === undefined) {
+          return;
+        }
+        try {
+          service.uninstall(row.pluginId);
+        } catch (err) {
+          UiFeedback.toast(this.getUIContext(), `卸载失败：${describe(err)}`);
+          return;
+        }
+        this.reloadPlugins();
+      });
+  }
+
+  /**
+   * 导入一份扩展清单（.json）。
+   *
+   * 装不上也要留在盘上（PluginService.installFromText 的口径），所以这里只在
+   * 「装不上」时提示原因，不把文件删掉 —— 用户改一行 apiVersion 就能重试，
+   * 而文件已经不在的话他得先找到它。
+   */
+  private async importPluginJson(): Promise<void> {
+    const host: common.UIAbilityContext | undefined = this.host;
+    if (host === undefined) {
+      return;
+    }
+    this.importing = true;
+    this.pluginImportError = '';
+    try {
+      const picked = await pickPluginFile(host);
+      if (picked.canceled) {
+        return;
+      }
+      const text: string = ProfileTransfer.readText(picked.uri);
+      const service: PluginService | undefined = this.pluginService();
+      if (service === undefined) {
+        return;
+      }
+      const result = service.installFromText(text);
+      if (!result.loaded) {
+        this.pluginImportError = result.reason;
+        UiFeedback.toast(this.getUIContext(), `没有装上：${result.reason}`);
+      } else {
+        UiFeedback.toast(this.getUIContext(),
+          `已装「${result.pluginId}」，${result.entryCount} 条条目。`);
+      }
+      this.reloadPlugins();
+    } catch (err) {
+      this.pluginImportError = describe(err);
+      UiFeedback.toast(this.getUIContext(), `导入失败：${describe(err)}`);
+    } finally {
+      this.importing = false;
+    }
+  }
+
+  /**
+   * 导入一个桌面版插件包（.cipx）。
+   *
+   * 与 .json 导入的分工：.cipx 里只有元信息（那份 dll 是 .NET 程序集，本端
+   * 没有运行时去加载它），所以走 PluginPackageImporter 先转成清单文本，再交给
+   * 同一条 installFromText —— 两条路在「装」这一步必须汇合，否则「装不上时
+   * 留在盘上」这类口径会出现两份。
+   */
+  private async importPluginCipx(): Promise<void> {
+    const host: common.UIAbilityContext | undefined = this.host;
+    if (host === undefined) {
+      return;
+    }
+    this.importing = true;
+    this.pluginImportError = '';
+    try {
+      const picked = await pickPluginFile(host);
+      if (picked.canceled) {
+        return;
+      }
+      const converted = await PluginPackageImporter.convertCipx(host, picked.uri);
+      const service: PluginService | undefined = this.pluginService();
+      if (service === undefined) {
+        return;
+      }
+      const result = service.installFromText(converted.manifestText);
+      UiFeedback.toast(this.getUIContext(), converted.summary);
+      if (!result.loaded) {
+        this.pluginImportError = result.reason;
+      }
+      this.reloadPlugins();
+    } catch (err) {
+      this.pluginImportError = describe(err);
+      UiFeedback.toast(this.getUIContext(), `导入失败：${describe(err)}`);
+    } finally {
+      this.importing = false;
+    }
+  }
+
+  /** 导出某个扩展的清单。给作者改完再传回来用。 */
+  private async exportPlugin(row: PluginListRow): Promise<void> {
+    const host: common.UIAbilityContext | undefined = this.host;
+    const service: PluginService | undefined = this.pluginService();
+    if (host === undefined || service === undefined) {
+      return;
+    }
+    try {
+      const text: string = service.exportTextOf(row.pluginId);
+      const picked = await ProfileTransfer.pickSaveUri(host, `${row.pluginId}.json`);
+      if (picked.canceled) {
+        return;
+      }
+      ProfileTransfer.writeText(picked.uri, text);
+      UiFeedback.toast(this.getUIContext(), '已导出清单。');
+    } catch (err) {
+      UiFeedback.toast(this.getUIContext(), `导出失败：${describe(err)}`);
+    }
+  }
+
   // ------------------------------------------------------------ 精确时间
 
   private toggleExactTime(on: boolean): void {
@@ -1018,6 +1202,82 @@ struct SettingsPage {
         onTap();
       }
     })
+  }
+
+  /**
+   * 扩展列表里的一行。
+   *
+   * 头部一行常显（名字 + 开关），点开是详情。常显只放名字与开关，是因为这一屏
+   * 里「装上了几条」是次要信息，而「它叫什么、开没开」是用户进来就要看的两件事；
+   * 详情里再放描述、声明了什么、问题明细 —— 那些是「它为什么不工作」时才需要
+   * 的东西，而那种时候用户会去点。
+   *
+   * 开关放在头部而不是详情里：开关是这一屏唯一会「拨一下」的控件，把它塞进
+   * 展开区意味着每次拨都要先点开一次。
+   */
+  @Builder
+  private pluginRow(row: PluginListRow) {
+    ListItem() {
+      Column() {
+        Row() {
+          Column() {
+            Text(row.displayName())
+              .fontSize(16)
+              .fontColor($r('app.color.ch_text_primary'))
+              .maxLines(1)
+            Text(row.subtitle())
+              .fontSize(12)
+              .fontColor($r('app.color.ch_text_hint'))
+              .maxLines(2)
+          }
+          .alignItems(HorizontalAlign.Start)
+          .layoutWeight(1)
+          .constraintSize({ maxWidth: '72%' })
+          Toggle({ type: ToggleType.Switch, isOn: row.enabled })
+            .selectedColor($r('app.color.ch_accent'))
+            .onChange((on: boolean) => {
+              this.togglePlugin(row);
+            })
+        }
+        .width('100%')
+        .alignItems(VerticalAlign.Center)
+        .padding({ left: 16, right: 16, top: 10, bottom: 10 })
+        .onClick(() => {
+          row.expanded = !row.expanded;
+        })
+
+        if (row.expanded) {
+          Column() {
+            this.noteRow('状态', row.statusText())
+            if (row.description.length > 0) {
+              this.noteRow('描述', row.description)
+            }
+            this.noteRow('声明了什么', row.declaredText())
+            this.noteRow('作者', row.author.length > 0 ? row.author : '没写')
+            ForEach(row.issueLines(), (line: string) => {
+              Text(`· ${line}`)
+                .fontSize(13)
+                .fontColor($r('app.color.ch_text_hint'))
+                .width('100%')
+                .padding({ left: 16, right: 16 })
+            }, (line: string) => line)
+            if (row.issueLines().length > 0) {
+              Blank()
+            }
+            this.actionRow('导出清单', true, () => {
+              this.exportPlugin(row);
+            })
+            this.actionRow('卸载', true, () => {
+              this.uninstallPlugin(row);
+            })
+          }
+          .width('100%')
+          .padding({ top: 2, bottom: 10 })
+        }
+      }
+      .width('100%')
+      .backgroundColor($r('app.color.ch_surface_weak'))
+    }
   }
 
   build() {
@@ -1290,6 +1550,26 @@ struct SettingsPage {
               .width('100%')
               .padding({ left: 16, right: 16, top: 6, bottom: 12 })
           }
+
+          // ---- 扩展
+          this.groupTitle('扩展')
+          this.noteRow('已装扩展', this.pluginSummary)
+          this.actionRow('导入扩展（.json）', !this.importing, () => {
+            this.importPluginJson();
+          })
+          this.actionRow('导入扩展（.cipx）', !this.importing, () => {
+            this.importPluginCipx();
+          })
+          if (this.pluginImportError.length > 0) {
+            this.noteRow('最近一次导入', `没成功：${this.pluginImportError}`)
+          }
+          if (this.pluginRows.length === 0) {
+            this.noteRow('提示', '还没有装扩展。扩展是声明式的：一份 JSON 清单声明组件、触发器、行动，' +
+              '装上来之后会出现在面板与自动化里。')
+          }
+          ForEach(this.pluginRows, (row: PluginListRow) => {
+            this.pluginRow(row);
+          }, (row: PluginListRow) => row.pluginId)
 
           // ---- 诊断
           this.groupTitle('诊断')

@@ -100,7 +100,9 @@ export function installPlugin(manifest: ExtensionManifest,
   out.issues = issues;
   if (hasBlockingIssues(issues)) {
     out.reason = blockingIssues(issues)[0].message;
-    ExtensionRegistry.putPlugin(makeRecord(manifest, false, 0, out.reason));
+    const rejected: PluginRecord = makeRecord(manifest, false, 0, out.reason);
+    rejected.issues = issues;
+    ExtensionRegistry.putPlugin(rejected);
     return out;
   }
 
@@ -120,6 +122,7 @@ export function installPlugin(manifest: ExtensionManifest,
     : conflicts.length === 0 ? '' : `${conflicts.length} 条条目因为冲突或非法被跳过。`;
   record.entryCount = count;
   record.reason = out.reason;
+  record.issues = out.issues;
   ExtensionRegistry.putPlugin(record);
   return out;
 }
@@ -214,7 +217,8 @@ function installComponents(manifest: ExtensionManifest, conflicts: PluginIssue[]
     if (decode === undefined) {
       // 校验阶段应该已经报过；到这里说明有人绕过校验直接塞了清单。
       conflicts.push(PluginIssue.create(PluginIssueCode.ComponentKindUnknown, `${path}.payloadKind`,
-        `payloadKind「${entry.payloadKind}」不认识，这条组件被跳过。`));
+        `payloadKind「${entry.payloadKind}」不认识，这条组件被跳过。`,
+        PluginIssueSeverity.Warning));
       continue;
     }
     const descriptor: ComponentDescriptor = ComponentDescriptor.create(entry.id, entry.name,
@@ -222,7 +226,8 @@ function installComponents(manifest: ExtensionManifest, conflicts: PluginIssue[]
       decode, entry.settings);
     if (!ComponentCatalog.registerPlugin(descriptor)) {
       conflicts.push(PluginIssue.create(PluginIssueCode.EntryIdReserved, `${path}.id`,
-        `组件 id「${entry.id}」已经被占用（内置组件或另一个扩展），这条被跳过。`));
+        `组件 id「${entry.id}」已经被占用（内置组件或另一个扩展），这条被跳过。`,
+        PluginIssueSeverity.Warning));
       continue;
     }
     attached.push(entry.id);
@@ -251,7 +256,8 @@ function installTriggers(manifest: ExtensionManifest, conflicts: PluginIssue[],
     info.canRevert = false;
     if (!TriggerCatalog.registerPlugin(info)) {
       conflicts.push(PluginIssue.create(PluginIssueCode.EntryIdReserved, `triggers[${i}].id`,
-        `触发器 id「${entry.id}」已经被占用，这条被跳过。`));
+        `触发器 id「${entry.id}」已经被占用，这条被跳过。`,
+        PluginIssueSeverity.Warning));
       continue;
     }
     attached.push(entry.id);
@@ -281,7 +287,8 @@ function installActions(manifest: ExtensionManifest, conflicts: PluginIssue[],
     info.isRevertable = false;
     if (!ActionCatalog.registerPlugin(info)) {
       conflicts.push(PluginIssue.create(PluginIssueCode.EntryIdReserved, `actions[${i}].id`,
-        `行动 id「${entry.id}」已经被占用，这条被跳过。`));
+        `行动 id「${entry.id}」已经被占用，这条被跳过。`,
+        PluginIssueSeverity.Warning));
       continue;
     }
     attached.push(entry.id);
@@ -303,7 +310,8 @@ function countProviders(manifest: ExtensionManifest, conflicts: PluginIssue[]): 
     const entry: NotificationProviderExtension = manifest.notificationProviders[i];
     if (entry.id.length === 0) {
       conflicts.push(PluginIssue.create(PluginIssueCode.EntryIdMissing,
-        `notificationProviders[${i}].id`, '通知提供者没写 id，这条被跳过。'));
+        `notificationProviders[${i}].id`, '通知提供者没写 id，这条被跳过。',
+        PluginIssueSeverity.Warning));
       continue;
     }
     count++;
@@ -318,7 +326,7 @@ function countThemes(manifest: ExtensionManifest, conflicts: PluginIssue[]): num
     const entry: ThemeExtension = manifest.themes[i];
     if (entry.id.length === 0) {
       conflicts.push(PluginIssue.create(PluginIssueCode.EntryIdMissing, `themes[${i}].id`,
-        '主题没写 id，这条被跳过。'));
+        '主题没写 id，这条被跳过。', PluginIssueSeverity.Warning));
       continue;
     }
     count++;

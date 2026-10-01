@@ -214,6 +214,37 @@ export class PrefKeys {
   static readonly BACKGROUND_KEEP_ALIVE: string = 'BackgroundKeepAlive';
 }
 
+/*
+ * 声明式扩展允许改的设置键（P12）。
+ *
+ * 为什么名单在这里而不在 core
+ * --------------------------
+ * 这些键的**名字**只有这里知道（它们是 settings.json 里的字面量），core 只拿到
+ * 一份字符串。名单放在 core 的症状是两份名单对不上，而对不上时的表现是「扩展
+ * 改了个它不该改的设置」或「该改的改不动」，两个都极难从界面上看出来。
+ *
+ * 为什么只有三个键
+ * --------------
+ * 判据是「这个键是不是**运行期**的一个小开关」：扩展改它，其它地方（用户看
+ * 到的界面、别的规则）会跟着变，于是改动有迹可循。
+ *
+ *   DebugLog            扩展排错时要开日志。日志里会出现它自己的提示文本，
+ *                       用户拿那段文本去问作者，作者才查得动。
+ *   PerformanceOverlay  扩展声明自己吃性能时让用户能看见帧率。
+ *   ReminderEnabled     「考试周静音」这类声明式规则需要一个能关掉全部提醒的
+ *                       开关；没有它就只能一条条去关每条自动化。
+ *
+ * 刻意不给的：主题、字体、首页页、自动化总开关、校时相关。
+ * 前三个是「用户看着屏幕的东西」，让扩展去改等于让它替用户做界面决定，而用户
+ * 并没授权它；后两个是引擎自己的开关，扩展改了会和自己停摆或停转有关 ——
+ * 症状（提醒不响了、时间不准）离原因（某个扩展动作）隔得太远。
+ */
+export const PLUGIN_WRITABLE_SETTING_KEYS: string[] = [
+  PrefKeys.DEBUG_LOG,
+  PrefKeys.PERFORMANCE_OVERLAY,
+  PrefKeys.REMINDER_ENABLED
+];
+
 /** 全部可识别的键。导出是为了「重置」与「导入」能遍历。 */
 export const ALL_PREF_KEYS: string[] = [
   PrefKeys.REMINDER_ENABLED,
@@ -476,6 +507,17 @@ export class AppPreferences {
    * 不抛也不整份作废：这个键从桌面版同步过来时可能混着别的类型，丢一个
    * 坏元素比丢掉整份排除列表更不伤。
    */
+  /**
+   * 某键当前值的原始节点；没这个键时 undefined。
+   *
+   * 给「按旧值的类型解释新值」的调用点用（见 AutomationExecutor 里扩展的改设置
+   * 行动）。只读：写仍然走 put / putClamped / putStringArray，那几个才负责夹取
+   * 与「保留不认识的键」，绕过去就会把跨端带过来的新键抹掉。
+   */
+  rawValueOf(key: string): JsonNode | undefined {
+    return this.readAll().tryGet(key);
+  }
+
   getStringArray(key: string): string[] {
     const out: string[] = [];
     const node: JsonNode | undefined = this.readAll().tryGet(key);

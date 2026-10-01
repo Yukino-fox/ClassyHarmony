@@ -34,15 +34,33 @@
  * 扩展提供的是数据，而数据不该能变成逻辑。宁可少几个占位符，也不要开一个求值器。
  */
 
-import { DateTimeValue } from 'common_shared';
+import { DateTimeValue, TimeState } from 'common_shared';
 import { LessonsSnapshot } from '../engine/LessonsSnapshot';
+
+/**
+ * 五个时间状态的中文名，按枚举值排列。
+ *
+ * 放在 core 而不是各自写一份：模板的 {state}、规则编辑器的下拉、设置页的摘要
+ * 都要说同一件事。三处各写一份的话，改了一处另外两处就开始说另一种话 ——
+ * 而这类不一致只有用户截图反馈时才看得出来。
+ */
+export const TIME_STATE_LABELS: string[] =
+  ['无课程', '上课中', '准备上课', '课间休息', '已放学'];
+
+/** 时间状态的中文名。认不出来的值给「未知状态（n）」而不是空串。 */
+export function timeStateLabel(state: number): string {
+  if (state < 0 || state >= TIME_STATE_LABELS.length) {
+    return `未知状态（${state}）`;
+  }
+  return TIME_STATE_LABELS[state];
+}
 
 /** 渲染时的取值。字段全为空串时占位符落空串。 */
 export class PluginTemplateContext {
   now: DateTimeValue | undefined = undefined;
   snapshot: LessonsSnapshot | undefined = undefined;
   profileName: string = '';
-  /** 时间状态的中文名。为空时取快照上的状态。 */
+  /** 时间状态的中文名。留空则按快照上的状态自动取（见 renderPluginTemplate）。 */
   stateText: string = '';
 }
 
@@ -89,6 +107,7 @@ class PluginTemplateResolver {
   /** 认得的占位符取值；返回 undefined 表示「不认识，原样保留」。 */
   static lookup(name: string, ctx: PluginTemplateContext): string | undefined {
     const now: DateTimeValue | undefined = ctx.now;
+    const snapshot: LessonsSnapshot | undefined = ctx.snapshot;
     if (name === 'time') {
       return now === undefined ? '' : PluginTemplateResolver.timeText(now);
     }
@@ -108,12 +127,17 @@ class PluginTemplateResolver {
       return PluginTemplateResolver.weekdayText(now.dayOfWeek());
     }
     if (name === 'state') {
-      return ctx.stateText;
+      // stateText 是给「想换个说法」的调用方留的出口；没给就从快照上取。
+      // 不做这个回落的话，{state} 恒为空串 —— 而调用方十有八九不会去设置它，
+      // 症状是「模板里 {state} 什么都没替换出来」，而清单作者什么也改不了。
+      if (ctx.stateText.length > 0) {
+        return ctx.stateText;
+      }
+      return snapshot === undefined ? '' : timeStateLabel(snapshot.state);
     }
     if (name === 'profile') {
       return ctx.profileName;
     }
-    const snapshot: LessonsSnapshot | undefined = ctx.snapshot;
     if (name === 'subject') {
       const subject = snapshot === undefined ? undefined : snapshot.currentSubject;
       return subject === undefined ? '' : subject.name;

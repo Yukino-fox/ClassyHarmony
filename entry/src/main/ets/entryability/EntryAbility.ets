@@ -35,6 +35,7 @@ import {
   resetBackgroundTaskService,
   resolveBackgroundTaskService
 } from '../background/BackgroundTaskService';
+import { resolvePluginService } from '../plugin/PluginService';
 import { buildPublicQueryResult, isPublicQuery } from '../ipc/PublicQueryService';
 import { ClassTableViewModel } from '../viewmodel/ClassTableViewModel';
 
@@ -67,6 +68,10 @@ export default class EntryAbility extends UIAbility {
     // 自动化调度器在这里建（但不 start）：它每秒读档案算快照，必须与
     // ViewModel 分开持有 —— 页面的生命周期与「该不该弹通知」无关。
     resolveAutomationScheduler(this.context);
+    // 扩展在这里装载。必须早于自动化调度器的第一次 tick：调度器每秒都会按
+    // ActionCatalog 找行动，扩展的条目晚一拍注册的话，头一秒会把它判成
+    // 「未知行动 id」并在自动化里留下一条失败记录 —— 而用户什么都没做错。
+    resolvePluginService(this.context);
     // 后台保活服务同理：设置页要读它的状态，先建出来。
     resolveBackgroundTaskService(this.context);
     hilog.info(DOMAIN, TAG, 'onCreate: viewModel ready');

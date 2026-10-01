@@ -142,6 +142,10 @@ export class AutomationTickScheduler {
       return;
     }
 
+    // 声明式行动的模板要拿这一帧的 now 与快照，所以只能在算出快照之后、执行之前
+    // 塞进去。放在「有 run 的时候」是因为没跑的时候没人会渲染模板。
+    this.executor.setTemplateContext(now, snapshot, profile.name);
+
     for (let i = 0; i < result.runs.length; i++) {
       const run: AutomationRun = result.runs[i];
       const wf: Workflow = workflows[run.workflowIndex];
