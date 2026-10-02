@@ -31,6 +31,7 @@
 import { common } from '@kit.AbilityKit';
 import { fileIo as fs } from '@kit.CoreFileKit';
 import zlib from '@ohos.zlib';
+import { t } from 'common_core';
 import {
   DesktopPluginMeta,
   ExtensionManifest,
@@ -86,7 +87,7 @@ export class PluginPackageImporter {
       await zlib.decompressFile(zipPath, outDir);
       const manifestPath: string = PluginPackageImporter.findManifest(outDir);
       if (manifestPath.length === 0) {
-        throw new Error('这个包里没有 manifest.yml，不像是 ClassIsland 的插件包。');
+        throw new Error(t('imp_no_manifest'));
       }
       const size: number = fileSizeOf(manifestPath);
       if (size > MAX_MANIFEST_TEXT_LENGTH) {
@@ -95,7 +96,7 @@ export class PluginPackageImporter {
       const text: string = fs.readTextSync(manifestPath, { encoding: 'utf-8' });
       const meta: DesktopPluginMeta = parseDesktopPluginYaml(text);
       if (meta.id.trim().length === 0) {
-        throw new Error('manifest.yml 里没有 Id，不确定这是哪个插件。');
+        throw new Error(t('imp_no_id'));
       }
       const manifest: ExtensionManifest = desktopPluginManifest(meta);
       const out: CipxImportResult = new CipxImportResult();
@@ -115,7 +116,7 @@ export class PluginPackageImporter {
     if (meta.id.trim() !== manifest.id) {
       out += `（原 id ${meta.id.trim()} 改成了 ${manifest.id}）`;
     }
-    out += '桌面版插件的代码是 .NET 程序集，本端不加载它，所以它不会提供任何条目。';
+    out += t('imp_dotnet_note');
     if (meta.unreadableFields.length > 0) {
       out += `有 ${meta.unreadableFields.length} 个字段本端读不出来。`;
     }

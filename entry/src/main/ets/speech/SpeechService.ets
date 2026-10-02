@@ -41,6 +41,7 @@
 
 import { common } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
+import { t } from 'common_core';
 import {
   DEFAULT_SPEECH_PROVIDER,
   SPEECH_PROVIDER_SYSTEM,
@@ -162,7 +163,7 @@ export class SpeechService {
    */
   statusText(): string {
     if (!this.isEnabled()) {
-      return '语音已关闭';
+      return t('speech_off');
     }
     const selected: string = this.selectedProviderId();
     const resolved: SpeechResolution = this.resolution();
@@ -251,7 +252,7 @@ export class SpeechService {
   async trySpeakNow(text: string): Promise<string> {
     const resolved: SpeechResolution = this.resolution();
     if (resolved.providerId.length === 0) {
-      return '本设备没有可用的语音引擎';
+      return t('speech_no_engine');
     }
     this.systemSpeech.resetAvailability();
     const outcome = await this.systemSpeech.speak(text);

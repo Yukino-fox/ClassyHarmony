@@ -13,6 +13,7 @@
  * 与 RulesetEditModel 的 RuleEditRow 同一个取舍。
  */
 
+import { t } from 'common_core';
 import { ExtensionManifest, PluginIssue, PluginRecord } from 'common_core';
 import { PluginLoadIssue } from './PluginService';
 
@@ -88,10 +89,10 @@ export class PluginListRow {
   /** 状态行：装上了几条 / 为什么没装上。 */
   statusText(): string {
     if (!this.loaded) {
-      return this.reason.length > 0 ? this.reason : '没有装上';
+      return this.reason.length > 0 ? this.reason : t('plrow_not_loaded');
     }
     if (this.entryCount === 0) {
-      return '装上了，但没有可用条目';
+      return t('plrow_no_entries');
     }
     return `装上了 ${this.entryCount} 条条目`;
   }

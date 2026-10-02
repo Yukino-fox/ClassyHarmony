@@ -1063,6 +1063,186 @@
     {
       "name": "sub_no_classes_use",
       "value": "No classes reference this subject yet."
+    },
+    {
+      "name": "clv_load_failed",
+      "value": "Cannot read the panel layout; the file may be corrupt. What you see is not saved."
+    },
+    {
+      "name": "clv_reloaded",
+      "value": "Reloaded"
+    },
+    {
+      "name": "clv_discarded",
+      "value": "Changes discarded"
+    },
+    {
+      "name": "clv_row_added",
+      "value": "Row added"
+    },
+    {
+      "name": "clv_row_deleted",
+      "value": "Row deleted"
+    },
+    {
+      "name": "clv_row_reordered",
+      "value": "Rows reordered"
+    },
+    {
+      "name": "clv_row_visible",
+      "value": "This row is now visible"
+    },
+    {
+      "name": "clv_row_hidden",
+      "value": "This row is now hidden"
+    },
+    {
+      "name": "clv_component_deleted",
+      "value": "Component deleted"
+    },
+    {
+      "name": "clv_cannot_move_into_self",
+      "value": "Cannot move: a container cannot be moved into itself or its own children"
+    },
+    {
+      "name": "ctv_no_schedule",
+      "value": "No schedule yet"
+    },
+    {
+      "name": "ctv_no_break_after",
+      "value": "No break after this class"
+    },
+    {
+      "name": "ctv_until_next_class",
+      "value": "Until next class"
+    },
+    {
+      "name": "ctv_no_more_class",
+      "value": "No more classes today"
+    },
+    {
+      "name": "ctv_after_school",
+      "value": "After school"
+    },
+    {
+      "name": "rsync_disabled",
+      "value": "Class reminders turned off"
+    },
+    {
+      "name": "rsync_disable_failed",
+      "value": "Failed to disable; try again later"
+    },
+    {
+      "name": "rsync_no_permission",
+      "value": "Notification permission is off; allow this app to send notifications in system settings"
+    },
+    {
+      "name": "rsync_nothing",
+      "value": "No classes to remind"
+    },
+    {
+      "name": "rsync_read_failed",
+      "value": "Could not read existing reminders; nothing was changed"
+    },
+    {
+      "name": "rsync_slot_limited",
+      "value": "The system provides too few reminder slots; this app can schedule at most 30"
+    },
+    {
+      "name": "sysspeech_stopped",
+      "value": "Stopped"
+    },
+    {
+      "name": "sysspeech_unavailable",
+      "value": "System speech engine unavailable"
+    },
+    {
+      "name": "sysspeech_create_failed",
+      "value": "Failed to create system speech engine"
+    },
+    {
+      "name": "speech_off",
+      "value": "Speech is off"
+    },
+    {
+      "name": "speech_no_engine",
+      "value": "No usable speech engine on this device"
+    },
+    {
+      "name": "ew_move_up",
+      "value": "Move Up"
+    },
+    {
+      "name": "ew_move_down",
+      "value": "Move Down"
+    },
+    {
+      "name": "ew_delete_periods_hint",
+      "value": "After deleting, these classes become empty; the rest is unaffected."
+    },
+    {
+      "name": "ew_has_default",
+      "value": "Has Default"
+    },
+    {
+      "name": "time_off_use_system",
+      "value": "Precise time is off; using system time."
+    },
+    {
+      "name": "time_sync_bad_response",
+      "value": "Time sync failed: invalid response."
+    },
+    {
+      "name": "imp_no_manifest",
+      "value": "No manifest.yml in this package; it does not look like a ClassIsland plugin package."
+    },
+    {
+      "name": "imp_no_id",
+      "value": "No Id in manifest.yml; cannot tell which plugin this is."
+    },
+    {
+      "name": "imp_dotnet_note",
+      "value": "The desktop plugin code is a .NET assembly; this platform does not load it, so it provides no entries."
+    },
+    {
+      "name": "plrow_not_loaded",
+      "value": "Not loaded"
+    },
+    {
+      "name": "plrow_no_entries",
+      "value": "Loaded, but no usable entries"
+    },
+    {
+      "name": "exec_run_unavailable",
+      "value": "Action \"Run Program\" is unavailable on HarmonyOS"
+    },
+    {
+      "name": "exec_restart_unimplemented",
+      "value": "Action \"Restart App\" has no implementation"
+    },
+    {
+      "name": "exec_plugin_empty_notice",
+      "value": "The extension notification title and body are both empty; nothing to send."
+    },
+    {
+      "name": "exec_weather_no_data",
+      "value": "No weather data yet; wait for the next refresh"
+    },
+    {
+      "name": "exec_weather_nothing",
+      "value": "No weather content to speak"
+    },
+    {
+      "name": "exec_weather_title",
+      "value": "Weather Forecast"
+    },
+    {
+      "name": "exec_alert_title",
+      "value": "Weather Alert"
+    },
+    {
+      "name": "exec_quit_failed",
+      "value": "Failed to quit the app"
     }
   ]
 }

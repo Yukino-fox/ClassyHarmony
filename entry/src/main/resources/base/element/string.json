@@ -1099,6 +1099,186 @@
     {
       "name": "sub_no_classes_use",
       "value": "还没有课次引用这个科目。"
+    },
+    {
+      "name": "clv_load_failed",
+      "value": "读不出信息面板布局，可能是文件损坏了。你看到的这份还没有保存。"
+    },
+    {
+      "name": "clv_reloaded",
+      "value": "已重新读取"
+    },
+    {
+      "name": "clv_discarded",
+      "value": "已丢弃改动"
+    },
+    {
+      "name": "clv_row_added",
+      "value": "已加一行"
+    },
+    {
+      "name": "clv_row_deleted",
+      "value": "已删一行"
+    },
+    {
+      "name": "clv_row_reordered",
+      "value": "已调整行的顺序"
+    },
+    {
+      "name": "clv_row_visible",
+      "value": "这一行已显示"
+    },
+    {
+      "name": "clv_row_hidden",
+      "value": "这一行已隐藏"
+    },
+    {
+      "name": "clv_component_deleted",
+      "value": "已删除组件"
+    },
+    {
+      "name": "clv_cannot_move_into_self",
+      "value": "移不过去：不能把容器移进它自己或它的子容器里"
+    },
+    {
+      "name": "ctv_no_schedule",
+      "value": "还没有课表"
+    },
+    {
+      "name": "ctv_no_break_after",
+      "value": "本节之后没有课间"
+    },
+    {
+      "name": "ctv_until_next_class",
+      "value": "距下一节课"
+    },
+    {
+      "name": "ctv_no_more_class",
+      "value": "今天没有下一节课"
+    },
+    {
+      "name": "ctv_after_school",
+      "value": "已放学"
+    },
+    {
+      "name": "rsync_disabled",
+      "value": "已关闭课前提醒"
+    },
+    {
+      "name": "rsync_disable_failed",
+      "value": "关闭失败，稍后重试"
+    },
+    {
+      "name": "rsync_no_permission",
+      "value": "通知权限未开启，请在系统设置里允许本应用发送通知"
+    },
+    {
+      "name": "rsync_nothing",
+      "value": "没有需要提醒的课"
+    },
+    {
+      "name": "rsync_read_failed",
+      "value": "读不到现有提醒，本次未改动"
+    },
+    {
+      "name": "rsync_slot_limited",
+      "value": "系统给的提醒条数不够，本应用最多排 30 条"
+    },
+    {
+      "name": "sysspeech_stopped",
+      "value": "已停止"
+    },
+    {
+      "name": "sysspeech_unavailable",
+      "value": "系统语音引擎不可用"
+    },
+    {
+      "name": "sysspeech_create_failed",
+      "value": "系统语音引擎创建失败"
+    },
+    {
+      "name": "speech_off",
+      "value": "语音已关闭"
+    },
+    {
+      "name": "speech_no_engine",
+      "value": "本设备没有可用的语音引擎"
+    },
+    {
+      "name": "ew_move_up",
+      "value": "上移"
+    },
+    {
+      "name": "ew_move_down",
+      "value": "下移"
+    },
+    {
+      "name": "ew_delete_periods_hint",
+      "value": "删除后这些课次会变成空白，其余不受影响。"
+    },
+    {
+      "name": "ew_has_default",
+      "value": "有默认"
+    },
+    {
+      "name": "time_off_use_system",
+      "value": "未启用精确时间，使用系统时间。"
+    },
+    {
+      "name": "time_sync_bad_response",
+      "value": "同步时间失败：响应不合法。"
+    },
+    {
+      "name": "imp_no_manifest",
+      "value": "这个包里没有 manifest.yml，不像是 ClassIsland 的插件包。"
+    },
+    {
+      "name": "imp_no_id",
+      "value": "manifest.yml 里没有 Id，不确定这是哪个插件。"
+    },
+    {
+      "name": "imp_dotnet_note",
+      "value": "桌面版插件的代码是 .NET 程序集，本端不加载它，所以它不会提供任何条目。"
+    },
+    {
+      "name": "plrow_not_loaded",
+      "value": "没有装上"
+    },
+    {
+      "name": "plrow_no_entries",
+      "value": "装上了，但没有可用条目"
+    },
+    {
+      "name": "exec_run_unavailable",
+      "value": "行动「运行程序」在鸿蒙上不可用"
+    },
+    {
+      "name": "exec_restart_unimplemented",
+      "value": "行动「重启应用」无对应实现"
+    },
+    {
+      "name": "exec_plugin_empty_notice",
+      "value": "扩展的通知标题与正文都是空的，没有可发的内容。"
+    },
+    {
+      "name": "exec_weather_no_data",
+      "value": "还没有天气数据，等下一次刷新"
+    },
+    {
+      "name": "exec_weather_nothing",
+      "value": "没有可播报的天气内容"
+    },
+    {
+      "name": "exec_weather_title",
+      "value": "天气预报"
+    },
+    {
+      "name": "exec_alert_title",
+      "value": "气象预警"
+    },
+    {
+      "name": "exec_quit_failed",
+      "value": "退出应用失败"
     }
   ]
 }

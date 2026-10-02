@@ -42,6 +42,7 @@ import { reminderAgentManager } from '@kit.BackgroundTasksKit';
 import notification from '@ohos.notification';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { DateTimeValue, Profile } from 'common_shared';
+import { t } from 'common_core';
 import {
   ReminderDiff,
   ReminderMode,
@@ -169,7 +170,7 @@ async function runOnce(context: common.UIAbilityContext, repository: ProfileRepo
     // 还在响，而界面上显示着「已关闭」。
     const ok: boolean = await cancelAllReminders();
     result.status = ok ? SYNC_OK : SYNC_FAILED;
-    result.message = ok ? '已关闭课前提醒' : '关闭失败，稍后重试';
+    result.message = ok ? t('rsync_disabled') : t('rsync_disable_failed');
     return result;
   }
 
@@ -177,7 +178,7 @@ async function runOnce(context: common.UIAbilityContext, repository: ProfileRepo
   // 提醒落进默认渠道，而之后的注册对它无效。
   if (!(await ensureNotificationEnabled(context))) {
     result.status = SYNC_NOTIFICATIONS_OFF;
-    result.message = '通知权限未开启，请在系统设置里允许本应用发送通知';
+    result.message = t('rsync_no_permission');
     return result;
   }
   await ensureReminderChannel(context);
@@ -201,7 +202,7 @@ async function runOnce(context: common.UIAbilityContext, repository: ProfileRepo
   if (plan.items.length === 0 && plan.droppedCount === 0 && existing.length === 0) {
     result.mode = plan.mode;
     result.plannedCount = 0;
-    result.message = '没有需要提醒的课';
+    result.message = t('rsync_nothing');
     return result;
   }
 
@@ -268,7 +269,7 @@ async function readSnapshots(result: ReminderSyncResult): Promise<ReminderAgentS
     // 而旧的还在，于是条数翻倍 —— 下一次同步就会撞额度。
     console.warn(`[ClassyHarmony] 读取现有提醒失败：${err}`);
     result.status = SYNC_FAILED;
-    result.message = '读不到现有提醒，本次未改动';
+    result.message = t('rsync_read_failed');
   }
   return out;
 }
@@ -458,7 +459,7 @@ async function publishOne(context: common.UIAbilityContext, item: ReminderPlanIt
       // 走到这里说明真实额度比 QUOTA 小（有可能系统里有本应用之外的提醒，
       // 或者设备给了更小的额度）。如实报出来，让界面上出现「额度不够」这句
       // 人话，而不是一句「同步失败」。
-      result.message = '系统给的提醒条数不够，本应用最多排 30 条';
+      result.message = t('rsync_slot_limited');
     }
     console.warn(`[ClassyHarmony] 发布提醒 ${item.key} 失败（${code}）：${err}`);
     return false;

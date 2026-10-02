@@ -44,6 +44,7 @@
  * 课前一分钟提醒恰恰最可能发生在应用不在前台的时候 —— 那正是它该起作用的时候。
  */
 
+import { t } from 'common_core';
 import { textToSpeech } from '@kit.CoreSpeechKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 
@@ -144,7 +145,7 @@ export class SystemSpeechService {
       this.finish(requestId, { ok: true, detail: '' });
     },
     onStop: (requestId: string, response: textToSpeech.StopResponse): void => {
-      this.finish(requestId, { ok: false, detail: '已停止' });
+      this.finish(requestId, { ok: false, detail: t('sysspeech_stopped') });
     },
     onError: (requestId: string, errorCode: number, errorMessage: string): void => {
       this.finish(requestId, { ok: false, detail: `${errorCode} ${errorMessage}` });
@@ -187,12 +188,12 @@ export class SystemSpeechService {
       return { ok: true, detail: '' };
     }
     if (this.engineUnavailable) {
-      return { ok: false, detail: '系统语音引擎不可用' };
+      return { ok: false, detail: t('sysspeech_unavailable') };
     }
 
     const engine: textToSpeech.TextToSpeechEngine | undefined = await this.ensureEngine();
     if (engine === undefined) {
-      return { ok: false, detail: '系统语音引擎创建失败' };
+      return { ok: false, detail: t('sysspeech_create_failed') };
     }
 
     const requestId: string = `classy${this.counter++}`;
@@ -229,7 +230,7 @@ export class SystemSpeechService {
     const id: string = this.pendingId;
     this.stopEngine();
     if (id.length > 0) {
-      this.finish(id, { ok: false, detail: '已停止' });
+      this.finish(id, { ok: false, detail: t('sysspeech_stopped') });
     }
   }
 

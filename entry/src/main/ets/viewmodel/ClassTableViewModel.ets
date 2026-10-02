@@ -22,6 +22,7 @@
  */
 
 import { ClassPlan, DateTimeValue, Profile, Subject, TimeLayout, TimeLayoutItem, TimeSpanValue, TimeState } from 'common_shared';
+import { t } from 'common_core';
 import { EngineSettings, LessonsEngine, LessonsSnapshot, ScheduleGrid, ScheduleGridBuilder } from 'common_core';
 import { AppClock } from '../common/AppClock';
 import { ProfileRepository } from '../data/ProfileRepository';
@@ -199,7 +200,7 @@ export class ClassTableViewModel {
 function buildBanner(snapshot: LessonsSnapshot): LessonBanner {
   const banner: LessonBanner = new LessonBanner();
   if (!snapshot.isClassPlanLoaded) {
-    banner.title = '还没有课表';
+    banner.title = t('ctv_no_schedule');
     banner.subtitle = '添加课表后这里会显示今天的课程';
     return banner;
   }
@@ -209,7 +210,7 @@ function buildBanner(snapshot: LessonsSnapshot): LessonBanner {
     banner.title = subjectName(snapshot.currentSubject);
     banner.subtitle = isRealTimePoint(snapshot, snapshot.nextBreakingTimeLayoutItem)
       ? countdown('距下课', snapshot.onBreakingTimeLeftTime)
-      : '本节之后没有课间';
+      : t('ctv_no_break_after');
     return banner;
   }
 
@@ -217,17 +218,17 @@ function buildBanner(snapshot: LessonsSnapshot): LessonBanner {
     banner.tone = BannerTone.Breaking;
     banner.title = '课间';
     banner.subtitle = isRealTimePoint(snapshot, snapshot.nextClassTimeLayoutItem)
-      ? countdown('距下一节课', snapshot.onClassLeftTime)
-      : '今天没有下一节课';
+      ? countdown(t('ctv_until_next_class'), snapshot.onClassLeftTime)
+      : t('ctv_no_more_class');
     return banner;
   }
 
   banner.tone = BannerTone.Idle;
   if (isRealTimePoint(snapshot, snapshot.nextClassTimeLayoutItem)) {
     banner.title = '还没开始上课';
-    banner.subtitle = countdown('距下一节课', snapshot.onClassLeftTime);
+    banner.subtitle = countdown(t('ctv_until_next_class'), snapshot.onClassLeftTime);
   } else {
-    banner.title = '已放学';
+    banner.title = t('ctv_after_school');
     banner.subtitle = '';
   }
   return banner;

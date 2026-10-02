@@ -38,6 +38,7 @@ import {
   WeatherInfo,
   DateTimeValue
 } from 'common_shared';
+import { t } from 'common_core';
 import { weatherTextByCode } from 'common_core';
 import { LessonsSnapshot } from 'common_core';
 import {
@@ -134,10 +135,10 @@ export class AutomationExecutor {
       case ActionIds.NOTIFICATION_WEATHER:
         return this.execWeatherNotification(action, causeText);
       case ActionIds.OS_RUN:
-        causeText.value = '行动「运行程序」在鸿蒙上不可用';
+        causeText.value = t('exec_run_unavailable');
         return false;
       case ActionIds.APP_RESTART:
-        causeText.value = '行动「重启应用」无对应实现';
+        causeText.value = t('exec_restart_unimplemented');
         return false;
       default:
         // 扩展声明的行动 id 是作者自己起的，不可能出现在上面这张表里，所以
@@ -192,7 +193,7 @@ export class AutomationExecutor {
     const title: string = this.renderTemplate(plan.notification.title);
     const content: string = this.renderTemplate(plan.notification.content);
     if (title.length === 0 && content.length === 0) {
-      causeText.value = '扩展的通知标题与正文都是空的，没有可发的内容。';
+      causeText.value = t('exec_plugin_empty_notice');
       return false;
     }
     const category: NotificationCategory =
@@ -437,7 +438,7 @@ export class AutomationExecutor {
     const service: WeatherService = resolveWeatherService(this.ctx.context);
     const info: WeatherInfo = service.lastInfo();
     if (!info.hasData()) {
-      causeText.value = '还没有天气数据，等下一次刷新';
+      causeText.value = t('exec_weather_no_data');
       return false;
     }
 
@@ -460,7 +461,7 @@ export class AutomationExecutor {
     }
     if (!ok) {
       // 三种都是「数据是空的所以没东西可发」，不是失败。
-      causeText.value = '没有可播报的天气内容';
+      causeText.value = t('exec_weather_nothing');
     }
     return ok;
   }
@@ -482,7 +483,7 @@ export class AutomationExecutor {
       return false;
     }
     await this.notificationService.publish(NotificationCategory.Weather, {
-      title: '天气预报',
+      title: t('exec_weather_title'),
       content: parts.join('  '),
       subText: '',
       ongoing: false,
@@ -514,7 +515,7 @@ export class AutomationExecutor {
       parts.push(`${pad2(hour)}:00 ${weatherTextByCode(`${codes[i]}`)} ${temperatures[i]}℃`);
     }
     await this.notificationService.publish(NotificationCategory.Weather, {
-      title: '天气预报',
+      title: t('exec_weather_title'),
       content: parts.join('  '),
       subText: '',
       ongoing: false,
@@ -536,7 +537,7 @@ export class AutomationExecutor {
       return false;
     }
     for (const alert of pending) {
-      const title: string = alert.title.length > 0 ? alert.title : '气象预警';
+      const title: string = alert.title.length > 0 ? alert.title : t('exec_alert_title');
       await this.notificationService.publish(NotificationCategory.Weather, {
         title: title,
         content: alert.detail,
@@ -588,7 +589,7 @@ export class AutomationExecutor {
       });
       return true;
     } catch {
-      causeText.value = '退出应用失败';
+      causeText.value = t('exec_quit_failed');
       return false;
     }
   }

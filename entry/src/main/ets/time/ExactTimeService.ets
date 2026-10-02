@@ -55,6 +55,7 @@ import { common } from '@kit.AbilityKit';
 import { systemDateTime } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { DateTimeValue } from 'common_shared';
+import { t } from 'common_core';
 import { ExactClock, SyncOutcome, planDailyAutoAdjust } from 'common_core';
 
 import { AppClock } from '../common/AppClock';
@@ -198,7 +199,7 @@ export class ExactTimeService implements AppClock {
    */
   private async doSync(manual: boolean): Promise<void> {
     if (!this.enabled) {
-      this.syncStatus = '未启用精确时间，使用系统时间。';
+      this.syncStatus = t('time_off_use_system');
       return;
     }
     if (this.syncing) {
@@ -233,7 +234,7 @@ export class ExactTimeService implements AppClock {
    */
   private applyResult(result: NtpQueryResult): void {
     if (result.response === undefined) {
-      this.syncStatus = '同步时间失败：响应不合法。';
+      this.syncStatus = t('time_sync_bad_response');
       return;
     }
     const outcome: SyncOutcome = this.core.applySync(
@@ -326,7 +327,7 @@ export class ExactTimeService implements AppClock {
       this.start();
     } else {
       this.stop();
-      this.syncStatus = '未启用精确时间，使用系统时间。';
+      this.syncStatus = t('time_off_use_system');
     }
   }
 

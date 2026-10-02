@@ -22,6 +22,7 @@
  * 只写「确定删除吗」的话用户点完之后才发现课没了。
  */
 
+import { t } from 'common_core';
 import { ClassPlanGroupRow, ClassSlotRow, SubjectRow, TimeLayoutRow, TimePointRow } from 'common_core';
 import { UiFeedback } from '../common/UiFeedback';
 
@@ -346,15 +347,15 @@ export struct SubjectRowHeader {
 
       if (this.isExpanded) {
         Row() {
-          EditorChip({ text: '上移', onTap: () => { this.onMoveUp(); } })
+          EditorChip({ text: t('ew_move_up'), onTap: () => { this.onMoveUp(); } })
           Blank()
-          EditorChip({ text: '下移', onTap: () => { this.onMoveDown(); } })
+          EditorChip({ text: t('ew_move_down'), onTap: () => { this.onMoveDown(); } })
           Blank()
           EditorDeleteButton({
             text: '删除',
             message: this.row.usedByClassesTotal > 0
               ? `「${this.row.name}」正被 ${this.row.usedByClassesTotal} 节课引用。` +
-                '删除后这些课次会变成空白，其余不受影响。'
+                t('ew_delete_periods_hint')
               : `「${this.row.name}」没有被任何课次引用。`,
             onConfirm: () => { this.onDelete(); }
           })
@@ -431,7 +432,7 @@ export struct ClassSlotRowView {
         })
 
       if (this.row.hasDefault) {
-        Text('有默认')
+        Text(t('ew_has_default'))
           .fontSize(11)
           .fontColor($r('app.color.ch_text_hint'))
           .margin({ right: 8 })

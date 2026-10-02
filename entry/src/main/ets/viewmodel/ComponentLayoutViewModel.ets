@@ -42,6 +42,7 @@ import {
   Subject,
   RulesetLogicalMode
 } from 'common_shared';
+import { t } from 'common_core';
 import {
   COMPONENT_CLOCK,
   COMPONENT_COUNTDOWN,
@@ -305,7 +306,7 @@ export class ComponentLayoutViewModel {
       // 读不出来时也给出可用的草稿：空布局能让人从零开始排，而不是对着一屏
       // 错误提示发呆。草稿不会自动保存，除非用户自己点保存。
       this.draft = ComponentProfile.defaultProfile();
-      this.loadErrorText = '读不出信息面板布局，可能是文件损坏了。你看到的这份还没有保存。';
+      this.loadErrorText = t('clv_load_failed');
     }
     this.baseline = ComponentProfile.stringify(this.draft);
     this.loaded = true;
@@ -360,14 +361,14 @@ export class ComponentLayoutViewModel {
   reload(): void {
     this.loaded = false;
     this.load(this.schemeName);
-    this.say('已重新读取');
+    this.say(t('clv_reloaded'));
   }
 
   /** 丢掉改动，回到上次载入或保存的状态。 */
   discardChanges(): void {
     this.draft = ComponentProfile.parse(this.baseline);
     this.rebuild();
-    this.say('已丢弃改动');
+    this.say(t('clv_discarded'));
   }
 
   // ------------------------------------------------------------ 方案切换
@@ -426,14 +427,14 @@ export class ComponentLayoutViewModel {
     if (!ComponentLayoutMutations.addLine(this.draft, afterIndex + 1)) {
       return;
     }
-    this.settle('已加一行');
+    this.settle(t('clv_row_added'));
   }
 
   removeLine(lineIndex: number): void {
     if (!ComponentLayoutMutations.removeLine(this.draft, lineIndex)) {
       return;
     }
-    this.settle('已删一行');
+    this.settle(t('clv_row_deleted'));
   }
 
   /**
@@ -446,7 +447,7 @@ export class ComponentLayoutViewModel {
     if (!ComponentLayoutMutations.moveLine(this.draft, from, to)) {
       return;
     }
-    this.settle('已调整行的顺序');
+    this.settle(t('clv_row_reordered'));
   }
 
   toggleLineVisible(lineIndex: number): void {
@@ -455,7 +456,7 @@ export class ComponentLayoutViewModel {
     }
     const line: MainWindowLineSettings = this.draft.lines[lineIndex];
     line.isVisible = !line.isVisible;
-    this.settle(line.isVisible ? '这一行已显示' : '这一行已隐藏');
+    this.settle(line.isVisible ? t('clv_row_visible') : t('clv_row_hidden'));
   }
 
   // ---------------------------------------------------------- 组件的改动
@@ -484,14 +485,14 @@ export class ComponentLayoutViewModel {
     if (!ComponentLayoutMutations.removeComponent(this.draft, location)) {
       return;
     }
-    this.settle('已删除组件');
+    this.settle(t('clv_component_deleted'));
   }
 
   moveComponent(from: ComponentLocation, to: ComponentLocation, insertIndex: number): void {
     if (!ComponentLayoutMutations.moveComponent(this.draft, from, to, insertIndex)) {
       // 移动失败布局原样不变（改动层内部会回滚），所以这里只提示。
       // 最常见的原因是「移进自己的子孙」—— 那会形成环，面板会卡死。
-      this.say('移不过去：不能把容器移进它自己或它的子容器里');
+      this.say(t('clv_cannot_move_into_self'));
       return;
     }
     this.settle('已移动组件');
