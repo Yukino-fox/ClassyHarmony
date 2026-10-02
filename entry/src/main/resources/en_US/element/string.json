@@ -1347,6 +1347,258 @@
     {
       "name": "settings_alert_icon_hint",
       "value": "Not loaded: alert icons are remote images over plain HTTP"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "Main UI of the schedule app"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "ClassIsland"
+    },
+    {
+      "name": "EntryFormAbility_desc",
+      "value": "Today's schedule desktop widget"
+    },
+    {
+      "name": "EntryFormAbility_label",
+      "value": "Today's Schedule"
+    },
+    {
+      "name": "distributed_permission_reason",
+      "value": "Syncs the current schedule state between trusted devices (off by default; must be enabled manually)"
+    },
+    {
+      "name": "form_today_description",
+      "value": "Shows the upcoming classes and current status on the desktop"
+    },
+    {
+      "name": "form_today_display_name",
+      "value": "Today's Schedule"
+    },
+    {
+      "name": "location_permission_reason",
+      "value": "Selects the weather city based on the current location"
+    },
+    {
+      "name": "module_desc",
+      "value": "Schedule: timetable, schedule editing and daily reminders"
+    },
+    {
+      "name": "settings_weather_not_started",
+      "value": "Weather service not started"
+    },
+    {
+      "name": "settings_plugin_not_started",
+      "value": "Extension service not started"
+    },
+    {
+      "name": "settings_save_failed",
+      "value": "Save failed: {0}"
+    },
+    {
+      "name": "settings_uninstall_title",
+      "value": "Uninstall Extension"
+    },
+    {
+      "name": "settings_uninstall_confirm",
+      "value": "Removes the manifest and switch state of \"{0}\". The components, triggers and actions it declares disappear from the panel and automation too."
+    },
+    {
+      "name": "settings_uninstall_failed",
+      "value": "Uninstall failed: {0}"
+    },
+    {
+      "name": "settings_not_installed_reason",
+      "value": "Not installed: {0}"
+    },
+    {
+      "name": "settings_installed_toast",
+      "value": "Installed \"{0}\", {1} entries."
+    },
+    {
+      "name": "settings_import_failed_detail",
+      "value": "Import failed: {0}"
+    },
+    {
+      "name": "settings_export_failed",
+      "value": "Export failed: {0}"
+    },
+    {
+      "name": "settings_automation_nav_failed",
+      "value": "Cannot open the automation page"
+    },
+    {
+      "name": "settings_preparing",
+      "value": "Preparing settings…"
+    },
+    {
+      "name": "settings_server_label",
+      "value": "Server"
+    },
+    {
+      "name": "settings_server_hint",
+      "value": "Takes effect on Enter or when you tap elsewhere. Leave empty to fall back to ntp.aliyun.com."
+    },
+    {
+      "name": "settings_sync_not_started",
+      "value": "Not started yet"
+    },
+    {
+      "name": "settings_not_initialized",
+      "value": "Not initialized"
+    },
+    {
+      "name": "settings_city_id_field",
+      "value": "City id"
+    },
+    {
+      "name": "settings_display_name_field",
+      "value": "Display name"
+    },
+    {
+      "name": "settings_icon_scheme_note",
+      "value": "{0} (icon font not ported; this key is stored but has no effect)"
+    },
+    {
+      "name": "settings_refreshing",
+      "value": "Refreshing…"
+    },
+    {
+      "name": "settings_refresh_now",
+      "value": "Refresh Now"
+    },
+    {
+      "name": "settings_distributed_enable",
+      "value": "Enable cross-device sync"
+    },
+    {
+      "name": "settings_device_name",
+      "value": "This device name"
+    },
+    {
+      "name": "settings_unknown_device",
+      "value": "Unknown device"
+    },
+    {
+      "name": "settings_session_id",
+      "value": "Session ID"
+    },
+    {
+      "name": "settings_session_not_generated",
+      "value": "Not generated"
+    },
+    {
+      "name": "settings_session_placeholder",
+      "value": "Letters, digits, underscore"
+    },
+    {
+      "name": "settings_generate_session_id",
+      "value": "Generate New Session ID"
+    },
+    {
+      "name": "settings_not_enabled",
+      "value": "Not enabled"
+    },
+    {
+      "name": "settings_keep_alive",
+      "value": "Allow background running"
+    },
+    {
+      "name": "settings_import_json",
+      "value": "Import extension (.json)"
+    },
+    {
+      "name": "settings_import_cipx",
+      "value": "Import extension (.cipx)"
+    },
+    {
+      "name": "settings_debug_log",
+      "value": "Debug log"
+    },
+    {
+      "name": "settings_perf_overlay",
+      "value": "Performance overlay"
+    },
+    {
+      "name": "settings_reset_all",
+      "value": "Reset All Settings to Defaults"
+    },
+    {
+      "name": "settings_reset_title",
+      "value": "Reset to Defaults"
+    },
+    {
+      "name": "settings_theme_system",
+      "value": "Follow system"
+    },
+    {
+      "name": "settings_theme_light",
+      "value": "Light"
+    },
+    {
+      "name": "settings_theme_dark",
+      "value": "Dark"
+    },
+    {
+      "name": "settings_page_schedule",
+      "value": "Schedule"
+    },
+    {
+      "name": "settings_page_editor",
+      "value": "Editor"
+    },
+    {
+      "name": "settings_page_panel",
+      "value": "Info panel"
+    },
+    {
+      "name": "settings_page_automation",
+      "value": "Automation"
+    },
+    {
+      "name": "settings_advance_seconds",
+      "value": "{0} s"
+    },
+    {
+      "name": "settings_advance_minutes",
+      "value": "{0} min"
+    },
+    {
+      "name": "settings_font_scale_toast",
+      "value": "Font scale {0}%"
+    },
+    {
+      "name": "settings_provider_unsupported",
+      "value": "{0} (unavailable on this device)"
+    },
+    {
+      "name": "settings_voice_female",
+      "value": "Female voice"
+    },
+    {
+      "name": "settings_voice_male",
+      "value": "Male voice"
+    },
+    {
+      "name": "settings_location_city_id",
+      "value": "By city id"
+    },
+    {
+      "name": "settings_location_auto",
+      "value": "Auto locate"
+    },
+    {
+      "name": "settings_offset_none",
+      "value": "No offset"
+    },
+    {
+      "name": "settings_compensate_none",
+      "value": "No compensation"
+    },
+    {
+      "name": "settings_compensate_daily",
+      "value": "+{0} s per day"
     }
   ]
 }

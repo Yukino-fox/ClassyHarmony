@@ -511,6 +511,10 @@
     {
       "name": "week_saturday",
       "value": "Saturday"
+    },
+    {
+      "name": "common_core_desc",
+      "value": "ClassyHarmony core engine layer"
     }
   ]
 }

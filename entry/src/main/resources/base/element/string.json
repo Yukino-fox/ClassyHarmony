@@ -1383,6 +1383,222 @@
     {
       "name": "settings_alert_icon_hint",
       "value": "不加载：预警图标是明文 HTTP 的远程图片"
+    },
+    {
+      "name": "settings_weather_not_started",
+      "value": "天气服务未启动"
+    },
+    {
+      "name": "settings_plugin_not_started",
+      "value": "扩展服务未启动"
+    },
+    {
+      "name": "settings_save_failed",
+      "value": "保存失败：{0}"
+    },
+    {
+      "name": "settings_uninstall_title",
+      "value": "卸载扩展"
+    },
+    {
+      "name": "settings_uninstall_confirm",
+      "value": "会删掉「{0}」的清单与开关状态。它声明的组件、触发器、行动会一起从面板与自动化里消失。"
+    },
+    {
+      "name": "settings_uninstall_failed",
+      "value": "卸载失败：{0}"
+    },
+    {
+      "name": "settings_not_installed_reason",
+      "value": "没有装上：{0}"
+    },
+    {
+      "name": "settings_installed_toast",
+      "value": "已装「{0}」，{1} 条条目。"
+    },
+    {
+      "name": "settings_import_failed_detail",
+      "value": "导入失败：{0}"
+    },
+    {
+      "name": "settings_export_failed",
+      "value": "导出失败：{0}"
+    },
+    {
+      "name": "settings_automation_nav_failed",
+      "value": "进不去自动化页"
+    },
+    {
+      "name": "settings_preparing",
+      "value": "正在准备设置…"
+    },
+    {
+      "name": "settings_server_label",
+      "value": "服务器"
+    },
+    {
+      "name": "settings_server_hint",
+      "value": "回车或点别处生效。留空则回落到 ntp.aliyun.com。"
+    },
+    {
+      "name": "settings_sync_not_started",
+      "value": "尚未开始"
+    },
+    {
+      "name": "settings_not_initialized",
+      "value": "尚未初始化"
+    },
+    {
+      "name": "settings_city_id_field",
+      "value": "城市 id"
+    },
+    {
+      "name": "settings_display_name_field",
+      "value": "显示名"
+    },
+    {
+      "name": "settings_icon_scheme_note",
+      "value": "{0}（图标字体未移植，该键只读写不生效）"
+    },
+    {
+      "name": "settings_refreshing",
+      "value": "正在刷新…"
+    },
+    {
+      "name": "settings_refresh_now",
+      "value": "立即刷新"
+    },
+    {
+      "name": "settings_distributed_enable",
+      "value": "开启跨设备同步"
+    },
+    {
+      "name": "settings_device_name",
+      "value": "本机名称"
+    },
+    {
+      "name": "settings_unknown_device",
+      "value": "未知设备"
+    },
+    {
+      "name": "settings_session_id",
+      "value": "会话 ID"
+    },
+    {
+      "name": "settings_session_not_generated",
+      "value": "未生成"
+    },
+    {
+      "name": "settings_session_placeholder",
+      "value": "字母、数字、下划线"
+    },
+    {
+      "name": "settings_generate_session_id",
+      "value": "生成新会话 ID"
+    },
+    {
+      "name": "settings_not_enabled",
+      "value": "未开启"
+    },
+    {
+      "name": "settings_keep_alive",
+      "value": "允许后台运行"
+    },
+    {
+      "name": "settings_import_json",
+      "value": "导入扩展（.json）"
+    },
+    {
+      "name": "settings_import_cipx",
+      "value": "导入扩展（.cipx）"
+    },
+    {
+      "name": "settings_debug_log",
+      "value": "调试日志"
+    },
+    {
+      "name": "settings_perf_overlay",
+      "value": "性能叠加层"
+    },
+    {
+      "name": "settings_reset_all",
+      "value": "恢复全部默认设置"
+    },
+    {
+      "name": "settings_reset_title",
+      "value": "恢复默认设置"
+    },
+    {
+      "name": "settings_theme_system",
+      "value": "跟随系统"
+    },
+    {
+      "name": "settings_theme_light",
+      "value": "浅色"
+    },
+    {
+      "name": "settings_theme_dark",
+      "value": "深色"
+    },
+    {
+      "name": "settings_page_schedule",
+      "value": "课表页"
+    },
+    {
+      "name": "settings_page_editor",
+      "value": "编辑页"
+    },
+    {
+      "name": "settings_page_panel",
+      "value": "信息面板"
+    },
+    {
+      "name": "settings_page_automation",
+      "value": "自动化"
+    },
+    {
+      "name": "settings_advance_seconds",
+      "value": "{0} 秒"
+    },
+    {
+      "name": "settings_advance_minutes",
+      "value": "{0} 分钟"
+    },
+    {
+      "name": "settings_font_scale_toast",
+      "value": "字体缩放 {0}%"
+    },
+    {
+      "name": "settings_provider_unsupported",
+      "value": "{0}（本设备暂不支持）"
+    },
+    {
+      "name": "settings_voice_female",
+      "value": "女声"
+    },
+    {
+      "name": "settings_voice_male",
+      "value": "男声"
+    },
+    {
+      "name": "settings_location_city_id",
+      "value": "按城市 id"
+    },
+    {
+      "name": "settings_location_auto",
+      "value": "自动定位"
+    },
+    {
+      "name": "settings_offset_none",
+      "value": "不调整"
+    },
+    {
+      "name": "settings_compensate_none",
+      "value": "不补偿"
+    },
+    {
+      "name": "settings_compensate_daily",
+      "value": "每天 +{0} 秒"
     }
   ]
 }

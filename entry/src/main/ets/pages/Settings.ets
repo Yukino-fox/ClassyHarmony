@@ -26,14 +26,20 @@
  * 为一个箭头引入 png 不划算：它在深色主题下还要另备一张（图片不跟随文字颜色），
  * 而字符天然跟随 fontColor。
  *
- * 取值都是「点一下循环」而不是选择器
- * ------------------------------
- * 每一项的可选值都是已知的少量枚举，循环比弹选择器少一次界面往返，也不会让
- * 用户在一个临时列表里找「浅色」两个字。代价是看不到「全部有哪些值」，对这几项
- * 来说不构成问题。
+ * 可选值是点开菜单选，不是「点一下循环」
+ * ---------------------------------
+ * 每一项的可选值都是已知的少量枚举：行上显示当前值，点开弹一个 Menu 列出全部
+ * 候选，当前项前面打 ✓。早先做成「点一下换一档」，理由是省一次界面往返；真机
+ * 上一试就发现那样不对 —— 用户点之前不知道有哪些值，点之后又不知道自己改成了
+ * 什么（值变了但没有确认感），手滑一下配置就被改掉还不知道改成了什么。菜单把
+ * 「有哪些值」和「现在是哪个」一次说清，代价只是多一次点击。
+ *
+ * 菜单用 bindMenu + Menu/MenuItem，与课表编辑、规则编辑里的菜单是同一套；不用
+ * TextPickerDialog：它在 d.ts 里已标 @useinstead UIContext#showTextPickerDialog
+ * （等于已废弃），而且对「三个选项」来说模态整屏太重。
  */
 
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import { common } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import {
@@ -78,7 +84,7 @@ import { PluginLoadIssue, PluginService, resolvePluginService } from '../plugin/
 const DOMAIN: number = 0x0000;
 const TAG: string = 'Settings';
 
-/** 字体缩放的档位。循环切换用，不给滑块 —— 见 cycleFontScale 的注释。 */
+/** 字体缩放的档位。不给滑块 —— 见 fontScaleList 的注释。 */
 const FONT_SCALE_STEPS: number[] = [0.8, 0.9, 1.0, 1.1, 1.3, 1.6];
 
 /** 提前量的档位（秒）。 */
@@ -90,8 +96,8 @@ const ADVANCE_MAX_SECONDS: number = 3600;
 /*
  * 手动偏移的档位（秒）。
  *
- * 负值排在正值前面且 0 在中间：偏移是「往哪边拨」的一个双向量，把 0 放在
- * 列表中间并让循环从它开始，点到 0 时不用先滚过所有负档。
+ * 负值排在正值前面且 0 在中间：偏移是「往哪边拨」的一个双向量，0 排在中间
+ * 让列表从负到正自然读下来，也离两边都近。
  */
 const OFFSET_STEPS: number[] = [-60, -30, -10, -5, -1, 0, 1, 5, 10, 30, 60];
 
@@ -103,6 +109,18 @@ const OFFSET_STEPS: number[] = [-60, -30, -10, -5, -1, 0, 1, 5, 10, 30, 60];
  * 偏移即可。想要每天回拨的用户请把符号反着想。
  */
 const AUTO_ADJUST_STEPS: number[] = [0, 0.5, 1, 2, 5, 10, 30, 60];
+
+/**
+ * 菜单里的一条候选。
+ *
+ * value 统一成字符串：菜单要拿它跟「当前值」比对来打 ✓，也要在选中时原样带回
+ * 给写盘的回调。数值档位用 `${n}` 格式化后两边都是同一个 ToString，天然对得上；
+ * 提供方这类本来就是字符串的直接用 id。
+ */
+interface PickOption {
+  label: string;
+  value: string;
+}
 
 @Entry
 @ComponentV2
@@ -295,7 +313,7 @@ struct SettingsPage {
       DEFAULT_NO_TLS_WEATHER_REQUESTS);
     this.weatherIconId = prefs.getString(PrefKeys.WEATHER_ICON_ID, DEFAULT_WEATHER_ICON_ID);
     this.excludedAlertsText = prefs.getStringArray(PrefKeys.EXCLUDED_WEATHER_ALERTS).join('、');
-    this.weatherStatus = this.weatherService()?.statusText() ?? '天气服务未启动';
+    this.weatherStatus = this.weatherService()?.statusText() ?? t('settings_weather_not_started');
 
     // 跨设备：开关与会话 ID 直接读盘（服务是它们的写入者，读了就是最新的），
     // 设备名与状态问服务要 —— 设备名来自系统、状态取决于入会话成没成。
@@ -334,59 +352,162 @@ struct SettingsPage {
     this.prefs?.put(key, value);
   }
 
-  // ------------------------------------------------------------ 取值展示
+  // ------------------------------------------------------------ 候选值
 
-  private themeLabel(): string {
-    if (this.theme === ThemeMode.Light) {
-      return '浅色';
+  /**
+   * 按 value 找显示文字。
+   *
+   * 找不到时原样显示 value，而不是空白 —— 跨端同步可能送来本端没见过的野值
+   * （别的端新增的档位），把它显示出来至少让用户知道「现在是个没列出来的值」，
+   * 空白只会让人以为坏了。
+   */
+  private static labelOf(options: PickOption[], value: string): string {
+    for (let i: number = 0; i < options.length; i++) {
+      if (options[i].value === value) {
+        return options[i].label;
+      }
     }
-    if (this.theme === ThemeMode.Dark) {
-      return '深色';
-    }
-    return '跟随系统';
+    return value;
   }
 
-  private defaultPageLabel(): string {
-    if (this.defaultPage === DefaultPage.Editor) {
-      return '编辑页';
+  /**
+   * 档位表 → 菜单候选。
+   *
+   * 当前值不在档位表里时按大小插进去（桌面版可能写了 1.25 这种中间值，偏移
+   * 也可能不是档位上的整数），这样菜单里总有一条跟行上显示一致的候选，✓ 才
+   * 打得上去 —— 行上写着 125% 而菜单里没有 125%，看起来就像菜单漏了项。
+   *
+   * 插入前先做一次 1e-9 的近似比对：JSON 回读的浮点偶尔跟字面量差最后一位，
+   * 严格 `===` 会把同一个值判成两个，于是出现「行上 0.8、菜单里另一个 0.8」。
+   */
+  private stepOptions(steps: number[], current: number,
+    labelOf: (value: number) => string): PickOption[] {
+    const values: number[] = [];
+    for (let i: number = 0; i < steps.length; i++) {
+      values.push(steps[i]);
     }
-    if (this.defaultPage === DefaultPage.Panel) {
-      return '信息面板';
+    let exact: boolean = false;
+    for (let i: number = 0; i < values.length; i++) {
+      if (values[i] === current) {
+        exact = true;
+        break;
+      }
     }
-    if (this.defaultPage === DefaultPage.Automation) {
-      return '自动化';
+    if (!exact) {
+      let at: number = values.length;
+      for (let i: number = 0; i < values.length; i++) {
+        if (values[i] > current) {
+          at = i;
+          break;
+        }
+      }
+      if (at < values.length && Math.abs(values[at] - current) < 1e-9) {
+        values[at] = current;
+      } else if (at > 0 && Math.abs(values[at - 1] - current) < 1e-9) {
+        values[at - 1] = current;
+      } else {
+        values.splice(at, 0, current);
+      }
     }
-    return '课表页';
+    const options: PickOption[] = [];
+    for (let i: number = 0; i < values.length; i++) {
+      options.push({ label: labelOf(values[i]), value: `${values[i]}` });
+    }
+    return options;
   }
 
-  private fontScaleLabel(): string {
-    return `${Math.round(this.fontScale * 100)}%`;
+  private themeOptions(): PickOption[] {
+    const options: PickOption[] = [];
+    options.push({ label: t('settings_theme_system'), value: `${ThemeMode.System}` });
+    options.push({ label: t('settings_theme_light'), value: `${ThemeMode.Light}` });
+    options.push({ label: t('settings_theme_dark'), value: `${ThemeMode.Dark}` });
+    return options;
   }
 
-  private advanceLabel(seconds: number): string {
+  private defaultPageOptions(): PickOption[] {
+    const options: PickOption[] = [];
+    options.push({ label: t('settings_page_schedule'), value: `${DefaultPage.Schedule}` });
+    options.push({ label: t('settings_page_editor'), value: `${DefaultPage.Editor}` });
+    options.push({ label: t('settings_page_panel'), value: `${DefaultPage.Panel}` });
+    options.push({ label: t('settings_page_automation'), value: `${DefaultPage.Automation}` });
+    return options;
+  }
+
+  private fontScaleOptions(): PickOption[] {
+    return this.stepOptions(FONT_SCALE_STEPS, this.fontScale,
+      (value: number): string => `${Math.round(value * 100)}%`);
+  }
+
+  private advanceOptions(current: number): PickOption[] {
+    return this.stepOptions(ADVANCE_STEPS, current,
+      (value: number): string => SettingsPage.advanceLabel(value));
+  }
+
+  private reminderModeOptions(): PickOption[] {
+    const options: PickOption[] = [];
+    options.push({ label: t('settings_auto'), value: `${-1}` });
+    options.push({ label: t('settings_per_class'), value: '0' });
+    options.push({ label: t('settings_folded'), value: '1' });
+    return options;
+  }
+
+  private offsetOptions(): PickOption[] {
+    return this.stepOptions(OFFSET_STEPS, this.timeOffsetSeconds,
+      (value: number): string => SettingsPage.offsetLabel(value));
+  }
+
+  private autoAdjustOptions(): PickOption[] {
+    return this.stepOptions(AUTO_ADJUST_STEPS, this.timeAutoAdjustSeconds,
+      (value: number): string => SettingsPage.autoAdjustLabel(value));
+  }
+
+  private speechProviderOptions(): PickOption[] {
+    const options: PickOption[] = [];
+    for (let i: number = 0; i < SPEECH_PROVIDERS.length; i++) {
+      const info: SpeechProviderInfo = SPEECH_PROVIDERS[i];
+      options.push({
+        label: info.implemented ? info.displayName
+          : tf('settings_provider_unsupported', info.displayName),
+        value: info.id
+      });
+    }
+    // 跨端同步来的 id 可能不在本端的表里（别的端新增了提供方）。补一条原样
+    // 显示的候选，否则设置行会显示一个菜单里找不到的值，用户既确认不了也改不回。
+    if (this.speechProviderId.length > 0
+      && findSpeechProvider(this.speechProviderId) === undefined) {
+      options.push({ label: this.speechProviderId, value: this.speechProviderId });
+    }
+    return options;
+  }
+
+  private systemPersonOptions(): PickOption[] {
+    const options: PickOption[] = [];
+    options.push({ label: t('settings_voice_female'), value: `${PERSON_FEMALE}` });
+    options.push({ label: t('settings_voice_male'), value: `${PERSON_MALE}` });
+    return options;
+  }
+
+  private weatherLocationOptions(): PickOption[] {
+    const options: PickOption[] = [];
+    options.push({ label: t('settings_location_city_id'), value: '0' });
+    options.push({ label: t('settings_location_auto'), value: '1' });
+    return options;
+  }
+
+  private static advanceLabel(seconds: number): string {
     if (seconds <= 0) {
       return t('settings_at_class_moment');
     }
     if (seconds < 60) {
-      return `${seconds} 秒`;
+      return tf('settings_advance_seconds', `${seconds}`);
     }
-    return `${Math.round(seconds / 60)} 分钟`;
-  }
-
-  private reminderModeLabel(): string {
-    if (this.reminderMode === 0) {
-      return t('settings_per_class');
-    }
-    if (this.reminderMode === 1) {
-      return t('settings_folded');
-    }
-    return t('settings_auto');
+    return tf('settings_advance_minutes', `${Math.round(seconds / 60)}`);
   }
 
   // ------------------------------------------------------------ 交互
 
   /**
-   * 切主题：写盘 + 立刻生效。
+   * 换主题：写盘 + 立刻生效。
    *
    * 立刻生效而不是「下次启动生效」：配色是那种「不立刻看到就以为自己没改
    * 成功」的东西，而生效成本只是改一个窗口属性。
@@ -395,68 +516,46 @@ struct SettingsPage {
    * 进来会看到生效；反过来先切后落盘，中间崩了就出现「屏幕上变了但重进
    * 又变回去」的更糟状态。
    */
-  private cycleTheme(): void {
-    this.theme = (this.theme + 1) % 3;
-    this.writeNumber(PrefKeys.THEME, this.theme);
+  private applyTheme(value: string): void {
+    const mode: number = Number(value);
+    this.theme = mode;
+    this.writeNumber(PrefKeys.THEME, mode);
     if (this.host !== undefined) {
-      ThemeService.apply(this.host, this.theme);
+      ThemeService.apply(this.host, mode);
     }
   }
 
-  private cycleDefaultPage(): void {
-    this.defaultPage = (this.defaultPage + 1) % 4;
+  private applyDefaultPage(value: string): void {
+    this.defaultPage = Number(value);
     this.writeNumber(PrefKeys.DEFAULT_PAGE, this.defaultPage);
   }
 
   /**
-   * 字体缩放按档位循环，不给滑块。
+   * 字体缩放按档位给，不给滑块。
    *
-   * 连续滑块每帧都要写盘，而帧间隔短到能让 rename 连续做十几次；档位循环只在
-   * 点一下时写一次。代价是调不到 1.25 这种中间值 —— 对正文字号来说六个档位已经
-   * 够用，真要连续值可以放到设置页之外的独立入口。
+   * 连续滑块每帧都要写盘，而帧间隔短到能让 rename 连续做十几次；档位只在
+   * 真选中一档时写一次。代价是调不到 1.25 这种中间值 —— 对正文字号来说
+   * 六个档位已经够用，真要连续值可以放到设置页之外的独立入口。
    */
-  private cycleFontScale(): void {
-    let next: number = FONT_SCALE_STEPS[FONT_SCALE_STEPS.length - 1];
-    for (let i: number = 0; i < FONT_SCALE_STEPS.length; i++) {
-      if (FONT_SCALE_STEPS[i] > this.fontScale) {
-        next = FONT_SCALE_STEPS[i];
-        break;
-      }
-    }
+  private applyFontScale(value: string): void {
+    const next: number = Number(value);
     this.fontScale = next;
     this.writeNumber(PrefKeys.FONT_SCALE, next);
-    UiFeedback.toast(this.getUIContext(), `字体缩放 ${Math.round(next * 100)}%`);
+    UiFeedback.toast(this.getUIContext(), tf('settings_font_scale_toast', `${Math.round(next * 100)}`));
   }
 
-  private cycleAdvanceIndoor(): void {
-    this.advanceIndoor = this.nextAdvance(this.advanceIndoor);
+  private applyAdvanceIndoor(value: string): void {
+    this.advanceIndoor = Number(value);
     this.writeNumber(PrefKeys.REMINDER_ADVANCE_INDOOR, this.advanceIndoor);
   }
 
-  private cycleAdvanceOutdoor(): void {
-    this.advanceOutdoor = this.nextAdvance(this.advanceOutdoor);
+  private applyAdvanceOutdoor(value: string): void {
+    this.advanceOutdoor = Number(value);
     this.writeNumber(PrefKeys.REMINDER_ADVANCE_OUTDOOR, this.advanceOutdoor);
   }
 
-  /** 在四档之间往后走一档，到顶后回到第一档。 */
-  private nextAdvance(current: number): number {
-    for (let i: number = 0; i < ADVANCE_STEPS.length; i++) {
-      if (ADVANCE_STEPS[i] > current) {
-        return ADVANCE_STEPS[i];
-      }
-    }
-    return ADVANCE_STEPS[0];
-  }
-
-  private cycleReminderMode(): void {
-    // -1（自动）→ 0（精确）→ 1（折叠）→ -1
-    if (this.reminderMode === -1) {
-      this.reminderMode = 0;
-    } else if (this.reminderMode === 0) {
-      this.reminderMode = 1;
-    } else {
-      this.reminderMode = -1;
-    }
+  private applyReminderMode(value: string): void {
+    this.reminderMode = Number(value);
     this.writeNumber(PrefKeys.REMINDER_MODE, this.reminderMode);
   }
 
@@ -510,31 +609,21 @@ struct SettingsPage {
   }
 
   /**
-   * 换提供方。在**全部**提供方里循环，包括本设备没有实现的。
+   * 换提供方。在**全部**提供方里选，包括本设备没有实现的。
    *
    * 为什么不跳过没实现的：这个键是跨端读写的。用户在桌面上选的是 EdgeTTS，
    * 同步过来之后设置页要能把那件事显示出来（而不是显示成「系统 TTS」让他
    * 以为选的就是系统 TTS）；也要能选回系统 TTS。让没实现的选项在列表里出现
    * 并注明「本设备暂不支持」，比把它藏起来诚实。
    */
-  private cycleSpeechProvider(): void {
-    const next: string = SettingsPage.nextProvider(this.speechProviderId);
-    this.speechProviderId = next;
-    this.prefs?.put(PrefKeys.SELECTED_SPEECH_PROVIDER, next);
+  private applySpeechProvider(value: string): void {
+    this.speechProviderId = value;
+    this.prefs?.put(PrefKeys.SELECTED_SPEECH_PROVIDER, value);
     this.refreshSpeechStatus();
   }
 
-  private static nextProvider(current: string): string {
-    for (let i: number = 0; i < SPEECH_PROVIDERS.length; i++) {
-      if (SPEECH_PROVIDERS[i].id === current) {
-        return SPEECH_PROVIDERS[(i + 1) % SPEECH_PROVIDERS.length].id;
-      }
-    }
-    return SPEECH_PROVIDERS[0].id;
-  }
-
-  private cycleSystemPerson(): void {
-    const next: number = this.systemPerson === PERSON_FEMALE ? PERSON_MALE : PERSON_FEMALE;
+  private applySystemPerson(value: string): void {
+    const next: number = Number(value);
     this.systemPerson = next;
     this.writeNumber(PrefKeys.SYSTEM_SPEECH_PERSON, next);
     // 音色是引擎的创建参数，改不了 —— 服务会丢掉旧引擎，下次朗读重建。
@@ -570,21 +659,6 @@ struct SettingsPage {
     this.refreshSpeechStatus();
   }
 
-  private speechProviderLabel(): string {
-    const info: SpeechProviderInfo | undefined = findSpeechProvider(this.speechProviderId);
-    if (info === undefined) {
-      return this.speechProviderId;
-    }
-    if (!info.implemented) {
-      return `${info.displayName}（本设备暂不支持）`;
-    }
-    return info.displayName;
-  }
-
-  private personLabel(): string {
-    return this.systemPerson === PERSON_MALE ? '男声' : '女声';
-  }
-
   // ------------------------------------------------------------ 天气
 
   private weatherService(): WeatherService | undefined {
@@ -594,10 +668,6 @@ struct SettingsPage {
     return resolveWeatherService(this.host);
   }
 
-  private weatherLocationLabel(): string {
-    return this.weatherLocationSource === 1 ? '自动定位' : '按城市 id';
-  }
-
   /**
    * 换定位方式。
    *
@@ -605,10 +675,9 @@ struct SettingsPage {
    * 切回城市 id 要等下一次刷新用 CityId 查。所以这里只写盘 + 改文案，不触发
    * 刷新 —— 用户点「立即刷新」才是「现在就按新方式取一次」的意思。
    */
-  private cycleWeatherLocationSource(): void {
-    const next: number = this.weatherLocationSource === 1 ? 0 : 1;
-    this.weatherLocationSource = next;
-    this.writeNumber(PrefKeys.WEATHER_LOCATION_SOURCE, next);
+  private applyWeatherLocationSource(value: string): void {
+    this.weatherLocationSource = Number(value);
+    this.writeNumber(PrefKeys.WEATHER_LOCATION_SOURCE, this.weatherLocationSource);
   }
 
   private toggleAutoRefreshWeatherLocation(on: boolean): void {
@@ -809,7 +878,7 @@ struct SettingsPage {
     const service: PluginService | undefined = this.pluginService();
     if (service === undefined) {
       this.pluginRows = [];
-      this.pluginSummary = '扩展服务未启动';
+      this.pluginSummary = t('settings_plugin_not_started');
       return;
     }
     const issues: Map<string, PluginLoadIssue> = new Map<string, PluginLoadIssue>();
@@ -833,16 +902,16 @@ struct SettingsPage {
     try {
       service.setEnabled(row.pluginId, !row.enabled);
     } catch (err) {
-      UiFeedback.toast(this.getUIContext(), `保存失败：${describe(err)}`);
+      UiFeedback.toast(this.getUIContext(), tf('settings_save_failed', describe(err)));
       return;
     }
     this.reloadPlugins();
   }
 
   private uninstallPlugin(row: PluginListRow): void {
-    UiFeedback.confirm(this.getUIContext(), '卸载扩展',
-      `会删掉「${row.displayName()}」的清单与开关状态。它声明的组件、触发器、行动会一起从面板与自动化里消失。`,
-      '卸载', () => {
+    UiFeedback.confirm(this.getUIContext(), t('settings_uninstall_title'),
+      tf('settings_uninstall_confirm', row.displayName()),
+      t('settings_uninstall'), () => {
         const service: PluginService | undefined = this.pluginService();
         if (service === undefined) {
           return;
@@ -850,7 +919,7 @@ struct SettingsPage {
         try {
           service.uninstall(row.pluginId);
         } catch (err) {
-          UiFeedback.toast(this.getUIContext(), `卸载失败：${describe(err)}`);
+          UiFeedback.toast(this.getUIContext(), tf('settings_uninstall_failed', describe(err)));
           return;
         }
         this.reloadPlugins();
@@ -884,15 +953,15 @@ struct SettingsPage {
       const result = service.installFromText(text);
       if (!result.loaded) {
         this.pluginImportError = result.reason;
-        UiFeedback.toast(this.getUIContext(), `没有装上：${result.reason}`);
+        UiFeedback.toast(this.getUIContext(), tf('settings_not_installed_reason', result.reason));
       } else {
         UiFeedback.toast(this.getUIContext(),
-          `已装「${result.pluginId}」，${result.entryCount} 条条目。`);
+          tf('settings_installed_toast', result.pluginId, `${result.entryCount}`));
       }
       this.reloadPlugins();
     } catch (err) {
       this.pluginImportError = describe(err);
-      UiFeedback.toast(this.getUIContext(), `导入失败：${describe(err)}`);
+      UiFeedback.toast(this.getUIContext(), tf('settings_import_failed_detail', describe(err)));
     } finally {
       this.importing = false;
     }
@@ -931,7 +1000,7 @@ struct SettingsPage {
       this.reloadPlugins();
     } catch (err) {
       this.pluginImportError = describe(err);
-      UiFeedback.toast(this.getUIContext(), `导入失败：${describe(err)}`);
+      UiFeedback.toast(this.getUIContext(), tf('settings_import_failed_detail', describe(err)));
     } finally {
       this.importing = false;
     }
@@ -953,7 +1022,7 @@ struct SettingsPage {
       ProfileTransfer.writeText(picked.uri, text);
       UiFeedback.toast(this.getUIContext(), t('settings_exported'));
     } catch (err) {
-      UiFeedback.toast(this.getUIContext(), `导出失败：${describe(err)}`);
+      UiFeedback.toast(this.getUIContext(), tf('settings_export_failed', describe(err)));
     }
   }
 
@@ -986,8 +1055,8 @@ struct SettingsPage {
     this.refreshStatusSoon();
   }
 
-  private cycleOffset(): void {
-    const next: number = SettingsPage.nextStep(OFFSET_STEPS, this.timeOffsetSeconds);
+  private applyOffset(value: string): void {
+    const next: number = Number(value);
     this.timeOffsetSeconds = next;
     this.exactService()?.setOffsetSeconds(next);
   }
@@ -997,8 +1066,8 @@ struct SettingsPage {
     this.exactService()?.setAutoAdjustEnabled(on);
   }
 
-  private cycleAutoAdjust(): void {
-    const next: number = SettingsPage.nextStep(AUTO_ADJUST_STEPS, this.timeAutoAdjustSeconds);
+  private applyAutoAdjust(value: string): void {
+    const next: number = Number(value);
     this.timeAutoAdjustSeconds = next;
     this.exactService()?.setAutoAdjustSeconds(next);
   }
@@ -1035,30 +1104,19 @@ struct SettingsPage {
     }, 200);
   }
 
-  /** 在档位表里往后走一档，到顶后回到第一档。 */
-  private static nextStep(steps: number[], current: number): number {
-    for (let i: number = 0; i < steps.length; i++) {
-      if (steps[i] > current + 1e-9) {
-        return steps[i];
-      }
-    }
-    return steps[0];
-  }
-
-  private offsetLabel(): string {
-    const seconds: number = this.timeOffsetSeconds;
+  private static offsetLabel(seconds: number): string {
     if (seconds === 0) {
-      return '不调整';
+      return t('settings_offset_none');
     }
     const sign: string = seconds > 0 ? '+' : '-';
-    return `${sign}${Math.abs(seconds)} 秒`;
+    return tf('settings_advance_seconds', `${sign}${Math.abs(seconds)}`);
   }
 
-  private autoAdjustLabel(): string {
-    if (this.timeAutoAdjustSeconds === 0) {
-      return '不补偿';
+  private static autoAdjustLabel(seconds: number): string {
+    if (seconds === 0) {
+      return t('settings_compensate_none');
     }
-    return `每天 +${this.timeAutoAdjustSeconds} 秒`;
+    return tf('settings_compensate_daily', `${seconds}`);
   }
 
   private resetAll(): void {
@@ -1093,7 +1151,7 @@ struct SettingsPage {
   private goAutomation(): void {
     const uiContext: UIContext = this.getUIContext();
     uiContext.getRouter().pushUrl({ url: 'pages/Automation' }).catch(() => {
-      UiFeedback.toast(uiContext, '进不去自动化页');
+      UiFeedback.toast(uiContext, t('settings_automation_nav_failed'));
     });
   }
 
@@ -1138,6 +1196,62 @@ struct SettingsPage {
     .onClick(() => {
       onTap();
     })
+  }
+
+  /**
+   * 可选值行：行上显示当前值，点开弹菜单选。
+   *
+   * 与 valueRow 的分工：valueRow 是「点了有别的事发生」（展开编辑框、跳页），
+   * pickRow 是「点了从固定几项里挑一个」。两者的行外观一样，差别只在尾巴上
+   * 一个是 onClick 一个是 bindMenu。
+   *
+   * 行上显示的文字由 options 和 current 现算（labelOf），调用方不用另外拼一份
+   * —— 展示与菜单同源，不会出现「行上写 A、菜单里没有 A」这种对不上。
+   */
+  @Builder
+  private pickRow(title: string, options: PickOption[], current: string,
+    onPick: (value: string) => void) {
+    ListItem() {
+      Row() {
+        Text(title)
+          .fontSize(16)
+          .fontColor($r('app.color.ch_text_primary'))
+        Blank()
+        Text(SettingsPage.labelOf(options, current))
+          .fontSize(15)
+          .fontColor($r('app.color.ch_text_secondary'))
+          .maxLines(1)
+        Text('›')
+          .fontSize(18)
+          .fontColor($r('app.color.ch_text_hint'))
+          .margin({ left: 6 })
+      }
+      .width('100%')
+      .height(52)
+      .padding({ left: 16, right: 16 })
+      .bindMenu(this.optionMenu(options, current, onPick))
+    }
+  }
+
+  /**
+   * 候选菜单。当前项前缀一个 ✓ —— 菜单弹出来时用户要先知道「现在是哪个」，
+   * 才谈得上「换成哪个」；光靠高亮在小屏上不够显眼。
+   *
+   * 用 onChange 而不是 onClick 收口：MenuItem 的 onChange 是选中语义，点一下
+   * 就关菜单，正好是我们要的行为。
+   */
+  @Builder
+  private optionMenu(options: PickOption[], current: string,
+    onPick: (value: string) => void) {
+    Menu() {
+      ForEach(options, (option: PickOption) => {
+        MenuItem({
+          content: option.value === current ? `✓  ${option.label}` : option.label
+        }).onChange(() => {
+          onPick(option.value);
+        })
+      }, (option: PickOption) => `${option.value}|${option.label}`)
+    }
   }
 
   /** 开关行：左标题、右侧开关。 */
@@ -1254,7 +1368,7 @@ struct SettingsPage {
               this.noteRow(t('settings_description'), row.description)
             }
             this.noteRow(t('settings_declared'), row.declaredText())
-            this.noteRow(t('settings_author'), row.author.length > 0 ? row.author : '没写')
+            this.noteRow(t('settings_author'), row.author.length > 0 ? row.author : t('settings_no_author'))
             ForEach(row.issueLines(), (line: string) => {
               Text(`· ${line}`)
                 .fontSize(13)
@@ -1284,7 +1398,7 @@ struct SettingsPage {
   build() {
     Column() {
       if (!this.ready) {
-        Text('正在准备设置…')
+        Text(t('settings_preparing'))
           .fontSize(14)
           .fontColor($r('app.color.ch_text_secondary'))
           .width('100%')
@@ -1294,15 +1408,18 @@ struct SettingsPage {
         List() {
           // ---- 界面
           this.groupTitle(t('settings_group_ui'))
-          this.valueRow(t('settings_theme'), this.themeLabel(), () => {
-            this.cycleTheme();
-          })
-          this.valueRow(t('settings_font_scale'), this.fontScaleLabel(), () => {
-            this.cycleFontScale();
-          })
-          this.valueRow(t('settings_default_page'), this.defaultPageLabel(), () => {
-            this.cycleDefaultPage();
-          })
+          this.pickRow(t('settings_theme'), this.themeOptions(), `${this.theme}`,
+            (value: string) => {
+              this.applyTheme(value);
+            })
+          this.pickRow(t('settings_font_scale'), this.fontScaleOptions(), `${this.fontScale}`,
+            (value: string) => {
+              this.applyFontScale(value);
+            })
+          this.pickRow(t('settings_default_page'), this.defaultPageOptions(),
+            `${this.defaultPage}`, (value: string) => {
+              this.applyDefaultPage(value);
+            })
 
           // ---- 课表
           this.groupTitle(t('settings_group_schedule'))
@@ -1329,15 +1446,18 @@ struct SettingsPage {
             this.reminderEnabled = on;
             this.writeBool(PrefKeys.REMINDER_ENABLED, on);
           })
-          this.valueRow(t('settings_advance_indoor'), this.advanceLabel(this.advanceIndoor), () => {
-            this.cycleAdvanceIndoor();
-          })
-          this.valueRow(t('settings_advance_outdoor'), this.advanceLabel(this.advanceOutdoor), () => {
-            this.cycleAdvanceOutdoor();
-          })
-          this.valueRow(t('settings_reminder_mode'), this.reminderModeLabel(), () => {
-            this.cycleReminderMode();
-          })
+          this.pickRow(t('settings_advance_indoor'), this.advanceOptions(this.advanceIndoor),
+            `${this.advanceIndoor}`, (value: string) => {
+              this.applyAdvanceIndoor(value);
+            })
+          this.pickRow(t('settings_advance_outdoor'), this.advanceOptions(this.advanceOutdoor),
+            `${this.advanceOutdoor}`, (value: string) => {
+              this.applyAdvanceOutdoor(value);
+            })
+          this.pickRow(t('settings_reminder_mode'), this.reminderModeOptions(),
+            `${this.reminderMode}`, (value: string) => {
+              this.applyReminderMode(value);
+            })
 
           // ---- 自动化
           this.groupTitle(t('settings_group_automation'))
@@ -1364,14 +1484,14 @@ struct SettingsPage {
             ListItem() {
               Column() {
                 EditorTextField({
-                  label: '服务器',
+                  label: t('settings_server_label'),
                   value: this.exactTimeServer,
                   placeholder: 'ntp.aliyun.com',
                   onCommit: (text: string) => {
                     this.commitServer(text);
                   }
                 })
-                Text('回车或点别处生效。留空则回落到 ntp.aliyun.com。')
+                Text(t('settings_server_hint'))
                   .fontSize(12)
                   .fontColor($r('app.color.ch_text_hint'))
                   .width('100%')
@@ -1381,17 +1501,19 @@ struct SettingsPage {
               .padding({ left: 16, right: 16, top: 10, bottom: 10 })
             }
           }
-          this.valueRow(t('settings_manual_offset'), this.offsetLabel(), () => {
-            this.cycleOffset();
-          })
+          this.pickRow(t('settings_manual_offset'), this.offsetOptions(),
+            `${this.timeOffsetSeconds}`, (value: string) => {
+              this.applyOffset(value);
+            })
           this.toggleRow(t('settings_daily_compensate'), this.timeAutoAdjustEnabled, (on: boolean) => {
             this.toggleAutoAdjust(on);
           })
-          this.valueRow(t('settings_daily_compensate_amount'), this.autoAdjustLabel(), () => {
-            this.cycleAutoAdjust();
-          })
-          this.noteRow(t('settings_sync_status'), this.syncStatus.length === 0 ? '尚未开始' : this.syncStatus)
-          this.actionRow(this.syncing ? '正在校时…' : '立即校时',
+          this.pickRow(t('settings_daily_compensate_amount'), this.autoAdjustOptions(),
+            `${this.timeAutoAdjustSeconds}`, (value: string) => {
+              this.applyAutoAdjust(value);
+            })
+          this.noteRow(t('settings_sync_status'), this.syncStatus.length === 0 ? t('settings_sync_not_started') : this.syncStatus)
+          this.actionRow(this.syncing ? t('settings_syncing') : t('settings_sync_now'),
             this.exactTimeEnabled && !this.syncing, () => {
               this.syncNow();
             })
@@ -1404,28 +1526,31 @@ struct SettingsPage {
           this.toggleRow(t('settings_speech_notification'), this.allowNotificationSpeech, (on: boolean) => {
             this.toggleAllowNotificationSpeech(on);
           })
-          this.valueRow(t('settings_speech_provider'), this.speechProviderLabel(), () => {
-            this.cycleSpeechProvider();
-          })
+          this.pickRow(t('settings_speech_provider'), this.speechProviderOptions(),
+            this.speechProviderId, (value: string) => {
+              this.applySpeechProvider(value);
+            })
           if (this.speechProviderId === SPEECH_PROVIDER_SYSTEM) {
             // 只在真的用系统 TTS 时才显示音色。挂在 EdgeTTS 上显示一个改不动
             // 的音色，是一件需要解释的事。
-            this.valueRow(t('settings_speech_person'), this.personLabel(), () => {
-              this.cycleSystemPerson();
-            })
+            this.pickRow(t('settings_speech_person'), this.systemPersonOptions(),
+              `${this.systemPerson}`, (value: string) => {
+                this.applySystemPerson(value);
+              })
           }
           this.noteRow(t('settings_speech_status'),
-            this.speechStatus.length === 0 ? '尚未初始化' : this.speechStatus)
+            this.speechStatus.length === 0 ? t('settings_not_initialized') : this.speechStatus)
           this.noteRow(t('settings_speech_volume'), t('settings_volume_hint'))
-          this.actionRow(this.testingSpeech ? '正在试听…' : '试听', !this.testingSpeech, () => {
+          this.actionRow(this.testingSpeech ? t('settings_testing_speech') : t('settings_test_speech'), !this.testingSpeech, () => {
             this.testSpeak();
           })
 
           // ---- 天气
           this.groupTitle(t('settings_group_weather'))
-          this.valueRow(t('settings_weather_location'), this.weatherLocationLabel(), () => {
-            this.cycleWeatherLocationSource();
-          })
+          this.pickRow(t('settings_weather_location'), this.weatherLocationOptions(),
+            `${this.weatherLocationSource}`, (value: string) => {
+              this.applyWeatherLocationSource(value);
+            })
           this.valueRow(t('settings_city'),
             this.cityName.length > 0 ? this.cityName : this.cityId, () => {
               this.editingCity = !this.editingCity;
@@ -1434,7 +1559,7 @@ struct SettingsPage {
             ListItem() {
               Column() {
                 EditorTextField({
-                  label: '城市 id',
+                  label: t('settings_city_id_field'),
                   value: this.cityId,
                   placeholder: DEFAULT_CITY_ID,
                   onCommit: (text: string) => {
@@ -1447,7 +1572,7 @@ struct SettingsPage {
                   .width('100%')
                   .padding({ top: 4, bottom: 10 })
                 EditorTextField({
-                  label: '显示名',
+                  label: t('settings_display_name_field'),
                   value: this.cityName,
                   placeholder: DEFAULT_CITY_NAME,
                   onCommit: (text: string) => {
@@ -1466,7 +1591,7 @@ struct SettingsPage {
             this.toggleNoTlsWeatherRequests(on);
           })
           this.valueRow(t('settings_excluded_alerts'),
-            this.excludedAlertsText.length === 0 ? '不排除' : this.excludedAlertsText, () => {
+            this.excludedAlertsText.length === 0 ? t('settings_not_excluded') : this.excludedAlertsText, () => {
               this.editingExclusions = !this.editingExclusions;
             })
           if (this.editingExclusions) {
@@ -1490,32 +1615,32 @@ struct SettingsPage {
               .padding({ left: 16, right: 16, top: 10, bottom: 10 })
             }
           }
-          this.noteRow(t('settings_icon_scheme'), `${this.weatherIconId}（图标字体未移植，该键只读写不生效）`)
+          this.noteRow(t('settings_icon_scheme'), tf('settings_icon_scheme_note', this.weatherIconId))
           this.noteRow(t('settings_alert_icon'), t('settings_alert_icon_hint'))
-          this.noteRow(t('settings_status'), this.weatherStatus.length === 0 ? '尚未初始化' : this.weatherStatus)
-          this.actionRow(this.refreshingWeather ? '正在刷新…' : '立即刷新',
+          this.noteRow(t('settings_status'), this.weatherStatus.length === 0 ? t('settings_not_initialized') : this.weatherStatus)
+          this.actionRow(this.refreshingWeather ? t('settings_refreshing') : t('settings_refresh_now'),
             !this.refreshingWeather, () => {
               this.refreshWeather();
             })
 
           // ---- 跨设备
           this.groupTitle(t('settings_group_ipc'))
-          this.toggleRow('开启跨设备同步', this.distributedEnabled, (on: boolean) => {
+          this.toggleRow(t('settings_distributed_enable'), this.distributedEnabled, (on: boolean) => {
             this.toggleDistributed(on);
           })
-          this.noteRow('本机名称',
-            this.distributedDeviceName.length === 0 ? '未知设备' : this.distributedDeviceName)
-          this.valueRow('会话 ID',
-            this.distributedSessionId.length === 0 ? '未生成' : this.distributedSessionId, () => {
+          this.noteRow(t('settings_device_name'),
+            this.distributedDeviceName.length === 0 ? t('settings_unknown_device') : this.distributedDeviceName)
+          this.valueRow(t('settings_session_id'),
+            this.distributedSessionId.length === 0 ? t('settings_session_not_generated') : this.distributedSessionId, () => {
               this.editingSessionId = !this.editingSessionId;
             })
           if (this.editingSessionId) {
             ListItem() {
               Column() {
                 EditorTextField({
-                  label: '会话 ID',
+                  label: t('settings_session_id'),
                   value: this.distributedSessionId,
-                  placeholder: '字母、数字、下划线',
+                  placeholder: t('settings_session_placeholder'),
                   onCommit: (text: string) => {
                     this.commitSessionId(text);
                   }
@@ -1530,19 +1655,19 @@ struct SettingsPage {
               .padding({ left: 16, right: 16, top: 10, bottom: 10 })
             }
           }
-          this.actionRow('生成新会话 ID', true, () => {
+          this.actionRow(t('settings_generate_session_id'), true, () => {
             this.generateDistributedSessionId();
           })
           this.noteRow(t('settings_status'),
-            this.distributedStatus.length === 0 ? '未开启' : this.distributedStatus)
+            this.distributedStatus.length === 0 ? t('settings_not_enabled') : this.distributedStatus)
 
           // ---- 后台保活
           this.groupTitle(t('settings_group_background'))
-          this.toggleRow('允许后台运行', this.backgroundKeepAlive, (on: boolean) => {
+          this.toggleRow(t('settings_keep_alive'), this.backgroundKeepAlive, (on: boolean) => {
             this.toggleBackgroundKeepAlive(on);
           })
           this.noteRow(t('settings_status'),
-            this.backgroundKeepAliveStatus.length === 0 ? '未启动' : this.backgroundKeepAliveStatus)
+            this.backgroundKeepAliveStatus.length === 0 ? t('settings_not_started') : this.backgroundKeepAliveStatus)
           ListItem() {
             Text(t('settings_background_hint'))
               .fontSize(12)
@@ -1554,10 +1679,10 @@ struct SettingsPage {
           // ---- 扩展
           this.groupTitle(t('settings_group_plugins'))
           this.noteRow(t('settings_installed_extensions'), this.pluginSummary)
-          this.actionRow('导入扩展（.json）', !this.importing, () => {
+          this.actionRow(t('settings_import_json'), !this.importing, () => {
             this.importPluginJson();
           })
-          this.actionRow('导入扩展（.cipx）', !this.importing, () => {
+          this.actionRow(t('settings_import_cipx'), !this.importing, () => {
             this.importPluginCipx();
           })
           if (this.pluginImportError.length > 0) {
@@ -1572,11 +1697,11 @@ struct SettingsPage {
 
           // ---- 诊断
           this.groupTitle(t('settings_group_debug'))
-          this.toggleRow('调试日志', this.debugLog, (on: boolean) => {
+          this.toggleRow(t('settings_debug_log'), this.debugLog, (on: boolean) => {
             this.debugLog = on;
             this.writeBool(PrefKeys.DEBUG_LOG, on);
           })
-          this.toggleRow('性能叠加层', this.performanceOverlay, (on: boolean) => {
+          this.toggleRow(t('settings_perf_overlay'), this.performanceOverlay, (on: boolean) => {
             this.performanceOverlay = on;
             this.writeBool(PrefKeys.PERFORMANCE_OVERLAY, on);
           })
@@ -1584,7 +1709,7 @@ struct SettingsPage {
           // ---- 重置
           this.groupTitle(t('settings_group_reset'))
           ListItem() {
-            Text('恢复全部默认设置')
+            Text(t('settings_reset_all'))
               .fontSize(16)
               .fontColor($r('app.color.ch_accent'))
               .width('100%')
@@ -1593,7 +1718,7 @@ struct SettingsPage {
               .textAlign(TextAlign.Start)
           }
           .onClick(() => {
-            UiFeedback.confirm(this.getUIContext(), '恢复默认设置',
+            UiFeedback.confirm(this.getUIContext(), t('settings_reset_title'),
               t('settings_reset_confirm'), t('settings_reset'), () => {
                 this.resetAll();
               });
