@@ -17,7 +17,7 @@
  * 改动过的内容。
  */
 
-import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
+import { AbilityConstant, Configuration, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { resolveClassTableViewModel, resetAutomationScheduler, resolveAutomationScheduler,
@@ -35,6 +35,7 @@ import {
   resetBackgroundTaskService,
   resolveBackgroundTaskService
 } from '../background/BackgroundTaskService';
+import { clearCache } from 'common_core';
 import { resolvePluginService } from '../plugin/PluginService';
 import { buildPublicQueryResult, isPublicQuery } from '../ipc/PublicQueryService';
 import { ClassTableViewModel } from '../viewmodel/ClassTableViewModel';
@@ -223,5 +224,23 @@ export default class EntryAbility extends UIAbility {
     // 后台了，继续广播也没有观众。回前台 start() 会重新入会话。
     resolveDistributedStateService(this.context).stop();
     hilog.info(DOMAIN, TAG, 'onBackground: polling stopped');
+  }
+
+  /**
+   * 配置变化（语言、深色模式、字号…）。
+   *
+   * 语言切换时清掉 i18n 缓存：`$r` 每次都会按当前语言解析，但 I18n.t 的结果
+   * 有缓存（避免每秒 tick 里的天气/状态文案反复查资源）。不清的话，切换语言后
+   * 界面会一直显示旧语言，直到进程被系统重建 —— 而进程重建的时机不可控，
+   * 用户会以为「切语言没生效」。
+   *
+   * 其余配置变化（深色模式等）不需要处理：颜色走 `$r('app.color.*')` 是系统
+   * 实时解析的，不经过这里的缓存。
+   */
+  onConfigurationUpdate(newConfig: Configuration): void {
+    clearCache();
+    // 主题跟着系统走时，深色切换要刷新页面配色。ThemeService 内部有监听，
+    // 这里只清文案缓存；界面刷新由 ArkUI 的资源订阅自动触发。
+    super.onConfigurationUpdate(newConfig);
   }
 }
