@@ -319,6 +319,110 @@
     {
       "name": "settings_reset",
       "value": "Restore"
+    },
+    {
+      "name": "ruleset_after_school",
+      "value": "After School"
+    },
+    {
+      "name": "ruleset_no_data",
+      "value": "This platform has no data for this rule; treated as false."
+    },
+    {
+      "name": "ruleset_group_empty",
+      "value": "No rules chosen in this group; the whole group is skipped."
+    },
+    {
+      "name": "ruleset_group_disabled",
+      "value": "This group is disabled and does not participate."
+    },
+    {
+      "name": "ruleset_skipped",
+      "value": "Not evaluated (an earlier rule already decided)."
+    },
+    {
+      "name": "ruleset_remaining",
+      "value": "Remaining"
+    },
+    {
+      "name": "ruleset_passed",
+      "value": "Passed"
+    },
+    {
+      "name": "ruleset_minutes",
+      "value": "min"
+    },
+    {
+      "name": "ruleset_hide_title",
+      "value": "Hide Rules"
+    },
+    {
+      "name": "ruleset_no_groups",
+      "value": "No rule groups yet; this content will always show."
+    },
+    {
+      "name": "ruleset_all_groups_disabled",
+      "value": "All groups are disabled; this content will always show."
+    },
+    {
+      "name": "ruleset_result_hint",
+      "value": "The result was computed when this page opened; re-evaluate after the schedule changes."
+    },
+    {
+      "name": "ruleset_any_group",
+      "value": "Any group holds"
+    },
+    {
+      "name": "ruleset_all_groups",
+      "value": "All groups hold"
+    },
+    {
+      "name": "ruleset_reversed_hint",
+      "value": "Reverses the result after evaluating all groups (desktop: Ruleset.IsReversed)."
+    },
+    {
+      "name": "ruleset_disabled_label",
+      "value": "Disabled"
+    },
+    {
+      "name": "ruleset_reversed",
+      "value": "Reversed"
+    },
+    {
+      "name": "ruleset_reverse",
+      "value": "Reverse"
+    },
+    {
+      "name": "ruleset_any_rule",
+      "value": "Any rule holds"
+    },
+    {
+      "name": "ruleset_enable_group",
+      "value": "Enable This Group"
+    },
+    {
+      "name": "ruleset_disable_hint",
+      "value": "When disabled, this group does not participate; its settings are kept."
+    },
+    {
+      "name": "ruleset_add_rule",
+      "value": "Add a Rule"
+    },
+    {
+      "name": "ruleset_rule_order_hint",
+      "value": "Order of rules within a group does not affect the result"
+    },
+    {
+      "name": "ruleset_expression_hint",
+      "value": "Like the desktop version, no segment-reuse flag; a malformed expression is treated as no match."
+    },
+    {
+      "name": "ruleset_no_group_hint",
+      "value": "No rule groups yet. Add one before adding rules."
+    },
+    {
+      "name": "ruleset_add_group",
+      "value": "Add a Group"
     }
   ]
 }

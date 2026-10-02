@@ -55,6 +55,7 @@ import {
   TimeState,
   TimeStateRuleSettings
 } from 'common_shared';
+import { t } from 'common_core';
 import {
   ComponentLocation,
   RuleChoiceRow,
@@ -107,7 +108,7 @@ const TIME_STATE_CHOICES: TimeStateChoice[] = [
   timeStateChoice(TimeState.OnClass, '上课中'),
   timeStateChoice(TimeState.PrepareOnClass, '准备上课（不会命中）'),
   timeStateChoice(TimeState.Breaking, '课间休息'),
-  timeStateChoice(TimeState.AfterSchool, '已放学')
+  timeStateChoice(TimeState.AfterSchool, t('ruleset_after_school'))
 ];
 
 /** 时间状态的中文名。时间状态的值来自文件，认不出来时给「未知（n）」而不是空串。 */
@@ -134,7 +135,7 @@ function reasonText(reason: string): string {
     return '当前平台不认识这条规则，判为不成立';
   }
   if (reason === RuleReason.NotImplemented) {
-    return '当前平台没有这条规则要的数据，判为不成立';
+    return t('ruleset_no_data');
   }
   if (reason === RuleReason.HandlerThrew) {
     return '判定时出错，按不成立处理';
@@ -146,18 +147,18 @@ function reasonText(reason: string): string {
     return '不成立';
   }
   if (reason === RuleReason.GroupEmpty) {
-    return '组里没有挑过规则，整组不参与判定';
+    return t('ruleset_group_empty');
   }
   if (reason === RuleReason.NoRuleset) {
     return '还没配规则';
   }
   if (reason === RuleReason.GroupDisabled) {
-    return '这一组已停用，不参与判定';
+    return t('ruleset_group_disabled');
   }
   if (reason === RuleReason.ShortCircuited) {
     // 这一条/这一组压根没被判定过。必须明说，否则用户会以为它没成立而去重配 ——
     // 而实际上它成不成立根本没影响结果，前面的规则已经定论了。
-    return '没轮到判定（前面的已经定论了）';
+    return t('ruleset_skipped');
   }
   return '';
 }
@@ -189,7 +190,7 @@ function settingsSummary(row: RuleEditRow): string {
   }
   if (settings instanceof RainTimeRuleSettings) {
     const pick: RainTimeRuleSettings = settings;
-    return `${pick.isRemainingTime ? '还剩' : '已过'} ${pick.rainTimeMinutes} 分钟`;
+    return `${pick.isRemainingTime ? t('ruleset_remaining') : t('ruleset_passed')} ${pick.rainTimeMinutes} ${t('ruleset_minutes')}`;
   }
   if (settings instanceof SunRiseSetRuleSettings) {
     const pick: SunRiseSetRuleSettings = settings;
@@ -209,7 +210,7 @@ export struct RulesetEditorView {
   /** 宿主是一行而不是一个组件。桌面版的行规则与组件规则字段同名同义。 */
   @Param isLine: boolean = false;
   /** 卡片标题。行与组件的措辞不同，省得用户在两页看到同一个「隐藏规则」。 */
-  @Param title: string = '隐藏规则';
+  @Param title: string = t('ruleset_hide_title');
 
   /**
    * 当前规则集的编辑态。
@@ -281,14 +282,14 @@ export struct RulesetEditorView {
   /** 结论行下面那行小字。空组与停用组要分开说，否则用户不知道该动哪一个开关。 */
   private verdictHint(): string {
     if (this.model.groups.length === 0) {
-      return '还没有任何一组规则，这块内容会一直显示。';
+      return t('ruleset_no_groups');
     }
     const enabled: number = this.enabledGroupCount();
     if (enabled === 0) {
-      return '所有组都停用了，这块内容会一直显示。';
+      return t('ruleset_all_groups_disabled');
     }
     if (this.model.isEmpty) {
-      return '结论是打开这个页面的那一刻算的，课表变了要重新判定。';
+      return t('ruleset_result_hint');
     }
     return `结论是打开这个页面的那一刻算的，共 ${enabled} 组参与判定，课表变了要重新判定。`;
   }
@@ -312,7 +313,7 @@ export struct RulesetEditorView {
         .fontColor($r('app.color.ch_text_secondary'))
         .width(76)
       EditorChip({
-        text: '任一组成立',
+        text: t('ruleset_any_group'),
         tone: this.model.mode === RulesetLogicalMode.Or ? 1 : 0,
         onTap: () => {
           this.vm.setRulesetMode(this.location, this.isLine, RulesetLogicalMode.Or);
@@ -320,7 +321,7 @@ export struct RulesetEditorView {
         }
       })
       EditorChip({
-        text: '所有组都成立',
+        text: t('ruleset_all_groups'),
         tone: this.model.mode === RulesetLogicalMode.And ? 1 : 0,
         onTap: () => {
           this.vm.setRulesetMode(this.location, this.isLine, RulesetLogicalMode.And);
@@ -334,7 +335,7 @@ export struct RulesetEditorView {
 
     EditorToggleRow({
       label: '整体取反',
-      hint: '所有组算完之后把结论反过来。桌面版 Ruleset.IsReversed。',
+      hint: t('ruleset_reversed_hint'),
       isOn: this.model.isReversed,
       onToggle: (next: boolean) => {
         this.vm.setRulesetReversed(this.location, this.isLine, next);
@@ -355,13 +356,13 @@ export struct RulesetEditorView {
           .fontColor($r('app.color.ch_text_primary'))
           .layoutWeight(1)
         if (!group.isEnabled) {
-          Text('已停用')
+          Text(t('ruleset_disabled_label'))
             .fontSize(11)
             .fontColor($r('app.color.ch_text_hint'))
             .margin({ right: 8 })
         }
         EditorChip({
-          text: group.isReversed ? '已取反' : '取反',
+          text: group.isReversed ? t('ruleset_reversed') : t('ruleset_reverse'),
           onTap: () => {
             this.vm.setRuleGroupReversed(this.location, this.isLine, group.groupIndex,
               !group.isReversed);
@@ -387,7 +388,7 @@ export struct RulesetEditorView {
           .fontColor($r('app.color.ch_text_secondary'))
           .width(76)
         EditorChip({
-          text: '任一条成立',
+          text: t('ruleset_any_rule'),
           tone: group.mode === RulesetLogicalMode.Or ? 1 : 0,
           onTap: () => {
             this.vm.setRuleGroupMode(this.location, this.isLine, group.groupIndex,
@@ -410,8 +411,8 @@ export struct RulesetEditorView {
       .padding({ top: 2, bottom: 2 })
 
       EditorToggleRow({
-        label: '启用这一组',
-        hint: '停用后这一组不参与判定，配置留着不动。',
+        label: t('ruleset_enable_group'),
+        hint: t('ruleset_disable_hint'),
         isOn: group.isEnabled,
         onToggle: (next: boolean) => {
           this.vm.setRuleGroupEnabled(this.location, this.isLine, group.groupIndex, next);
@@ -425,7 +426,7 @@ export struct RulesetEditorView {
 
       Row() {
         EditorChip({
-          text: '加一条规则',
+          text: t('ruleset_add_rule'),
           onTap: () => {
             this.vm.addRule(this.location, this.isLine, group.groupIndex, group.rules.length, '');
             this.reload();
@@ -433,7 +434,7 @@ export struct RulesetEditorView {
         })
         // 组内换序对判定没有任何影响（组内规则是与/或的关系，顺序无关），
         // 而桌面版也没提供，所以这里不给按钮 —— 给了就是让用户以为顺序有意义。
-        Text('组内规则的先后不影响判定')
+        Text(t('ruleset_rule_order_hint'))
           .fontSize(11)
           .fontColor($r('app.color.ch_text_hint'))
           .layoutWeight(1)
@@ -463,7 +464,7 @@ export struct RulesetEditorView {
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .layoutWeight(1)
         EditorChip({
-          text: rule.isReversed ? '已取反' : '取反',
+          text: rule.isReversed ? t('ruleset_reversed') : t('ruleset_reverse'),
           onTap: () => {
             this.vm.setRuleReversed(this.location, this.isLine, rule.groupIndex, rule.ruleIndex,
               !rule.isReversed);
@@ -683,7 +684,7 @@ export struct RulesetEditorView {
     })
     EditorToggleRow({
       label: '按正则解释',
-      hint: '桌面版同样不加分段复用标志，表达式写错一律当作不匹配。',
+      hint: t('ruleset_expression_hint'),
       isOn: this.stringOf(rule).useRegex,
       onToggle: (next: boolean) => {
         this.stringOf(rule).useRegex = next;
@@ -721,7 +722,7 @@ export struct RulesetEditorView {
       this.rulesetOptions()
 
       if (this.model.groups.length === 0) {
-        EditorEmptyHint({ text: '还没有规则组。加一组之后才能往里填规则。' })
+        EditorEmptyHint({ text: t('ruleset_no_group_hint') })
       }
 
       ForEach(this.model.groups, (group: RuleGroupEditRow) => {
@@ -730,7 +731,7 @@ export struct RulesetEditorView {
 
       Row() {
         EditorChip({
-          text: '加一组',
+          text: t('ruleset_add_group'),
           onTap: () => {
             this.vm.addRuleGroup(this.location, this.isLine, this.model.groups.length);
             this.reload();

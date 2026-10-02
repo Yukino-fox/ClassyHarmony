@@ -355,6 +355,110 @@
     {
       "name": "settings_reset",
       "value": "恢复"
+    },
+    {
+      "name": "ruleset_after_school",
+      "value": "已放学"
+    },
+    {
+      "name": "ruleset_no_data",
+      "value": "当前平台没有这条规则要的数据，判为不成立"
+    },
+    {
+      "name": "ruleset_group_empty",
+      "value": "组里没有挑过规则，整组不参与判定"
+    },
+    {
+      "name": "ruleset_group_disabled",
+      "value": "这一组已停用，不参与判定"
+    },
+    {
+      "name": "ruleset_skipped",
+      "value": "没轮到判定（前面的已经定论了）"
+    },
+    {
+      "name": "ruleset_remaining",
+      "value": "还剩"
+    },
+    {
+      "name": "ruleset_passed",
+      "value": "已过"
+    },
+    {
+      "name": "ruleset_minutes",
+      "value": "分钟"
+    },
+    {
+      "name": "ruleset_hide_title",
+      "value": "隐藏规则"
+    },
+    {
+      "name": "ruleset_no_groups",
+      "value": "还没有任何一组规则，这块内容会一直显示。"
+    },
+    {
+      "name": "ruleset_all_groups_disabled",
+      "value": "所有组都停用了，这块内容会一直显示。"
+    },
+    {
+      "name": "ruleset_result_hint",
+      "value": "结论是打开这个页面的那一刻算的，课表变了要重新判定。"
+    },
+    {
+      "name": "ruleset_any_group",
+      "value": "任一组成立"
+    },
+    {
+      "name": "ruleset_all_groups",
+      "value": "所有组都成立"
+    },
+    {
+      "name": "ruleset_reversed_hint",
+      "value": "所有组算完之后把结论反过来。桌面版 Ruleset.IsReversed。"
+    },
+    {
+      "name": "ruleset_disabled_label",
+      "value": "已停用"
+    },
+    {
+      "name": "ruleset_reversed",
+      "value": "已取反"
+    },
+    {
+      "name": "ruleset_reverse",
+      "value": "取反"
+    },
+    {
+      "name": "ruleset_any_rule",
+      "value": "任一条成立"
+    },
+    {
+      "name": "ruleset_enable_group",
+      "value": "启用这一组"
+    },
+    {
+      "name": "ruleset_disable_hint",
+      "value": "停用后这一组不参与判定，配置留着不动。"
+    },
+    {
+      "name": "ruleset_add_rule",
+      "value": "加一条规则"
+    },
+    {
+      "name": "ruleset_rule_order_hint",
+      "value": "组内规则的先后不影响判定"
+    },
+    {
+      "name": "ruleset_expression_hint",
+      "value": "桌面版同样不加分段复用标志，表达式写错一律当作不匹配。"
+    },
+    {
+      "name": "ruleset_no_group_hint",
+      "value": "还没有规则组。加一组之后才能往里填规则。"
+    },
+    {
+      "name": "ruleset_add_group",
+      "value": "加一组"
     }
   ]
 }
