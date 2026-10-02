@@ -691,6 +691,178 @@
     {
       "name": "temp_cancel_booked",
       "value": "Cancel Booking"
+    },
+    {
+      "name": "edit_profile_renamed",
+      "value": "Profile renamed"
+    },
+    {
+      "name": "edit_shortname_updated",
+      "value": "Short name updated"
+    },
+    {
+      "name": "edit_teacher_updated",
+      "value": "Teacher updated"
+    },
+    {
+      "name": "edit_subject_renamed",
+      "value": "Subject renamed"
+    },
+    {
+      "name": "edit_subject_deleted",
+      "value": "Subject deleted; related periods cleared"
+    },
+    {
+      "name": "edit_group_renamed",
+      "value": "Schedule group renamed"
+    },
+    {
+      "name": "edit_group_dissolved",
+      "value": "Schedule group dissolved; schedules moved to default group"
+    },
+    {
+      "name": "edit_group_deleted",
+      "value": "Schedule group deleted along with its schedules"
+    },
+    {
+      "name": "edit_schedule_renamed",
+      "value": "Schedule renamed"
+    },
+    {
+      "name": "edit_schedule_deleted",
+      "value": "Schedule deleted"
+    },
+    {
+      "name": "edit_nothing_to_change",
+      "value": "Nothing to change"
+    },
+    {
+      "name": "edit_nothing_to_save",
+      "value": "No changes to save"
+    },
+    {
+      "name": "edit_period_updated",
+      "value": "Period updated"
+    },
+    {
+      "name": "edit_period_deleted",
+      "value": "Period deleted; related classes removed"
+    },
+    {
+      "name": "edit_timelayout_renamed",
+      "value": "Time layout renamed"
+    },
+    {
+      "name": "edit_timelayout_deleted",
+      "value": "Time layout deleted; linked schedules unbound"
+    },
+    {
+      "name": "edit_reordered_by_period",
+      "value": "Reordered by period"
+    },
+    {
+      "name": "edit_timelayout_bound",
+      "value": "Time layout bound"
+    },
+    {
+      "name": "edit_saved",
+      "value": "Saved"
+    },
+    {
+      "name": "edit_overlay_created",
+      "value": "Overlay schedule created"
+    },
+    {
+      "name": "edit_exported",
+      "value": "Exported"
+    },
+    {
+      "name": "edit_imported_save",
+      "value": "Imported — remember to save"
+    },
+    {
+      "name": "edit_reordered",
+      "value": "Reordered"
+    },
+    {
+      "name": "edit_group_moved",
+      "value": "Moved to another group"
+    },
+    {
+      "name": "edit_discarded",
+      "value": "Unsaved changes discarded"
+    },
+    {
+      "name": "edit_updated",
+      "value": "Updated"
+    },
+    {
+      "name": "edit_overlay_toggled",
+      "value": "Overlay switch updated"
+    },
+    {
+      "name": "edit_rotation_updated",
+      "value": "Rotation rule updated"
+    },
+    {
+      "name": "edit_preset_subjects_updated",
+      "value": "Preset subjects updated"
+    },
+    {
+      "name": "edit_class_filled",
+      "value": "Class scheduled"
+    },
+    {
+      "name": "edit_temp_enabled",
+      "value": "Temporary schedule enabled"
+    },
+    {
+      "name": "edit_temp_group_enabled",
+      "value": "Temporary group enabled"
+    },
+    {
+      "name": "edit_group_switched",
+      "value": "Current group switched"
+    },
+    {
+      "name": "edit_export_canceled",
+      "value": "Export canceled"
+    },
+    {
+      "name": "edit_import_canceled",
+      "value": "Import canceled"
+    },
+    {
+      "name": "edit_temp_canceled",
+      "value": "Temporary schedule canceled"
+    },
+    {
+      "name": "edit_temp_group_canceled",
+      "value": "Temporary group canceled"
+    },
+    {
+      "name": "edit_booking_set",
+      "value": "Booking set"
+    },
+    {
+      "name": "edit_subject_added",
+      "value": "Subject added"
+    },
+    {
+      "name": "edit_schedule_added",
+      "value": "Schedule added"
+    },
+    {
+      "name": "edit_group_added",
+      "value": "Schedule group added"
+    },
+    {
+      "name": "edit_period_added",
+      "value": "Period added"
+    },
+    {
+      "name": "edit_timelayout_added",
+      "value": "Time layout added"
     }
   ]
 }

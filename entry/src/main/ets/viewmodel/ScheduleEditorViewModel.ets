@@ -35,6 +35,7 @@
  */
 
 import { DateTimeValue, Guid, Profile, TempClassPlanGroupType } from 'common_shared';
+import { t } from 'common_core';
 import {
   ClassPlanGroupRow,
   ClassPlanResolver,
@@ -165,7 +166,7 @@ export class ScheduleEditorViewModel {
   /** 丢弃改动，从磁盘重读。 */
   reload(): void {
     this.load();
-    this.say('已放弃未保存的改动');
+    this.say(t('edit_discarded'));
   }
 
   /**
@@ -175,14 +176,14 @@ export class ScheduleEditorViewModel {
    */
   save(): boolean {
     if (!this.isDirty) {
-      this.say('没有需要保存的改动');
+      this.say(t('edit_nothing_to_save'));
       return true;
     }
     try {
       this.repository.save(this.draft);
       this.baseline = Profile.stringify(this.draft);
       this.refreshDirty();
-      this.say('已保存');
+      this.say(t('edit_saved'));
       this.notifySaved();
       return true;
     } catch (err) {
@@ -214,7 +215,7 @@ export class ScheduleEditorViewModel {
 
   /** 改名档案。 */
   renameProfile(name: string): boolean {
-    return this.run('档案已改名', (): boolean => {
+    return this.run(t('edit_profile_renamed'), (): boolean => {
       return ScheduleMutations.renameProfile(this.draft, name);
     });
   }
@@ -224,7 +225,7 @@ export class ScheduleEditorViewModel {
   /** 新建科目。返回新科目的 guid，供界面展开到那一行。 */
   addSubject(name: string): string {
     let created: string = '';
-    this.run('已添加科目', (): boolean => {
+    this.run(t('edit_subject_added'), (): boolean => {
       created = ScheduleMutations.addSubject(this.draft, name).toString();
       return true;
     });
@@ -232,37 +233,37 @@ export class ScheduleEditorViewModel {
   }
 
   renameSubject(guid: string, name: string): boolean {
-    return this.run('科目已改名', (): boolean => {
+    return this.run(t('edit_subject_renamed'), (): boolean => {
       return ScheduleMutations.renameSubject(this.draft, Guid.fromCanonical(guid), name);
     });
   }
 
   setSubjectTeacher(guid: string, teacherName: string): boolean {
-    return this.run('教师已更新', (): boolean => {
+    return this.run(t('edit_teacher_updated'), (): boolean => {
       return ScheduleMutations.setSubjectTeacher(this.draft, Guid.fromCanonical(guid), teacherName);
     });
   }
 
   setSubjectInitial(guid: string, initial: string): boolean {
-    return this.run('简称已更新', (): boolean => {
+    return this.run(t('edit_shortname_updated'), (): boolean => {
       return ScheduleMutations.setSubjectInitial(this.draft, Guid.fromCanonical(guid), initial);
     });
   }
 
   setSubjectOutDoor(guid: string, isOutDoor: boolean): boolean {
-    return this.run('已更新', (): boolean => {
+    return this.run(t('edit_updated'), (): boolean => {
       return ScheduleMutations.setSubjectOutDoor(this.draft, Guid.fromCanonical(guid), isOutDoor);
     });
   }
 
   moveSubject(guid: string, delta: number): boolean {
-    return this.run('已调整顺序', (): boolean => {
+    return this.run(t('edit_reordered'), (): boolean => {
       return ScheduleMutations.moveSubject(this.draft, Guid.fromCanonical(guid), delta);
     });
   }
 
   removeSubject(guid: string): boolean {
-    return this.run('科目已删除，相关课次已置空', (): boolean => {
+    return this.run(t('edit_subject_deleted'), (): boolean => {
       return ScheduleMutations.removeSubject(this.draft, Guid.fromCanonical(guid));
     });
   }
@@ -272,7 +273,7 @@ export class ScheduleEditorViewModel {
   /** 新建时间表，返回其 guid。 */
   addTimeLayout(name: string): string {
     let created: string = '';
-    this.run('已添加时间表', (): boolean => {
+    this.run(t('edit_timelayout_added'), (): boolean => {
       created = ScheduleMutations.addTimeLayout(this.draft, name).toString();
       return true;
     });
@@ -280,13 +281,13 @@ export class ScheduleEditorViewModel {
   }
 
   renameTimeLayout(guid: string, name: string): boolean {
-    return this.run('时间表已改名', (): boolean => {
+    return this.run(t('edit_timelayout_renamed'), (): boolean => {
       return ScheduleMutations.renameTimeLayout(this.draft, Guid.fromCanonical(guid), name);
     });
   }
 
   removeTimeLayout(guid: string): boolean {
-    return this.run('时间表已删除，绑定的课表已解绑', (): boolean => {
+    return this.run(t('edit_timelayout_deleted'), (): boolean => {
       return ScheduleMutations.removeTimeLayout(this.draft, Guid.fromCanonical(guid));
     });
   }
@@ -304,27 +305,27 @@ export class ScheduleEditorViewModel {
    * @param minutes 时长（分钟）
    */
   addTimePoint(guid: string, timeType: number, startSeconds: number, minutes: number): boolean {
-    return this.run('已添加时段', (): boolean => {
+    return this.run(t('edit_period_added'), (): boolean => {
       return ScheduleMutations.addTimePoint(this.draft, Guid.fromCanonical(guid), timeType,
         startSeconds, minutes);
     });
   }
 
   removeTimePoint(guid: string, rowIndex: number): boolean {
-    return this.run('时段已删除，对应课次已一并删除', (): boolean => {
+    return this.run(t('edit_period_deleted'), (): boolean => {
       return ScheduleMutations.removeTimePoint(this.draft, Guid.fromCanonical(guid), rowIndex);
     });
   }
 
   moveTimePoint(guid: string, rowIndex: number, delta: number): boolean {
-    return this.run('已调整顺序', (): boolean => {
+    return this.run(t('edit_reordered'), (): boolean => {
       return ScheduleMutations.moveTimePoint(this.draft, Guid.fromCanonical(guid), rowIndex, delta);
     });
   }
 
   /** 按开始时刻重排整张时间表。 */
   sortTimeLayout(guid: string): boolean {
-    return this.run('已按时段重排', (): boolean => {
+    return this.run(t('edit_reordered_by_period'), (): boolean => {
       return ScheduleMutations.sortTimeLayout(this.draft, Guid.fromCanonical(guid));
     });
   }
@@ -343,7 +344,7 @@ export class ScheduleEditorViewModel {
    */
   updateTimePoint(guid: string, rowIndex: number, timeType: number, startSeconds: number,
     minutes: number, breakName: string): boolean {
-    return this.run('时段已更新', (): boolean => {
+    return this.run(t('edit_period_updated'), (): boolean => {
       return ScheduleMutations.updateTimePoint(this.draft, Guid.fromCanonical(guid), rowIndex,
         timeType, startSeconds === UNCHANGED ? undefined : startSeconds,
         minutes === UNCHANGED ? undefined : minutes, breakName);
@@ -358,7 +359,7 @@ export class ScheduleEditorViewModel {
    */
   setDefaultClass(guid: string, rowIndex: number, subjectId: string,
     isHideDefault: boolean): boolean {
-    return this.run('已更新预置科目', (): boolean => {
+    return this.run(t('edit_preset_subjects_updated'), (): boolean => {
       return ScheduleMutations.setDefaultClass(this.draft, Guid.fromCanonical(guid), rowIndex,
         Guid.fromCanonical(subjectId), isHideDefault);
     });
@@ -369,7 +370,7 @@ export class ScheduleEditorViewModel {
   /** 新建课表，返回其 guid。 */
   addClassPlan(timeLayoutId: string, name: string): string {
     let created: string = '';
-    this.run('已添加课表', (): boolean => {
+    this.run(t('edit_schedule_added'), (): boolean => {
       created = ScheduleMutations.addClassPlan(this.draft, Guid.fromCanonical(timeLayoutId),
         name).toString();
       return true;
@@ -383,32 +384,32 @@ export class ScheduleEditorViewModel {
   }
 
   renameClassPlan(guid: string, name: string): boolean {
-    return this.run('课表已改名', (): boolean => {
+    return this.run(t('edit_schedule_renamed'), (): boolean => {
       return ScheduleMutations.renameClassPlan(this.draft, Guid.fromCanonical(guid), name);
     });
   }
 
   removeClassPlan(guid: string): boolean {
-    return this.run('课表已删除', (): boolean => {
+    return this.run(t('edit_schedule_deleted'), (): boolean => {
       return ScheduleMutations.removeClassPlan(this.draft, Guid.fromCanonical(guid));
     });
   }
 
   setClassPlanEnabled(guid: string, isEnabled: boolean): boolean {
-    return this.run('已更新', (): boolean => {
+    return this.run(t('edit_updated'), (): boolean => {
       return ScheduleMutations.setClassPlanEnabled(this.draft, Guid.fromCanonical(guid), isEnabled);
     });
   }
 
   setClassPlanTimeLayout(guid: string, timeLayoutId: string): boolean {
-    return this.run('已绑定时间表', (): boolean => {
+    return this.run(t('edit_timelayout_bound'), (): boolean => {
       return ScheduleMutations.setClassPlanTimeLayout(this.draft, Guid.fromCanonical(guid),
         Guid.fromCanonical(timeLayoutId));
     });
   }
 
   setClassPlanGroup(guid: string, groupId: string): boolean {
-    return this.run('已调整所属群', (): boolean => {
+    return this.run(t('edit_group_moved'), (): boolean => {
       return ScheduleMutations.setClassPlanGroup(this.draft, Guid.fromCanonical(guid),
         Guid.fromCanonical(groupId));
     });
@@ -417,7 +418,7 @@ export class ScheduleEditorViewModel {
   /** 改课表的单双周规则。 */
   setClassPlanRule(guid: string, weekDay: number, weekCountDiv: number,
     weekCountDivTotal: number): boolean {
-    return this.run('已更新轮转规则', (): boolean => {
+    return this.run(t('edit_rotation_updated'), (): boolean => {
       return ScheduleMutations.setClassPlanRule(this.draft, Guid.fromCanonical(guid), weekDay,
         weekCountDiv, weekCountDivTotal);
     });
@@ -430,20 +431,20 @@ export class ScheduleEditorViewModel {
    * @param subjectId 科目 guid；传空串表示清空这节课
    */
   setClassSubject(guid: string, slot: number, subjectId: string): boolean {
-    return this.run('已排课', (): boolean => {
+    return this.run(t('edit_class_filled'), (): boolean => {
       return ScheduleMutations.setClassSubject(this.draft, Guid.fromCanonical(guid), slot,
         Guid.fromCanonical(subjectId));
     });
   }
 
   setClassEnabled(guid: string, slot: number, isEnabled: boolean): boolean {
-    return this.run('已更新', (): boolean => {
+    return this.run(t('edit_updated'), (): boolean => {
       return ScheduleMutations.setClassEnabled(this.draft, Guid.fromCanonical(guid), slot, isEnabled);
     });
   }
 
   setClassChanged(guid: string, slot: number, isChanged: boolean): boolean {
-    return this.run('已更新', (): boolean => {
+    return this.run(t('edit_updated'), (): boolean => {
       return ScheduleMutations.setClassChanged(this.draft, Guid.fromCanonical(guid), slot, isChanged);
     });
   }
@@ -452,14 +453,14 @@ export class ScheduleEditorViewModel {
 
   /** 以某张课表为源建一张叠加课表。 */
   createOverlay(sourceGuid: string, name: string): boolean {
-    return this.run('已创建叠加课表', (): boolean => {
+    return this.run(t('edit_overlay_created'), (): boolean => {
       return ScheduleMutations.createOverlayClassPlan(this.draft, Guid.fromCanonical(sourceGuid),
         name) !== undefined;
     });
   }
 
   setClassPlanOverlayEnabled(isEnabled: boolean): boolean {
-    return this.run('已更新叠加开关', (): boolean => {
+    return this.run(t('edit_overlay_toggled'), (): boolean => {
       return ScheduleMutations.setClassPlanOverlayEnabled(this.draft, isEnabled);
     });
   }
@@ -469,7 +470,7 @@ export class ScheduleEditorViewModel {
   /** 新建课表群，返回其 guid。 */
   addClassPlanGroup(name: string): string {
     let created: string = '';
-    this.run('已添加课表群', (): boolean => {
+    this.run(t('edit_group_added'), (): boolean => {
       created = ScheduleMutations.addClassPlanGroup(this.draft, name).toString();
       return true;
     });
@@ -477,27 +478,27 @@ export class ScheduleEditorViewModel {
   }
 
   renameClassPlanGroup(guid: string, name: string): boolean {
-    return this.run('课表群已改名', (): boolean => {
+    return this.run(t('edit_group_renamed'), (): boolean => {
       return ScheduleMutations.renameClassPlanGroup(this.draft, Guid.fromCanonical(guid), name);
     });
   }
 
   /** 删除课表群，群内课表一并删除。 */
   deleteClassPlanGroup(guid: string): boolean {
-    return this.run('课表群已删除，群内课表一并删除', (): boolean => {
+    return this.run(t('edit_group_deleted'), (): boolean => {
       return ScheduleMutations.deleteClassPlanGroup(this.draft, Guid.fromCanonical(guid));
     });
   }
 
   /** 解散课表群，群内课表移到默认群。 */
   disbandClassPlanGroup(guid: string): boolean {
-    return this.run('课表群已解散，群内课表已移到默认群', (): boolean => {
+    return this.run(t('edit_group_dissolved'), (): boolean => {
       return ScheduleMutations.disbandClassPlanGroup(this.draft, Guid.fromCanonical(guid));
     });
   }
 
   selectClassPlanGroup(guid: string): boolean {
-    return this.run('已切换当前课表群', (): boolean => {
+    return this.run(t('edit_group_switched'), (): boolean => {
       return ScheduleMutations.selectClassPlanGroup(this.draft, Guid.fromCanonical(guid));
     });
   }
@@ -511,13 +512,13 @@ export class ScheduleEditorViewModel {
    * @param from 生效起点
    */
   applyTempClassPlan(planId: string, from: DateTimeValue): boolean {
-    return this.run('已启用临时课表', (): boolean => {
+    return this.run(t('edit_temp_enabled'), (): boolean => {
       return ScheduleMutations.applyTempClassPlan(this.draft, Guid.fromCanonical(planId), from);
     });
   }
 
   cancelTempClassPlan(): void {
-    this.run('已取消临时课表', (): boolean => {
+    this.run(t('edit_temp_canceled'), (): boolean => {
       ScheduleMutations.cancelTempClassPlan(this.draft);
       return true;
     });
@@ -525,7 +526,7 @@ export class ScheduleEditorViewModel {
 
   /** 启用临时课表群。 */
   applyTempClassPlanGroup(groupId: string, expire: DateTimeValue, type: number): boolean {
-    return this.run('已启用临时课表群', (): boolean => {
+    return this.run(t('edit_temp_group_enabled'), (): boolean => {
       const kind: TempClassPlanGroupType = type === 1
         ? TempClassPlanGroupType.Override : TempClassPlanGroupType.Inherit;
       return ScheduleMutations.applyTempClassPlanGroup(this.draft, Guid.fromCanonical(groupId),
@@ -534,7 +535,7 @@ export class ScheduleEditorViewModel {
   }
 
   cancelTempClassPlanGroup(): void {
-    this.run('已取消临时课表群', (): boolean => {
+    this.run(t('edit_temp_group_canceled'), (): boolean => {
       ScheduleMutations.cancelTempClassPlanGroup(this.draft);
       return true;
     });
@@ -542,7 +543,7 @@ export class ScheduleEditorViewModel {
 
   /** 给某一天预定一张课表。 */
   setOrderedSchedule(date: DateTimeValue, planId: string | undefined): boolean {
-    return this.run('已设定预定课表', (): boolean => {
+    return this.run(t('edit_booking_set'), (): boolean => {
       const id: Guid | undefined = planId === undefined || planId.length === 0
         ? undefined : Guid.fromCanonical(planId);
       return ScheduleMutations.setOrderedSchedule(this.draft, date, id);
@@ -562,10 +563,10 @@ export class ScheduleEditorViewModel {
       const outcome: TransferOutcome =
         await ProfileTransfer.exportProfile(this.asContext(context), this.draft);
       if (outcome.canceled) {
-        this.say('已取消导出');
+        this.say(t('edit_export_canceled'));
         return true;
       }
-      this.say('已导出');
+      this.say(t('edit_exported'));
       return true;
     } catch (err) {
       const message: string = err instanceof Error ? err.message : String(err);
@@ -587,11 +588,11 @@ export class ScheduleEditorViewModel {
     try {
       const outcome: ImportOutcome = await ProfileTransfer.importProfile(this.asContext(context));
       if (outcome.canceled) {
-        this.say('已取消导入');
+        this.say(t('edit_import_canceled'));
         return true;
       }
       this.adopt(outcome.profile);
-      this.say('已导入，记得保存');
+      this.say(t('edit_imported_save'));
       return true;
     } catch (err) {
       const message: string = err instanceof Error ? err.message : String(err);
@@ -645,7 +646,7 @@ export class ScheduleEditorViewModel {
     this.repairSelection();
     this.refreshDirty();
     this.rebuild();
-    this.say(changed ? message : '没有可改的内容');
+    this.say(changed ? message : t('edit_nothing_to_change'));
     return changed;
   }
 

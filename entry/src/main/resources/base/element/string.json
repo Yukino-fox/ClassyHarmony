@@ -727,6 +727,178 @@
     {
       "name": "temp_cancel_booked",
       "value": "取消预定"
+    },
+    {
+      "name": "edit_profile_renamed",
+      "value": "档案已改名"
+    },
+    {
+      "name": "edit_shortname_updated",
+      "value": "简称已更新"
+    },
+    {
+      "name": "edit_teacher_updated",
+      "value": "教师已更新"
+    },
+    {
+      "name": "edit_subject_renamed",
+      "value": "科目已改名"
+    },
+    {
+      "name": "edit_subject_deleted",
+      "value": "科目已删除，相关课次已置空"
+    },
+    {
+      "name": "edit_group_renamed",
+      "value": "课表群已改名"
+    },
+    {
+      "name": "edit_group_dissolved",
+      "value": "课表群已解散，群内课表已移到默认群"
+    },
+    {
+      "name": "edit_group_deleted",
+      "value": "课表群已删除，群内课表一并删除"
+    },
+    {
+      "name": "edit_schedule_renamed",
+      "value": "课表已改名"
+    },
+    {
+      "name": "edit_schedule_deleted",
+      "value": "课表已删除"
+    },
+    {
+      "name": "edit_nothing_to_change",
+      "value": "没有可改的内容"
+    },
+    {
+      "name": "edit_nothing_to_save",
+      "value": "没有需要保存的改动"
+    },
+    {
+      "name": "edit_period_updated",
+      "value": "时段已更新"
+    },
+    {
+      "name": "edit_period_deleted",
+      "value": "时段已删除，对应课次已一并删除"
+    },
+    {
+      "name": "edit_timelayout_renamed",
+      "value": "时间表已改名"
+    },
+    {
+      "name": "edit_timelayout_deleted",
+      "value": "时间表已删除，绑定的课表已解绑"
+    },
+    {
+      "name": "edit_reordered_by_period",
+      "value": "已按时段重排"
+    },
+    {
+      "name": "edit_timelayout_bound",
+      "value": "已绑定时间表"
+    },
+    {
+      "name": "edit_saved",
+      "value": "已保存"
+    },
+    {
+      "name": "edit_overlay_created",
+      "value": "已创建叠加课表"
+    },
+    {
+      "name": "edit_exported",
+      "value": "已导出"
+    },
+    {
+      "name": "edit_imported_save",
+      "value": "已导入，记得保存"
+    },
+    {
+      "name": "edit_reordered",
+      "value": "已调整顺序"
+    },
+    {
+      "name": "edit_group_moved",
+      "value": "已调整所属群"
+    },
+    {
+      "name": "edit_discarded",
+      "value": "已放弃未保存的改动"
+    },
+    {
+      "name": "edit_updated",
+      "value": "已更新"
+    },
+    {
+      "name": "edit_overlay_toggled",
+      "value": "已更新叠加开关"
+    },
+    {
+      "name": "edit_rotation_updated",
+      "value": "已更新轮转规则"
+    },
+    {
+      "name": "edit_preset_subjects_updated",
+      "value": "已更新预置科目"
+    },
+    {
+      "name": "edit_class_filled",
+      "value": "已排课"
+    },
+    {
+      "name": "edit_temp_enabled",
+      "value": "已启用临时课表"
+    },
+    {
+      "name": "edit_temp_group_enabled",
+      "value": "已启用临时课表群"
+    },
+    {
+      "name": "edit_group_switched",
+      "value": "已切换当前课表群"
+    },
+    {
+      "name": "edit_export_canceled",
+      "value": "已取消导出"
+    },
+    {
+      "name": "edit_import_canceled",
+      "value": "已取消导入"
+    },
+    {
+      "name": "edit_temp_canceled",
+      "value": "已取消临时课表"
+    },
+    {
+      "name": "edit_temp_group_canceled",
+      "value": "已取消临时课表群"
+    },
+    {
+      "name": "edit_booking_set",
+      "value": "已设定预定课表"
+    },
+    {
+      "name": "edit_subject_added",
+      "value": "已添加科目"
+    },
+    {
+      "name": "edit_schedule_added",
+      "value": "已添加课表"
+    },
+    {
+      "name": "edit_group_added",
+      "value": "已添加课表群"
+    },
+    {
+      "name": "edit_period_added",
+      "value": "已添加时段"
+    },
+    {
+      "name": "edit_timelayout_added",
+      "value": "已添加时间表"
     }
   ]
 }
