@@ -365,7 +365,7 @@ struct SettingsPage {
 
   private advanceLabel(seconds: number): string {
     if (seconds <= 0) {
-      return '上课那一刻';
+      return t('settings_at_class_moment');
     }
     if (seconds < 60) {
       return `${seconds} 秒`;
@@ -375,12 +375,12 @@ struct SettingsPage {
 
   private reminderModeLabel(): string {
     if (this.reminderMode === 0) {
-      return '精确到每节课';
+      return t('settings_per_class');
     }
     if (this.reminderMode === 1) {
-      return '折叠成一条';
+      return t('settings_folded');
     }
-    return '自动';
+    return t('settings_auto');
   }
 
   // ------------------------------------------------------------ 交互
@@ -560,9 +560,9 @@ struct SettingsPage {
     }
     this.testingSpeech = true;
     try {
-      const failure: string = await speech.trySpeakNow('上课了，第一节课即将开始。');
+      const failure: string = await speech.trySpeakNow(t('settings_speech_sample'));
       UiFeedback.toast(this.getUIContext(),
-        failure.length === 0 ? '试听已送出' : `试听失败：${failure}`);
+        failure.length === 0 ? t('settings_test_sent') : `${t('settings_test_failed')}：${failure}`);
     } catch (err) {
       hilog.warn(DOMAIN, TAG, 'testSpeak threw: %{public}s', `${err}`);
     }
@@ -771,7 +771,7 @@ struct SettingsPage {
     const service: BackgroundTaskService | undefined = this.backgroundService();
     if (service === undefined) {
       this.writeBool(PrefKeys.BACKGROUND_KEEP_ALIVE, on);
-      this.backgroundKeepAliveStatus = on ? '未启动' : '已关闭';
+      this.backgroundKeepAliveStatus = on ? t('settings_not_started') : t('settings_off');
       return;
     }
     service.setEnabled(on);
@@ -951,7 +951,7 @@ struct SettingsPage {
         return;
       }
       ProfileTransfer.writeText(picked.uri, text);
-      UiFeedback.toast(this.getUIContext(), '已导出清单。');
+      UiFeedback.toast(this.getUIContext(), t('settings_exported'));
     } catch (err) {
       UiFeedback.toast(this.getUIContext(), `导出失败：${describe(err)}`);
     }
@@ -1087,7 +1087,7 @@ struct SettingsPage {
     if (this.host !== undefined) {
       ThemeService.apply(this.host, this.theme);
     }
-    UiFeedback.toast(this.getUIContext(), '已恢复默认设置');
+    UiFeedback.toast(this.getUIContext(), t('settings_reset_done'));
   }
 
   private goAutomation(): void {
@@ -1441,7 +1441,7 @@ struct SettingsPage {
                     this.commitCityId(text);
                   }
                 })
-                Text('形如 weathercn:101010100。可从桌面版抄过来，或用「自动定位」自动填。')
+                Text(t('settings_city_hint'))
                   .fontSize(12)
                   .fontColor($r('app.color.ch_text_hint'))
                   .width('100%')
@@ -1473,14 +1473,14 @@ struct SettingsPage {
             ListItem() {
               Column() {
                 EditorTextField({
-                  label: '预警关键词',
+                  label: t('settings_alert_keyword'),
                   value: this.excludedAlertsText,
-                  placeholder: '多个词用「、」分隔',
+                  placeholder: t('settings_alert_keyword_placeholder'),
                   onCommit: (text: string) => {
                     this.commitExcludedAlerts(text);
                   }
                 })
-                Text('标题里含这些词的气象预警不发通知。留空表示全都发。')
+                Text(t('settings_alert_hint'))
                   .fontSize(12)
                   .fontColor($r('app.color.ch_text_hint'))
                   .width('100%')
@@ -1520,7 +1520,7 @@ struct SettingsPage {
                     this.commitSessionId(text);
                   }
                 })
-                Text('两台设备填同一个会话 ID 才会互相同步。只允许字母、数字、下划线，最长 128 字符。')
+                Text(t('settings_session_hint'))
                   .fontSize(12)
                   .fontColor($r('app.color.ch_text_hint'))
                   .width('100%')
@@ -1544,8 +1544,7 @@ struct SettingsPage {
           this.noteRow(t('settings_status'),
             this.backgroundKeepAliveStatus.length === 0 ? '未启动' : this.backgroundKeepAliveStatus)
           ListItem() {
-            Text('开启后应用退到后台仍会继续算课表并按时提醒。部分手机不允许普通应用长时间驻留，' +
-              '这类设备上会自动回落成「仅前台」，其余功能不受影响。')
+            Text(t('settings_background_hint'))
               .fontSize(12)
               .fontColor($r('app.color.ch_text_hint'))
               .width('100%')
@@ -1554,7 +1553,7 @@ struct SettingsPage {
 
           // ---- 扩展
           this.groupTitle(t('settings_group_plugins'))
-          this.noteRow('已装扩展', this.pluginSummary)
+          this.noteRow(t('settings_installed_extensions'), this.pluginSummary)
           this.actionRow('导入扩展（.json）', !this.importing, () => {
             this.importPluginJson();
           })
@@ -1562,11 +1561,10 @@ struct SettingsPage {
             this.importPluginCipx();
           })
           if (this.pluginImportError.length > 0) {
-            this.noteRow('最近一次导入', `没成功：${this.pluginImportError}`)
+            this.noteRow(t('settings_last_import'), t('settings_import_failed_prefix') + this.pluginImportError)
           }
           if (this.pluginRows.length === 0) {
-            this.noteRow('提示', '还没有装扩展。扩展是声明式的：一份 JSON 清单声明组件、触发器、行动，' +
-              '装上来之后会出现在面板与自动化里。')
+            this.noteRow(t('settings_hint'), t('settings_no_plugins_hint'))
           }
           ForEach(this.pluginRows, (row: PluginListRow) => {
             this.pluginRow(row);
@@ -1596,7 +1594,7 @@ struct SettingsPage {
           }
           .onClick(() => {
             UiFeedback.confirm(this.getUIContext(), '恢复默认设置',
-              '所有设置项都会回到初始值，包括提醒提前量与自动化方案。', '恢复', () => {
+              t('settings_reset_confirm'), t('settings_reset'), () => {
                 this.resetAll();
               });
           })

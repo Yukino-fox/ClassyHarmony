@@ -259,6 +259,102 @@
     {
       "name": "settings_no_author",
       "value": "没写"
+    },
+    {
+      "name": "settings_at_class_moment",
+      "value": "上课那一刻"
+    },
+    {
+      "name": "settings_per_class",
+      "value": "精确到每节课"
+    },
+    {
+      "name": "settings_folded",
+      "value": "折叠成一条"
+    },
+    {
+      "name": "settings_auto",
+      "value": "自动"
+    },
+    {
+      "name": "settings_speech_sample",
+      "value": "上课了，第一节课即将开始。"
+    },
+    {
+      "name": "settings_test_sent",
+      "value": "试听已送出"
+    },
+    {
+      "name": "settings_test_failed",
+      "value": "试听失败"
+    },
+    {
+      "name": "settings_not_started",
+      "value": "未启动"
+    },
+    {
+      "name": "settings_off",
+      "value": "已关闭"
+    },
+    {
+      "name": "settings_exported",
+      "value": "已导出清单。"
+    },
+    {
+      "name": "settings_reset_done",
+      "value": "已恢复默认设置"
+    },
+    {
+      "name": "settings_city_hint",
+      "value": "形如 weathercn:101010100。可从桌面版抄过来，或用「自动定位」自动填。"
+    },
+    {
+      "name": "settings_alert_keyword",
+      "value": "预警关键词"
+    },
+    {
+      "name": "settings_alert_keyword_placeholder",
+      "value": "多个词用「、」分隔"
+    },
+    {
+      "name": "settings_alert_hint",
+      "value": "标题里含这些词的气象预警不发通知。留空表示全都发。"
+    },
+    {
+      "name": "settings_session_hint",
+      "value": "两台设备填同一个会话 ID 才会互相同步。只允许字母、数字、下划线，最长 128 字符。"
+    },
+    {
+      "name": "settings_background_hint",
+      "value": "开启后应用退到后台仍会继续算课表并按时提醒。部分手机不允许普通应用长时间驻留，这类设备上会自动回落成「仅前台」，其余功能不受影响。"
+    },
+    {
+      "name": "settings_installed_extensions",
+      "value": "已装扩展"
+    },
+    {
+      "name": "settings_last_import",
+      "value": "最近一次导入"
+    },
+    {
+      "name": "settings_import_failed_prefix",
+      "value": "没成功："
+    },
+    {
+      "name": "settings_hint",
+      "value": "提示"
+    },
+    {
+      "name": "settings_no_plugins_hint",
+      "value": "还没有装扩展。扩展是声明式的：一份 JSON 清单声明组件、触发器、行动，装上来之后会出现在面板与自动化里。"
+    },
+    {
+      "name": "settings_reset_confirm",
+      "value": "所有设置项都会回到初始值，包括提醒提前量与自动化方案。"
+    },
+    {
+      "name": "settings_reset",
+      "value": "恢复"
     }
   ]
 }

@@ -223,6 +223,102 @@
     {
       "name": "settings_no_author",
       "value": "—"
+    },
+    {
+      "name": "settings_at_class_moment",
+      "value": "At Class Start"
+    },
+    {
+      "name": "settings_per_class",
+      "value": "Per Class"
+    },
+    {
+      "name": "settings_folded",
+      "value": "Folded into One"
+    },
+    {
+      "name": "settings_auto",
+      "value": "Auto"
+    },
+    {
+      "name": "settings_speech_sample",
+      "value": "Class is starting now."
+    },
+    {
+      "name": "settings_test_sent",
+      "value": "Sample sent"
+    },
+    {
+      "name": "settings_test_failed",
+      "value": "Sample failed"
+    },
+    {
+      "name": "settings_not_started",
+      "value": "Not started"
+    },
+    {
+      "name": "settings_off",
+      "value": "Off"
+    },
+    {
+      "name": "settings_exported",
+      "value": "Manifest exported."
+    },
+    {
+      "name": "settings_reset_done",
+      "value": "Settings restored to defaults"
+    },
+    {
+      "name": "settings_city_hint",
+      "value": "e.g. weathercn:101010100. Copy from the desktop app or use Auto-locate."
+    },
+    {
+      "name": "settings_alert_keyword",
+      "value": "Alert Keyword"
+    },
+    {
+      "name": "settings_alert_keyword_placeholder",
+      "value": "Separate keywords with 、"
+    },
+    {
+      "name": "settings_alert_hint",
+      "value": "Alerts whose title contains these keywords will not notify. Leave empty to notify all."
+    },
+    {
+      "name": "settings_session_hint",
+      "value": "Two devices sync only with the same session ID. Letters, digits, underscores only, up to 128 chars."
+    },
+    {
+      "name": "settings_background_hint",
+      "value": "When enabled, the app keeps computing the schedule and firing reminders in the background. On devices that disallow long background residency, it falls back to foreground-only; other features are unaffected."
+    },
+    {
+      "name": "settings_installed_extensions",
+      "value": "Installed Extensions"
+    },
+    {
+      "name": "settings_last_import",
+      "value": "Last Import"
+    },
+    {
+      "name": "settings_import_failed_prefix",
+      "value": "Failed: "
+    },
+    {
+      "name": "settings_hint",
+      "value": "Hint"
+    },
+    {
+      "name": "settings_no_plugins_hint",
+      "value": "No extensions installed. Extensions are declarative: a JSON manifest declaring components, triggers and actions, which appear in the panel and automation after installation."
+    },
+    {
+      "name": "settings_reset_confirm",
+      "value": "All settings will return to their initial values, including reminder advance times and automation profiles."
+    },
+    {
+      "name": "settings_reset",
+      "value": "Restore"
     }
   ]
 }
