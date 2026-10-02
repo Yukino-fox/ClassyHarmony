@@ -423,6 +423,122 @@
     {
       "name": "ruleset_add_group",
       "value": "Add a Group"
+    },
+    {
+      "name": "pane_use_exact_time",
+      "value": "Use precise time for calibration"
+    },
+    {
+      "name": "pane_use_local_time",
+      "value": "When off, uses the device time directly"
+    },
+    {
+      "name": "pane_seconds_hint",
+      "value": "Only takes effect when seconds are hidden"
+    },
+    {
+      "name": "pane_text_placeholder",
+      "value": "Text shown on this line"
+    },
+    {
+      "name": "pane_custom_color",
+      "value": "Use Custom Color"
+    },
+    {
+      "name": "pane_connector_accent",
+      "value": "Accent the Connector"
+    },
+    {
+      "name": "pane_countdown_past",
+      "value": "Show elapsed time instead"
+    },
+    {
+      "name": "pane_show_alerts",
+      "value": "Show Weather Alerts"
+    },
+    {
+      "name": "pane_show_rain",
+      "value": "Show Rain Time"
+    },
+    {
+      "name": "pane_vague_rain_countdown",
+      "value": "Vague Countdown for Long Rain"
+    },
+    {
+      "name": "pane_vague_rain_hint",
+      "value": "Hide exact remaining minutes during long rain"
+    },
+    {
+      "name": "pane_alert_meta_hint",
+      "value": "Alert title style and weather data source use desktop defaults; not configurable on HarmonyOS yet."
+    },
+    {
+      "name": "pane_schedule_notes",
+      "value": "Add a note next to each time"
+    },
+    {
+      "name": "pane_hide_finished",
+      "value": "Hide Finished Classes"
+    },
+    {
+      "name": "pane_dim_finished",
+      "value": "Dim Finished Classes"
+    },
+    {
+      "name": "pane_dim_hint",
+      "value": "Unlike hiding, this only dims them"
+    },
+    {
+      "name": "pane_no_class_text",
+      "value": "No-Class Text"
+    },
+    {
+      "name": "pane_highlight_temp",
+      "value": "Highlight Temporarily Changed Classes"
+    },
+    {
+      "name": "pane_rule_pause_hint",
+      "value": "Rule-based pause and stop will be configurable here after rule evaluation (P8) lands."
+    },
+    {
+      "name": "pane_slide_rule_hint",
+      "value": "Switch mode and rule-based pause/stop will be configurable here after rule evaluation (P8) lands."
+    },
+    {
+      "name": "pane_container_no_settings",
+      "value": "This container has no settings of its own; configure the components inside."
+    },
+    {
+      "name": "pane_separator_no_settings",
+      "value": "The separator has no configurable items."
+    },
+    {
+      "name": "pane_custom_name",
+      "value": "Custom Name"
+    },
+    {
+      "name": "pane_name_placeholder",
+      "value": "Leave empty to use the component name"
+    },
+    {
+      "name": "pane_hide_by_rules",
+      "value": "Hide by Rules"
+    },
+    {
+      "name": "pane_hide_by_rules_hint",
+      "value": "Hidden when the rules hold. Evaluation uses the schedule at the moment the page opened."
+    },
+    {
+      "name": "pane_hide_rules_title",
+      "value": "Hide Rules for This Content"
+    },
+    {
+      "name": "pane_extra_fields_hint",
+      "value": "Unlisted fields keep the values written on desktop; nothing is lost on round-trip."
+    },
+    {
+      "name": "pane_settings_title",
+      "value": "Settings"
     }
   ]
 }

@@ -34,6 +34,7 @@
  */
 
 import { ColorValue, ComponentSettings, DateTimeValue } from 'common_shared';
+import { t } from 'common_core';
 import {
   ClockPayload,
   COMPONENT_CLOCK,
@@ -809,8 +810,8 @@ export struct ComponentSettingsPane {
           }
 
           EditorCard({
-            title: '设置',
-            hint: '没列出来的字段沿用桌面版写下的值，往返不会丢。'
+            title: t('pane_settings_title'),
+            hint: t('pane_extra_fields_hint')
           })
           this.body()
         }

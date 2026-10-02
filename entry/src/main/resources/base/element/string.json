@@ -459,6 +459,122 @@
     {
       "name": "ruleset_add_group",
       "value": "加一组"
+    },
+    {
+      "name": "pane_use_exact_time",
+      "value": "用精确时间服务校时"
+    },
+    {
+      "name": "pane_use_local_time",
+      "value": "关掉则直接用本机时间"
+    },
+    {
+      "name": "pane_seconds_hint",
+      "value": "秒数不显示时才有效果"
+    },
+    {
+      "name": "pane_text_placeholder",
+      "value": "显示在这一行的文字"
+    },
+    {
+      "name": "pane_custom_color",
+      "value": "用自定义颜色"
+    },
+    {
+      "name": "pane_connector_accent",
+      "value": "连接词用强调色"
+    },
+    {
+      "name": "pane_countdown_past",
+      "value": "改成显示已经过去的时间"
+    },
+    {
+      "name": "pane_show_alerts",
+      "value": "显示天气预警"
+    },
+    {
+      "name": "pane_show_rain",
+      "value": "显示降雨时间"
+    },
+    {
+      "name": "pane_vague_rain_countdown",
+      "value": "模糊长时间降雨倒计时"
+    },
+    {
+      "name": "pane_vague_rain_hint",
+      "value": "长时间降雨时不显示具体剩余分钟"
+    },
+    {
+      "name": "pane_alert_meta_hint",
+      "value": "预警标题的显示方式、天气数据来源目前沿用桌面版的默认值，鸿蒙侧暂不可改。"
+    },
+    {
+      "name": "pane_schedule_notes",
+      "value": "在每个时刻旁边补一行说明"
+    },
+    {
+      "name": "pane_hide_finished",
+      "value": "隐藏已经上完的课"
+    },
+    {
+      "name": "pane_dim_finished",
+      "value": "淡化已上完的课"
+    },
+    {
+      "name": "pane_dim_hint",
+      "value": "与「隐藏」不同，它只是变淡"
+    },
+    {
+      "name": "pane_no_class_text",
+      "value": "没有课的文案"
+    },
+    {
+      "name": "pane_highlight_temp",
+      "value": "高亮有临时调整的课"
+    },
+    {
+      "name": "pane_rule_pause_hint",
+      "value": "按规则暂停与停止要等规则判定（P8）落地后才能在这里配。"
+    },
+    {
+      "name": "pane_slide_rule_hint",
+      "value": "切换方式、按规则暂停与停止要等规则判定（P8）落地后才能在这里配。"
+    },
+    {
+      "name": "pane_container_no_settings",
+      "value": "这个容器没有自己的设置，配置的是它里面的组件。"
+    },
+    {
+      "name": "pane_separator_no_settings",
+      "value": "分割线没有可设置的项。"
+    },
+    {
+      "name": "pane_custom_name",
+      "value": "自定义名"
+    },
+    {
+      "name": "pane_name_placeholder",
+      "value": "留空则用组件自己的名字"
+    },
+    {
+      "name": "pane_hide_by_rules",
+      "value": "按规则隐藏"
+    },
+    {
+      "name": "pane_hide_by_rules_hint",
+      "value": "规则成立时这个组件不显示。判定按打开页面的那一刻的课表。"
+    },
+    {
+      "name": "pane_hide_rules_title",
+      "value": "这块内容的隐藏规则"
+    },
+    {
+      "name": "pane_extra_fields_hint",
+      "value": "没列出来的字段沿用桌面版写下的值，往返不会丢。"
+    },
+    {
+      "name": "pane_settings_title",
+      "value": "设置"
     }
   ]
 }
