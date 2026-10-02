@@ -575,6 +575,154 @@
     {
       "name": "pane_settings_title",
       "value": "设置"
+    },
+    {
+      "name": "temp_today",
+      "value": "今天"
+    },
+    {
+      "name": "temp_tomorrow",
+      "value": "明天"
+    },
+    {
+      "name": "temp_week",
+      "value": "一周后"
+    },
+    {
+      "name": "temp_month",
+      "value": "一月后"
+    },
+    {
+      "name": "temp_inherit",
+      "value": "继承"
+    },
+    {
+      "name": "temp_override",
+      "value": "覆盖"
+    },
+    {
+      "name": "temp_none_current",
+      "value": "当前没有临时课表。"
+    },
+    {
+      "name": "temp_header",
+      "value": "临时与叠加"
+    },
+    {
+      "name": "temp_overlay_desc",
+      "value": "叠加表是挂在某张表之上的临时修改（例如这周把那节体育改成自习）。总开关关着时，叠加表完全不参与选课。"
+    },
+    {
+      "name": "temp_enable_overlay",
+      "value": "启用叠加"
+    },
+    {
+      "name": "temp_overlay_off_hint",
+      "value": "关着时所有叠加表都不生效"
+    },
+    {
+      "name": "temp_source_stale",
+      "value": "叠加源已失效，这张表不参与选课"
+    },
+    {
+      "name": "temp_cancel_overlay",
+      "value": "取消叠加"
+    },
+    {
+      "name": "temp_cancel_temporary",
+      "value": "取消临时课表"
+    },
+    {
+      "name": "temp_pick_expiry",
+      "value": "选一个到期时间，到期后自动恢复正常选课。"
+    },
+    {
+      "name": "temp_cancel_group",
+      "value": "取消临时课表群"
+    },
+    {
+      "name": "temp_group_pick_msg",
+      "value": "选策略与到期时间。"
+    },
+    {
+      "name": "temp_book_a_day",
+      "value": "+ 预定某一天"
+    },
+    {
+      "name": "temp_change_day",
+      "value": "换一天"
+    },
+    {
+      "name": "temp_cancel",
+      "value": "取消"
+    },
+    {
+      "name": "temp_in_use",
+      "value": "临时用"
+    },
+    {
+      "name": "temp_no_schedule",
+      "value": "还没有课表，先到「课表」建一张。"
+    },
+    {
+      "name": "temp_no_groups",
+      "value": "还没有课表群。"
+    },
+    {
+      "name": "temp_no_booked",
+      "value": "还没有预定。"
+    },
+    {
+      "name": "temp_temporary_desc",
+      "value": "选一张课表临时顶上去，到期后自动失效。"
+    },
+    {
+      "name": "temp_group_desc",
+      "value": "把一整个群临时顶上去。群里的课表按各自规则排，所以一周里不同天可能落到不同的表。"
+    },
+    {
+      "name": "temp_booked",
+      "value": "预定课表"
+    },
+    {
+      "name": "temp_booked_desc",
+      "value": "预定让某一天用另一张表，比如期中考试那天。过了的日子标成已过期，不会自动清掉 —— 它们还在档案里，跟着同步走。"
+    },
+    {
+      "name": "temp_current",
+      "value": "当前"
+    },
+    {
+      "name": "temp_use_this",
+      "value": "用这张"
+    },
+    {
+      "name": "week_sun",
+      "value": "日"
+    },
+    {
+      "name": "week_mon",
+      "value": "一"
+    },
+    {
+      "name": "week_tue",
+      "value": "二"
+    },
+    {
+      "name": "week_wed",
+      "value": "三"
+    },
+    {
+      "name": "week_thu",
+      "value": "四"
+    },
+    {
+      "name": "week_fri",
+      "value": "五"
+    },
+    {
+      "name": "week_sat",
+      "value": "六"
     }
   ]
 }

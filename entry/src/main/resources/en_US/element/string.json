@@ -539,6 +539,154 @@
     {
       "name": "pane_settings_title",
       "value": "Settings"
+    },
+    {
+      "name": "temp_today",
+      "value": "Today"
+    },
+    {
+      "name": "temp_tomorrow",
+      "value": "Tomorrow"
+    },
+    {
+      "name": "temp_week",
+      "value": "In a Week"
+    },
+    {
+      "name": "temp_month",
+      "value": "In a Month"
+    },
+    {
+      "name": "temp_inherit",
+      "value": "Inherit"
+    },
+    {
+      "name": "temp_override",
+      "value": "Override"
+    },
+    {
+      "name": "temp_none_current",
+      "value": "No temporary schedule currently."
+    },
+    {
+      "name": "temp_header",
+      "value": "Temporary & Overlay"
+    },
+    {
+      "name": "temp_overlay_desc",
+      "value": "An overlay schedule is a temporary modification over another schedule (e.g. changing P.E. to self-study this week). When the master switch is off, overlay schedules are completely ignored."
+    },
+    {
+      "name": "temp_enable_overlay",
+      "value": "Enable Overlay"
+    },
+    {
+      "name": "temp_overlay_off_hint",
+      "value": "When off, all overlay schedules are inactive"
+    },
+    {
+      "name": "temp_source_stale",
+      "value": "The overlay source is stale; this schedule is not used"
+    },
+    {
+      "name": "temp_cancel_overlay",
+      "value": "Remove Overlay"
+    },
+    {
+      "name": "temp_cancel_temporary",
+      "value": "Cancel Temporary Schedule"
+    },
+    {
+      "name": "temp_pick_expiry",
+      "value": "Pick an expiry time; selection returns to normal afterwards."
+    },
+    {
+      "name": "temp_cancel_group",
+      "value": "Cancel Temporary Group"
+    },
+    {
+      "name": "temp_group_pick_msg",
+      "value": "Pick a strategy and expiry time."
+    },
+    {
+      "name": "temp_book_a_day",
+      "value": "+ Book a Day"
+    },
+    {
+      "name": "temp_change_day",
+      "value": "Change Day"
+    },
+    {
+      "name": "temp_cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "temp_in_use",
+      "value": "Temporary"
+    },
+    {
+      "name": "temp_no_schedule",
+      "value": "No schedules yet. Create one in \"Schedule\"."
+    },
+    {
+      "name": "temp_no_groups",
+      "value": "No schedule groups yet."
+    },
+    {
+      "name": "temp_no_booked",
+      "value": "No bookings yet."
+    },
+    {
+      "name": "temp_temporary_desc",
+      "value": "Pick a schedule to temporarily take over; it expires automatically."
+    },
+    {
+      "name": "temp_group_desc",
+      "value": "Temporarily take over with an entire group. Schedules in the group follow their own rules, so different days may map to different schedules."
+    },
+    {
+      "name": "temp_booked",
+      "value": "Booked Schedules"
+    },
+    {
+      "name": "temp_booked_desc",
+      "value": "Booking lets a specific day use another schedule, e.g. exam day. Past days are marked as expired but not auto-removed — they stay in the profile and sync along."
+    },
+    {
+      "name": "temp_current",
+      "value": "Current"
+    },
+    {
+      "name": "temp_use_this",
+      "value": "Use This"
+    },
+    {
+      "name": "week_sun",
+      "value": "Su"
+    },
+    {
+      "name": "week_mon",
+      "value": "Mo"
+    },
+    {
+      "name": "week_tue",
+      "value": "Tu"
+    },
+    {
+      "name": "week_wed",
+      "value": "We"
+    },
+    {
+      "name": "week_thu",
+      "value": "Th"
+    },
+    {
+      "name": "week_fri",
+      "value": "Fr"
+    },
+    {
+      "name": "week_sat",
+      "value": "Sa"
     }
   ]
 }

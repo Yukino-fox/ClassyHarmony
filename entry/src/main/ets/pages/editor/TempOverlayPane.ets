@@ -24,7 +24,7 @@
  */
 
 import { DateTimeValue, TempClassPlanGroupType } from 'common_shared';
-import { ClassPlanGroupRow, ClassPlanRow, OrderedScheduleRow, ProfileRow } from 'common_core';
+import { ClassPlanGroupRow, ClassPlanRow, OrderedScheduleRow, ProfileRow, t } from 'common_core';
 import { ScheduleEditorViewModel } from '../../viewmodel/ScheduleEditorViewModel';
 import { UiFeedback } from '../../common/UiFeedback';
 import {
@@ -35,9 +35,9 @@ import {
 } from '../../components/EditorWidgets';
 
 /** 到期选项：今天 / 明天 / 一周后 / 一月后。 */
-const EXPIRY_CHOICES: string[] = ['今天', '明天', '一周后', '一月后'];
+const EXPIRY_CHOICES: string[] = [t('temp_today'), t('temp_tomorrow'), t('temp_week'), t('temp_month')];
 /** 临时策略：继承 / 覆盖。 */
-const TEMP_TYPE_CHOICES: string[] = ['继承', '覆盖'];
+const TEMP_TYPE_CHOICES: string[] = [t('temp_inherit'), t('temp_override')];
 
 @ComponentV2
 export struct TempOverlayPane {
@@ -80,7 +80,7 @@ export struct TempOverlayPane {
     if (row.tempPlanExists) {
       this.say(`临时生效中：${row.tempPlanName}（自 ${row.tempPlanFromText}）`);
     } else {
-      this.say('当前没有临时课表。');
+      this.say(t('temp_none_current'));
     }
   }
 
@@ -91,7 +91,7 @@ export struct TempOverlayPane {
   build() {
     NavDestination() {
       Column() {
-        EditorHeader({ title: '临时与叠加', stack: this.stack })
+        EditorHeader({ title: t('temp_header'), stack: this.stack })
 
         Scroll() {
           Column() {
@@ -126,16 +126,15 @@ export struct TempOverlayPane {
         .fontColor($r('app.color.ch_text_primary'))
         .width('100%')
 
-      Text('叠加表是挂在某张表之上的临时修改（例如这周把那节体育改成自习）。' +
-        '总开关关着时，叠加表完全不参与选课。')
+      Text(t('temp_overlay_desc'))
         .fontSize(11)
         .fontColor($r('app.color.ch_text_hint'))
         .width('100%')
         .margin({ top: 2, bottom: 6 })
 
       EditorToggleRow({
-        label: '启用叠加',
-        hint: '关着时所有叠加表都不生效',
+        label: t('temp_enable_overlay'),
+        hint: t('temp_overlay_off_hint'),
         isOn: vm.profile.isOverlayEnabled,
         onToggle: (isOn: boolean) => { vm.setClassPlanOverlayEnabled(isOn); }
       })
@@ -149,7 +148,7 @@ export struct TempOverlayPane {
                 .fontColor($r('app.color.ch_text_primary'))
               Text(plan.overlaySourceName.length > 0
                 ? `叠加自 ${plan.overlaySourceName}`
-                : '叠加源已失效，这张表不参与选课')
+                : t('temp_source_stale'))
                 .fontSize(11)
                 .fontColor(plan.overlaySourceName.length > 0
                   ? $r('app.color.ch_text_hint')
@@ -164,9 +163,9 @@ export struct TempOverlayPane {
               .onClick(() => {
                 UiFeedback.confirm(
                   this.getUIContext(),
-                  '取消叠加',
+                  t('temp_cancel_overlay'),
                   `「${plan.name}」会从叠加关系里摘掉。课表本身保留，可以当成普通课表启用。`,
-                  '取消叠加',
+                  t('temp_cancel_overlay'),
                   () => { vm.removeClassPlan(plan.guid); }
                 );
               })
@@ -198,12 +197,12 @@ export struct TempOverlayPane {
           .width('100%')
           .margin({ top: 4 })
         EditorChip({
-          text: '取消临时课表',
+          text: t('temp_cancel_temporary'),
           onTap: () => { vm.cancelTempClassPlan(); }
         })
           .margin({ top: 6 })
       } else {
-        Text('选一张课表临时顶上去，到期后自动失效。')
+        Text(t('temp_temporary_desc'))
           .fontSize(11)
           .fontColor($r('app.color.ch_text_hint'))
           .width('100%')
@@ -217,7 +216,7 @@ export struct TempOverlayPane {
             .fontColor($r('app.color.ch_text_primary'))
             .maxLines(1)
             .layoutWeight(1)
-          Text('临时用')
+          Text(t('temp_in_use'))
             .fontSize(12)
             .fontColor($r('app.color.ch_accent'))
             .onClick(() => { this.startTempPlan(vm, plan); })
@@ -228,7 +227,7 @@ export struct TempOverlayPane {
       }, (plan: ClassPlanRow) => plan.guid)
 
       if (vm.classPlans.length === 0) {
-        EditorEmptyHint({ text: '还没有课表，先到「课表」建一张。' })
+        EditorEmptyHint({ text: t('temp_no_schedule') })
       }
     }
     .width('100%')
@@ -239,9 +238,9 @@ export struct TempOverlayPane {
     const host = this.getUIContext();
     this.getUIContext().showAlertDialog({
       title: `临时用「${plan.name}」`,
-      message: '选一个到期时间，到期后自动恢复正常选课。',
+      message: t('temp_pick_expiry'),
       buttons: [
-        { value: '取消', action: () => {} },
+        { value: t('temp_cancel'), action: () => {} },
         ...this.expiryButtons(vm, plan)
       ]
     });
@@ -284,12 +283,12 @@ export struct TempOverlayPane {
           .width('100%')
           .margin({ top: 4 })
         EditorChip({
-          text: '取消临时课表群',
+          text: t('temp_cancel_group'),
           onTap: () => { vm.cancelTempClassPlanGroup(); }
         })
           .margin({ top: 6 })
       } else {
-        Text('把一整个群临时顶上去。群里的课表按各自规则排，所以一周里不同天可能落到不同的表。')
+        Text(t('temp_group_desc'))
           .fontSize(11)
           .fontColor($r('app.color.ch_text_hint'))
           .width('100%')
@@ -307,7 +306,7 @@ export struct TempOverlayPane {
             .fontSize(11)
             .fontColor($r('app.color.ch_text_hint'))
             .margin({ right: 10 })
-          Text('临时用')
+          Text(t('temp_in_use'))
             .fontSize(12)
             .fontColor($r('app.color.ch_accent'))
             .onClick(() => { this.startTempGroup(group.guid, group.name); })
@@ -318,7 +317,7 @@ export struct TempOverlayPane {
       }, (group: ClassPlanGroupRow) => group.guid)
 
       if (vm.groups.length === 0) {
-        EditorEmptyHint({ text: '还没有课表群。' })
+        EditorEmptyHint({ text: t('temp_no_groups') })
       }
     }
     .width('100%')
@@ -334,9 +333,9 @@ export struct TempOverlayPane {
   private startTempGroup(groupId: string, groupName: string): void {
     this.getUIContext().showAlertDialog({
       title: `临时用「${groupName}」`,
-      message: '选策略与到期时间。',
+      message: t('temp_group_pick_msg'),
       buttons: [
-        { value: '取消', action: () => {} },
+        { value: t('temp_cancel'), action: () => {} },
         {
           value: `${TEMP_TYPE_CHOICES[0]} · 到期`,
           action: () => { this.commitTempGroup(groupId, 0, 2); }
@@ -373,14 +372,13 @@ export struct TempOverlayPane {
   @Builder
   private orderedSection(vm: ScheduleEditorViewModel) {
     Column() {
-      Text('预定课表')
+      Text(t('temp_booked'))
         .fontSize(14)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('app.color.ch_text_primary'))
         .width('100%')
 
-      Text('预定让某一天用另一张表，比如期中考试那天。过了的日子标成已过期，' +
-        '不会自动清掉 —— 它们还在档案里，跟着同步走。')
+      Text(t('temp_booked_desc'))
         .fontSize(11)
         .fontColor($r('app.color.ch_text_hint'))
         .width('100%')
@@ -390,13 +388,13 @@ export struct TempOverlayPane {
         this.picker(vm)
       } else {
         Row() {
-          EditorChip({ text: '+ 预定某一天', onTap: () => { this.beginPick('', ''); } })
+          EditorChip({ text: t('temp_book_a_day'), onTap: () => { this.beginPick('', ''); } })
         }
         .width('100%')
       }
 
       if (vm.orderedSchedules.length === 0) {
-        EditorEmptyHint({ text: '还没有预定。' })
+        EditorEmptyHint({ text: t('temp_no_booked') })
       }
 
       ForEach(vm.orderedSchedules, (row: OrderedScheduleRow) => {
@@ -436,9 +434,9 @@ export struct TempOverlayPane {
         .onClick(() => {
           UiFeedback.confirm(
             this.getUIContext(),
-            '取消预定',
+            t('temp_cancel_booked'),
             `${row.dateText} 会恢复正常选课。档案里的这条预定将被删除。`,
-            '取消预定',
+            t('temp_cancel_booked'),
             () => { vm.setOrderedSchedule(dateOfKey(row.dateKey), undefined); }
           );
         })
@@ -471,15 +469,15 @@ export struct TempOverlayPane {
           .fontSize(13)
           .fontColor($r('app.color.ch_text_primary'))
           .layoutWeight(1)
-        EditorChip({ text: '换一天', onTap: () => { this.askDate(); } })
+        EditorChip({ text: t('temp_change_day'), onTap: () => { this.askDate(); } })
         Text(' ').fontSize(4)
-        EditorChip({ text: '取消', onTap: () => { this.picking = false; } })
+        EditorChip({ text: t('temp_cancel'), onTap: () => { this.picking = false; } })
       }
       .width('100%')
       .alignItems(VerticalAlign.Center)
 
       if (vm.classPlans.length === 0) {
-        EditorEmptyHint({ text: '还没有课表，先到「课表」建一张。' })
+        EditorEmptyHint({ text: t('temp_no_schedule') })
       }
 
       ForEach(vm.classPlans, (plan: ClassPlanRow) => {
@@ -489,7 +487,7 @@ export struct TempOverlayPane {
             .fontColor($r('app.color.ch_text_primary'))
             .maxLines(1)
             .layoutWeight(1)
-          Text(this.pickingKey.length > 0 && this.pickingKey === plan.guid ? '当前' : '用这张')
+          Text(this.pickingKey.length > 0 && this.pickingKey === plan.guid ? t('temp_current') : t('temp_use_this'))
             .fontSize(12)
             .fontColor($r('app.color.ch_accent'))
             .onClick(() => { this.commitPick(vm, plan.guid); })
@@ -573,7 +571,7 @@ function dateOfKey(key: string): DateTimeValue {
 
 /** 星期几的单字，档案口径（0=周日）。这里只用于日期选择器那行提示。 */
 function weekDayLabel(weekDay: number): string {
-  const names: string[] = ['日', '一', '二', '三', '四', '五', '六'];
+  const names: string[] = [t('week_sun'), t('week_mon'), t('week_tue'), t('week_wed'), t('week_thu'), t('week_fri'), t('week_sat')];
   return weekDay < 0 || weekDay > 6 ? '?' : names[weekDay];
 }
 
