@@ -687,6 +687,10 @@
     {
       "name": "week_sat",
       "value": "Sa"
+    },
+    {
+      "name": "temp_cancel_booked",
+      "value": "Cancel Booking"
     }
   ]
 }

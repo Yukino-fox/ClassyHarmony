@@ -222,8 +222,8 @@ struct ClockSettings {
         }
       })
       EditorToggleRow({
-        label: '用精确时间服务校时',
-        hint: '关掉则直接用本机时间',
+        label: t('pane_use_exact_time'),
+        hint: t('pane_use_local_time'),
         isOn: this.value.showRealTime,
         onToggle: (next: boolean) => {
           this.value.showRealTime = next;
@@ -232,7 +232,7 @@ struct ClockSettings {
       })
       EditorToggleRow({
         label: '冒号闪烁',
-        hint: '秒数不显示时才有效果',
+        hint: t('pane_seconds_hint'),
         isOn: this.value.flashTimeSeparator,
         onToggle: (next: boolean) => {
           this.value.flashTimeSeparator = next;
@@ -254,7 +254,7 @@ struct TextSettings {
       EditorTextField({
         label: '文字',
         value: this.value.textContent,
-        placeholder: '显示在这一行的文字',
+        placeholder: t('pane_text_placeholder'),
         onCommit: (text: string) => {
           this.value.textContent = text;
           this.onChanged();
@@ -273,7 +273,7 @@ struct TextSettings {
         }
       })
       EditorToggleRow({
-        label: '用自定义颜色',
+        label: t('pane_custom_color'),
         hint: '关掉则跟随面板前景色',
         isOn: this.value.useCustomFontColor,
         onToggle: (next: boolean) => {
@@ -330,14 +330,14 @@ struct CountDownSettings {
       EditorTextField({
         label: '连接词',
         value: this.value.countDownConnector,
-        placeholder: '还有',
+        placeholder: t('countdown_connector'),
         onCommit: (text: string) => {
           this.value.countDownConnector = text;
           this.onChanged();
         }
       })
       EditorToggleRow({
-        label: '连接词用强调色',
+        label: t('pane_connector_accent'),
         isOn: this.value.isConnectorColorEmphasized,
         onToggle: (next: boolean) => {
           this.value.isConnectorColorEmphasized = next;
@@ -363,7 +363,7 @@ struct CountDownSettings {
       if (this.value.showProgress) {
         EditorToggleRow({
           label: '进度条反向',
-          hint: '改成显示已经过去的时间',
+          hint: t('pane_countdown_past'),
           isOn: this.value.isProgressInverted,
           onToggle: (next: boolean) => {
             this.value.isProgressInverted = next;
@@ -418,7 +418,7 @@ struct WeatherSettings {
   build() {
     Column() {
       EditorToggleRow({
-        label: '显示天气预警',
+        label: t('pane_show_alerts'),
         isOn: this.value.showAlerts,
         onToggle: (next: boolean) => {
           this.value.showAlerts = next;
@@ -426,7 +426,7 @@ struct WeatherSettings {
         }
       })
       EditorToggleRow({
-        label: '显示降雨时间',
+        label: t('pane_show_rain'),
         isOn: this.value.showRainTime,
         onToggle: (next: boolean) => {
           this.value.showRainTime = next;
@@ -434,8 +434,8 @@ struct WeatherSettings {
         }
       })
       EditorToggleRow({
-        label: '模糊长时间降雨倒计时',
-        hint: '长时间降雨时不显示具体剩余分钟',
+        label: t('pane_vague_rain_countdown'),
+        hint: t('pane_vague_rain_hint'),
         isOn: this.value.isFuzzyLongRainCountdownEnabled,
         onToggle: (next: boolean) => {
           this.value.isFuzzyLongRainCountdownEnabled = next;
@@ -450,7 +450,7 @@ struct WeatherSettings {
           this.onChanged();
         }
       })
-      Text('预警标题的显示方式、天气数据来源目前沿用桌面版的默认值，鸿蒙侧暂不可改。')
+      Text(t('pane_alert_meta_hint'))
         .fontSize(11)
         .fontColor($r('app.color.ch_text_hint'))
         .width('100%')
@@ -469,7 +469,7 @@ struct ScheduleSettings {
     Column() {
       EditorToggleRow({
         label: '时刻显示额外信息',
-        hint: '在每个时刻旁边补一行说明',
+        hint: t('pane_schedule_notes'),
         isOn: this.value.showExtraInfoOnTimePoint,
         onToggle: (next: boolean) => {
           this.value.showExtraInfoOnTimePoint = next;
@@ -499,7 +499,7 @@ struct ScheduleSettings {
         }
       })
       EditorToggleRow({
-        label: '隐藏已经上完的课',
+        label: t('pane_hide_finished'),
         isOn: this.value.hideFinishedClass,
         onToggle: (next: boolean) => {
           this.value.hideFinishedClass = next;
@@ -507,8 +507,8 @@ struct ScheduleSettings {
         }
       })
       EditorToggleRow({
-        label: '淡化已上完的课',
-        hint: '与「隐藏」不同，它只是变淡',
+        label: t('pane_dim_finished'),
+        hint: t('pane_dim_hint'),
         isOn: this.value.fadeCompletedClasses,
         onToggle: (next: boolean) => {
           this.value.fadeCompletedClasses = next;
@@ -525,7 +525,7 @@ struct ScheduleSettings {
       })
       if (this.value.showPlaceholderOnEmptyClassPlan) {
         EditorTextField({
-          label: '没有课的文案',
+          label: t('pane_no_class_text'),
           value: this.value.placeholderTextNoClass,
           onCommit: (text: string) => {
             this.value.placeholderTextNoClass = text;
@@ -550,7 +550,7 @@ struct ScheduleSettings {
         }
       })
       EditorToggleRow({
-        label: '高亮有临时调整的课',
+        label: t('pane_highlight_temp'),
         isOn: this.value.highlightChangedClass,
         onToggle: (next: boolean) => {
           this.value.highlightChangedClass = next;
@@ -613,7 +613,7 @@ struct RollingSettings {
           }
         })
       }
-      Text('按规则暂停与停止要等规则判定（P8）落地后才能在这里配。')
+      Text(t('pane_rule_pause_hint'))
         .fontSize(11)
         .fontColor($r('app.color.ch_text_hint'))
         .width('100%')
@@ -649,7 +649,7 @@ struct SlideSettings {
           this.onChanged();
         }
       })
-      Text('切换方式、按规则暂停与停止要等规则判定（P8）落地后才能在这里配。')
+      Text(t('pane_slide_rule_hint'))
         .fontSize(11)
         .fontColor($r('app.color.ch_text_hint'))
         .width('100%')
@@ -740,9 +740,9 @@ export struct ComponentSettingsPane {
     } else if (this.componentGuid === COMPONENT_SLIDE) {
       SlideSettings({ value: this.payload as SlidePayload, onChanged: () => { this.onChanged(); } })
     } else if (this.componentGuid === COMPONENT_GROUP || this.componentGuid === COMPONENT_STACK) {
-      NoSettings({ hint: '这个容器没有自己的设置，配置的是它里面的组件。' })
+      NoSettings({ hint: t('pane_container_no_settings') })
     } else if (this.componentGuid === COMPONENT_SEPARATOR) {
-      NoSettings({ hint: '分割线没有可设置的项。' })
+      NoSettings({ hint: t('pane_separator_no_settings') })
     } else {
       NoSettings({
         hint: `组件 id ${this.componentGuid} 没有被识别，设置原样保留。`
@@ -783,17 +783,17 @@ export struct ComponentSettingsPane {
         Column() {
           EditorCard({ title: '组件' })
           EditorTextField({
-            label: '自定义名',
+            label: t('pane_custom_name'),
             value: this.nameCache,
-            placeholder: '留空则用组件自己的名字',
+            placeholder: t('pane_name_placeholder'),
             onCommit: (text: string) => {
               this.nameCache = text;
               this.vm.setNameCache(this.location, text);
             }
           })
           EditorToggleRow({
-            label: '按规则隐藏',
-            hint: '规则成立时这个组件不显示。判定按打开页面的那一刻的课表。',
+            label: t('pane_hide_by_rules'),
+            hint: t('pane_hide_by_rules_hint'),
             isOn: this.hideOnRule,
             onToggle: (next: boolean) => {
               this.hideOnRule = next;
@@ -805,7 +805,7 @@ export struct ComponentSettingsPane {
               vm: this.vm,
               location: this.location,
               isLine: false,
-              title: '这块内容的隐藏规则'
+              title: t('pane_hide_rules_title')
             })
           }
 

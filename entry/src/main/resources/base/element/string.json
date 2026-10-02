@@ -723,6 +723,10 @@
     {
       "name": "week_sat",
       "value": "六"
+    },
+    {
+      "name": "temp_cancel_booked",
+      "value": "取消预定"
     }
   ]
 }
