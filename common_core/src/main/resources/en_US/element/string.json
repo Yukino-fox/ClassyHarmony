@@ -1,180 +1,176 @@
 {
   "string": [
     {
-      "name": "common_core_desc",
-      "value": "ClassyHarmony 核心引擎层"
-    },
-    {
       "name": "weather_code_0",
-      "value": "晴"
+      "value": "Clear"
     },
     {
       "name": "weather_code_1",
-      "value": "多云"
+      "value": "Cloudy"
     },
     {
       "name": "weather_code_2",
-      "value": "阴"
+      "value": "Overcast"
     },
     {
       "name": "weather_code_3",
-      "value": "阵雨"
+      "value": "Shower"
     },
     {
       "name": "weather_code_4",
-      "value": "雷阵雨"
+      "value": "Thunderstorm"
     },
     {
       "name": "weather_code_5",
-      "value": "雷阵雨并伴有冰雹"
+      "value": "Thunderstorm with Hail"
     },
     {
       "name": "weather_code_6",
-      "value": "雨夹雪"
+      "value": "Sleet"
     },
     {
       "name": "weather_code_7",
-      "value": "小雨"
+      "value": "Light Rain"
     },
     {
       "name": "weather_code_8",
-      "value": "中雨"
+      "value": "Moderate Rain"
     },
     {
       "name": "weather_code_9",
-      "value": "大雨"
+      "value": "Heavy Rain"
     },
     {
       "name": "weather_code_10",
-      "value": "暴雨"
+      "value": "Rainstorm"
     },
     {
       "name": "weather_code_11",
-      "value": "大暴雨"
+      "value": "Severe Rainstorm"
     },
     {
       "name": "weather_code_12",
-      "value": "特大暴雨"
+      "value": "Extreme Rainstorm"
     },
     {
       "name": "weather_code_13",
-      "value": "阵雪"
+      "value": "Snow Shower"
     },
     {
       "name": "weather_code_14",
-      "value": "小雪"
+      "value": "Light Snow"
     },
     {
       "name": "weather_code_15",
-      "value": "中雪"
+      "value": "Moderate Snow"
     },
     {
       "name": "weather_code_16",
-      "value": "大雪"
+      "value": "Heavy Snow"
     },
     {
       "name": "weather_code_17",
-      "value": "暴雪"
+      "value": "Blizzard"
     },
     {
       "name": "weather_code_18",
-      "value": "雾"
+      "value": "Fog"
     },
     {
       "name": "weather_code_19",
-      "value": "冻雨"
+      "value": "Freezing Rain"
     },
     {
       "name": "weather_code_20",
-      "value": "沙尘暴"
+      "value": "Sandstorm"
     },
     {
       "name": "weather_code_21",
-      "value": "小雨-中雨"
+      "value": "Light to Moderate Rain"
     },
     {
       "name": "weather_code_22",
-      "value": "中雨-大雨"
+      "value": "Moderate to Heavy Rain"
     },
     {
       "name": "weather_code_23",
-      "value": "大雨-暴雨"
+      "value": "Heavy Rain to Rainstorm"
     },
     {
       "name": "weather_code_24",
-      "value": "暴雨-大暴雨"
+      "value": "Rainstorm to Severe Rainstorm"
     },
     {
       "name": "weather_code_25",
-      "value": "大暴雨-特大暴雨"
+      "value": "Severe to Extreme Rainstorm"
     },
     {
       "name": "weather_code_26",
-      "value": "小雪-中雪"
+      "value": "Light to Moderate Snow"
     },
     {
       "name": "weather_code_27",
-      "value": "中雪-大雪"
+      "value": "Moderate to Heavy Snow"
     },
     {
       "name": "weather_code_28",
-      "value": "大雪-暴雪"
+      "value": "Heavy Snow to Blizzard"
     },
     {
       "name": "weather_code_29",
-      "value": "浮尘"
+      "value": "Dust"
     },
     {
       "name": "weather_code_30",
-      "value": "扬沙"
+      "value": "Sand"
     },
     {
       "name": "weather_code_31",
-      "value": "强沙尘暴"
+      "value": "Severe Sandstorm"
     },
     {
       "name": "weather_code_32",
-      "value": "飑"
+      "value": "Squall"
     },
     {
       "name": "weather_code_33",
-      "value": "龙卷风"
+      "value": "Tornado"
     },
     {
       "name": "weather_code_34",
-      "value": "弱高吹雪"
+      "value": "Drifting Snow"
     },
     {
       "name": "weather_code_35",
-      "value": "轻雾"
+      "value": "Mist"
     },
     {
       "name": "weather_code_53",
-      "value": "霾"
+      "value": "Haze"
     },
     {
       "name": "weather_code_301",
-      "value": "雨"
+      "value": "Rain"
     },
     {
       "name": "weather_code_302",
-      "value": "雪"
+      "value": "Snow"
     },
     {
       "name": "weather_code_99",
-      "value": "未知"
+      "value": "Unknown"
     },
     {
       "name": "weather_unknown",
-      "value": "未知"
+      "value": "Unknown"
     },
     {
       "name": "trigger_lifetime_startup",
-      "value": "应用启动时"
+      "value": "On App Launch"
     },
     {
       "name": "trigger_lifetime_stopping",
-      "value": "应用退出时"
+      "value": "On App Exit"
     },
     {
       "name": "trigger_cron",
@@ -182,87 +178,87 @@
     },
     {
       "name": "trigger_lessons_current_time_state_changed",
-      "value": "当前时间状态变化时"
+      "value": "On Current Time State Change"
     },
     {
       "name": "trigger_lessons_on_after_school",
-      "value": "放学时"
+      "value": "After School"
     },
     {
       "name": "trigger_lessons_on_breaking_time",
-      "value": "课间休息时"
+      "value": "On Break"
     },
     {
       "name": "trigger_lessons_on_class",
-      "value": "上课时"
+      "value": "In Class"
     },
     {
       "name": "trigger_lessons_pre_time_point",
-      "value": "特定时间点前"
+      "value": "Before Specific Time"
     },
     {
       "name": "trigger_ruleset_changed",
-      "value": "规则集更新时"
+      "value": "On Ruleset Change"
     },
     {
       "name": "trigger_signal",
-      "value": "收到信号时"
+      "value": "On Signal Received"
     },
     {
       "name": "trigger_tray_menu",
-      "value": "从托盘菜单运行时"
+      "value": "From Tray Menu"
     },
     {
       "name": "trigger_uri",
-      "value": "调用 Uri 时"
+      "value": "On Uri Call"
     },
     {
       "name": "trigger_ruleset_changed_reason",
-      "value": "桌面版这个触发器挂在「规则集状态更新」事件上。鸿蒙侧规则集只在面板里被求值，没有一个全局的状态更新事件源 —— 硬造一个只会让工作流收到大量无意义的触发。"
+      "value": "The desktop version hooks this trigger to the \"ruleset state update\" event. On HarmonyOS, rulesets are only evaluated in the panel, and there is no global state update event source — creating one would only cause the workflow to receive a large number of meaningless triggers."
     },
     {
       "name": "trigger_signal_reason",
-      "value": "信号由 v2 行动 classisland.broadcastSignal 发出，鸿蒙侧没有 v2 行动，等于永远收不到这个信号。"
+      "value": "The signal is sent by the v2 action classisland.broadcastSignal. HarmonyOS does not have v2 actions, so this signal will never be received."
     },
     {
       "name": "trigger_tray_menu_reason",
-      "value": "鸿蒙没有托盘，从托盘菜单运行这一条没有对应物。"
+      "value": "HarmonyOS has no tray, so running from the tray menu has no equivalent."
     },
     {
       "name": "trigger_uri_reason",
-      "value": "鸿蒙侧的对应物是 ability 的 want.uri（深链），需要先在 module.json5 里声明 skills 匹配规则才能收到，那一步还没做。"
+      "value": "The HarmonyOS equivalent is the ability's want.uri (deep link), which requires declaring skills matching rules in module.json5 first — that step has not been done yet."
     },
     {
       "name": "action_app_quit",
-      "value": "退出 ClassIsland"
+      "value": "Quit ClassIsland"
     },
     {
       "name": "action_app_restart",
-      "value": "重启 ClassIsland"
+      "value": "Restart ClassIsland"
     },
     {
       "name": "action_settings",
-      "value": "应用设置"
+      "value": "App Settings"
     },
     {
       "name": "action_show_notification",
-      "value": "显示提醒"
+      "value": "Show Notification"
     },
     {
       "name": "action_os_run",
-      "value": "运行"
+      "value": "Run"
     },
     {
       "name": "action_sleep",
-      "value": "等待时长"
+      "value": "Wait"
     },
     {
       "name": "action_notification_weather",
-      "value": "显示天气提醒"
+      "value": "Show Weather Alert"
     },
     {
       "name": "component_clock",
-      "value": "显示现在的时间，支持精确到秒。"
+      "value": "Clock"
     },
     {
       "name": "component_clock_desc",
@@ -270,7 +266,7 @@
     },
     {
       "name": "component_countdown",
-      "value": "显示距离某一天的倒计时。"
+      "value": "Countdown"
     },
     {
       "name": "component_countdown_desc",
@@ -278,7 +274,7 @@
     },
     {
       "name": "component_date",
-      "value": "显示今天的日期和星期。"
+      "value": "Date"
     },
     {
       "name": "component_date_desc",
@@ -286,7 +282,7 @@
     },
     {
       "name": "component_group",
-      "value": "将多个组件组合到一个组件中显示。"
+      "value": "Group Container"
     },
     {
       "name": "component_group_desc",
@@ -294,7 +290,7 @@
     },
     {
       "name": "component_rolling",
-      "value": "滚动显示组件内的内容。"
+      "value": "Rolling Container"
     },
     {
       "name": "component_rolling_desc",
@@ -302,7 +298,7 @@
     },
     {
       "name": "component_schedule",
-      "value": "显示当前的课程表信息。"
+      "value": "Schedule"
     },
     {
       "name": "component_schedule_desc",
@@ -310,7 +306,7 @@
     },
     {
       "name": "component_separator",
-      "value": "显示一个分割线，视觉上对组件进行分组。"
+      "value": "Separator"
     },
     {
       "name": "component_separator_desc",
@@ -318,7 +314,7 @@
     },
     {
       "name": "component_slide",
-      "value": "轮播多个组件。"
+      "value": "Slide Container"
     },
     {
       "name": "component_slide_desc",
@@ -326,7 +322,7 @@
     },
     {
       "name": "component_stack",
-      "value": "将多个容器堆叠显示。"
+      "value": "Stack Container"
     },
     {
       "name": "component_stack_desc",
@@ -334,7 +330,7 @@
     },
     {
       "name": "component_text",
-      "value": "显示自定义文本。"
+      "value": "Text"
     },
     {
       "name": "component_text_desc",
@@ -342,7 +338,7 @@
     },
     {
       "name": "component_weather",
-      "value": "显示当前的天气概况和气象预警。"
+      "value": "Weather Brief"
     },
     {
       "name": "component_weather_desc",
@@ -350,143 +346,143 @@
     },
     {
       "name": "panel_no_class_today",
-      "value": "今天没有课程。"
+      "value": "No classes today."
     },
     {
       "name": "panel_all_class_ended",
-      "value": "今日课程已全部结束。"
+      "value": "Today's classes have all ended."
     },
     {
       "name": "panel_no_profile",
-      "value": "还没有课表档案，先去编辑页导入或新建一份。"
+      "value": "No schedule profile yet. Import or create one in the editor."
     },
     {
       "name": "countdown_connector",
-      "value": "还有"
+      "value": "in"
     },
     {
       "name": "editor_stale",
-      "value": "（已失效）"
+      "value": "（stale）"
     },
     {
       "name": "keepalive_disabled",
-      "value": "已关闭后台保活"
+      "value": "Background keep-alive is disabled"
     },
     {
       "name": "keepalive_nothing_needed",
-      "value": "当前没有需要后台运行的功能"
+      "value": "No background features are currently needed"
     },
     {
       "name": "keepalive_no_permission",
-      "value": "没有后台运行权限"
+      "value": "No background permission"
     },
     {
       "name": "keepalive_not_system_app",
-      "value": "非系统应用不能申请该类型"
+      "value": "Non-system apps cannot request this type"
     },
     {
       "name": "plugin_no_issues",
-      "value": "没有发现问题"
+      "value": "No issues found"
     },
     {
       "name": "plugin_no_entries_declared",
-      "value": "这份清单一个扩展条目都没声明，装上不会有任何东西出现。"
+      "value": "This manifest declares no extension entries, so installing it will produce nothing."
     },
     {
       "name": "plugin_entry_id_blank",
-      "value": "条目 id 里不能有空白或控制字符（它是配置里的一项，会被原样写进用户档案）。"
+      "value": "Entry id cannot contain whitespace or control characters (it is part of the config and will be written into the user profile as-is)."
     },
     {
       "name": "plugin_component_id_collide",
-      "value": "组件 id 会写进用户档案，与内置组件共用同一套查找表。"
+      "value": "Component ids are written into the user profile and share the same lookup table as built-in components."
     },
     {
       "name": "plugin_trigger_no_schedule",
-      "value": "这个触发器没有日程，装上之后永远不会触发。"
+      "value": "This trigger has no schedule, so it will never fire after installation."
     },
     {
       "name": "plugin_action_no_kind",
-      "value": "这个行动没有类别，跑起来什么也不做。"
+      "value": "This action has no kind, so it does nothing when run."
     },
     {
       "name": "plugin_action_setting_not_allowed",
-      "value": "声明式扩展只能改应用明确开放给扩展的键。"
+      "value": "Declarative extensions can only modify keys explicitly opened to extensions by the app."
     },
     {
       "name": "plugin_theme_no_colors",
-      "value": "主题一个颜色都没给。"
+      "value": "The theme defines no colors at all."
     },
     {
       "name": "plugin_api_version_missing",
-      "value": "清单里没写 apiVersion。声明式扩展必须写明它针对哪一版 API 写的。"
+      "value": "The manifest has no apiVersion. Declarative extensions must state which API version they target."
     },
     {
       "name": "plugin_none_installed",
-      "value": "没有安装扩展"
+      "value": "No extensions installed"
     },
     {
       "name": "plugin_action_settings_not_object",
-      "value": "行动配置不是一个对象。"
+      "value": "Action settings is not an object."
     },
     {
       "name": "plugin_no_usable_entries",
-      "value": "这份清单一个可用条目都没装上。"
+      "value": "No usable entries from this manifest were loaded."
     },
     {
       "name": "plugin_provider_theme_meta_only",
-      "value": "声明式通知提供者与主题只登记元信息，本版本没有对应的运行时。"
+      "value": "Declarative notification providers and themes only register metadata; this version has no corresponding runtime."
     },
     {
       "name": "time_state_none",
-      "value": "无课程"
+      "value": "No Class"
     },
     {
       "name": "time_state_on_class",
-      "value": "上课中"
+      "value": "In Class"
     },
     {
       "name": "time_state_prepare",
-      "value": "准备上课"
+      "value": "Class Soon"
     },
     {
       "name": "time_state_break",
-      "value": "课间休息"
+      "value": "On Break"
     },
     {
       "name": "time_state_after_school",
-      "value": "已放学"
+      "value": "After School"
     },
     {
       "name": "time_state_unknown",
-      "value": "未知状态"
+      "value": "Unknown State"
     },
     {
       "name": "time_weekday_sunday",
-      "value": "星期日"
+      "value": "Sunday"
     },
     {
       "name": "time_weekday_monday",
-      "value": "星期一"
+      "value": "Monday"
     },
     {
       "name": "time_weekday_tuesday",
-      "value": "星期二"
+      "value": "Tuesday"
     },
     {
       "name": "time_weekday_wednesday",
-      "value": "星期三"
+      "value": "Wednesday"
     },
     {
       "name": "time_weekday_thursday",
-      "value": "星期四"
+      "value": "Thursday"
     },
     {
       "name": "time_weekday_friday",
-      "value": "星期五"
+      "value": "Friday"
     },
     {
       "name": "time_weekday_saturday",
-      "value": "星期六"
+      "value": "Saturday"
     }
   ]
 }

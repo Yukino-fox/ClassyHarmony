@@ -34,6 +34,7 @@
  * 扩展提供的是数据，而数据不该能变成逻辑。宁可少几个占位符，也不要开一个求值器。
  */
 
+import { t } from '../i18n/I18n';
 import { DateTimeValue, TimeState } from 'common_shared';
 import { LessonsSnapshot } from '../engine/LessonsSnapshot';
 
@@ -44,13 +45,15 @@ import { LessonsSnapshot } from '../engine/LessonsSnapshot';
  * 都要说同一件事。三处各写一份的话，改了一处另外两处就开始说另一种话 ——
  * 而这类不一致只有用户截图反馈时才看得出来。
  */
-export const TIME_STATE_LABELS: string[] =
-  ['无课程', '上课中', '准备上课', '课间休息', '已放学'];
+export const TIME_STATE_LABELS: string[] = [
+  t('time_state_none'), t('time_state_on_class'), t('time_state_prepare'),
+  t('time_state_break'), t('time_state_after_school')
+];
 
 /** 时间状态的中文名。认不出来的值给「未知状态（n）」而不是空串。 */
 export function timeStateLabel(state: number): string {
   if (state < 0 || state >= TIME_STATE_LABELS.length) {
-    return `未知状态（${state}）`;
+    return t('time_state_unknown');
   }
   return TIME_STATE_LABELS[state];
 }
@@ -169,19 +172,19 @@ class PluginTemplateResolver {
   private static weekdayText(dayOfWeek: number): string {
     switch (dayOfWeek) {
       case 0:
-        return '星期日';
+        return t('time_weekday_sunday');
       case 1:
-        return '星期一';
+        return t('time_weekday_monday');
       case 2:
-        return '星期二';
+        return t('time_weekday_tuesday');
       case 3:
-        return '星期三';
+        return t('time_weekday_wednesday');
       case 4:
-        return '星期四';
+        return t('time_weekday_thursday');
       case 5:
-        return '星期五';
+        return t('time_weekday_friday');
       case 6:
-        return '星期六';
+        return t('time_weekday_saturday');
       default:
         return '';
     }

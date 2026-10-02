@@ -18,6 +18,7 @@
  * 不是键。所以每一行的 guid 都来自遍历回调的 key 参数，不来自对象字段。
  */
 
+import { t } from '../i18n/I18n';
 import {
   ClassInfo,
   ClassPlan,
@@ -270,7 +271,7 @@ export class EditorRows {
       const plan: ClassPlan | undefined = profile.tryGetClassPlan(tempId);
       out.tempPlanId = tempId.toString();
       out.tempPlanExists = plan !== undefined;
-      out.tempPlanName = plan === undefined ? '（已失效）' : plan.name;
+      out.tempPlanName = plan === undefined ? t('editor_stale') : plan.name;
     }
     out.tempPlanFromText = profile.tempClassPlanSetupTime.toDateString();
 
@@ -280,7 +281,7 @@ export class EditorRows {
         profile.classPlanGroups.tryGet(tempGroupId.toString());
       out.tempGroupId = tempGroupId.toString();
       out.tempGroupExists = group !== undefined;
-      out.tempGroupName = group === undefined ? '（已失效）' : group.name;
+      out.tempGroupName = group === undefined ? t('editor_stale') : group.name;
     }
     out.isTempGroupEnabled = profile.isTempClassPlanGroupEnabled;
     out.tempGroupExpireText = profile.tempClassPlanGroupExpireTime.toDateString();
@@ -292,7 +293,7 @@ export class EditorRows {
     if (selected !== undefined) {
       out.selectedGroupName = selected.name;
     } else {
-      out.selectedGroupName = '（已失效）';
+      out.selectedGroupName = t('editor_stale');
     }
     return out;
   }
@@ -335,7 +336,7 @@ export class EditorRows {
       const plan: ClassPlan | undefined = profile.tryGetClassPlan(schedule.classPlanId);
       row.planId = schedule.classPlanId.toString();
       row.planExists = plan !== undefined;
-      row.planName = plan === undefined ? '（已失效）' : plan.name;
+      row.planName = plan === undefined ? t('editor_stale') : plan.name;
       if (date !== undefined && plan !== undefined) {
         const resolved: ResolvedClassPlan = ClassPlanResolver.resolve(profile, date, settings);
         row.isActive = resolved.source === ResolvedSource.OrderedSchedule &&
@@ -473,7 +474,7 @@ export class EditorRows {
     const layout: TimeLayout | undefined = profile.tryGetTimeLayout(plan.timeLayoutId);
     if (layout === undefined) {
       row.hasTimeLayout = false;
-      row.timeLayoutName = '（已失效）';
+      row.timeLayoutName = t('editor_stale');
     } else {
       row.timeLayoutName = layout.name;
       const points: TimeLayoutItem[] = layout.classTimePoints();
@@ -509,7 +510,7 @@ export class EditorRows {
     if (sourceId !== undefined) {
       const source: ClassPlan | undefined = profile.tryGetClassPlan(sourceId);
       row.overlaySourceId = sourceId.toString();
-      row.overlaySourceName = source === undefined ? '（已失效）' : source.name;
+      row.overlaySourceName = source === undefined ? t('editor_stale') : source.name;
     }
 
     row.groupId = plan.associatedGroup.toString();
@@ -521,7 +522,7 @@ export class EditorRows {
     } else if (plan.associatedGroup.equals(ClassPlanGroup.globalGroupGuid())) {
       row.groupName = '全局课表群';
     } else {
-      row.groupName = '（已失效）';
+      row.groupName = t('editor_stale');
     }
 
     const names: string[] = [];

@@ -30,6 +30,7 @@
  */
 
 import { WEATHER_CODE_UNKNOWN } from 'common_shared';
+import { t } from '../i18n/I18n';
 
 /** 表里的一条。 */
 export interface WeatherCodeEntry {
@@ -38,7 +39,7 @@ export interface WeatherCodeEntry {
 }
 
 /** 查不到时的文案。桌面版字面量。 */
-export const WEATHER_TEXT_UNKNOWN: string = '未知';
+export const WEATHER_TEXT_UNKNOWN: string = t('weather_unknown');
 
 /**
  * 40 条天气代码。顺序与 `xiaomi_weather_status.json` 一致。
@@ -48,53 +49,53 @@ export const WEATHER_TEXT_UNKNOWN: string = '未知';
  * 这不是冗余，而是照抄：桌面版同样两条路都通向「未知」。
  */
 export const WEATHER_CODE_TABLE: WeatherCodeEntry[] = [
-  { code: 0, text: '晴' },
-  { code: 1, text: '多云' },
-  { code: 2, text: '阴' },
-  { code: 3, text: '阵雨' },
-  { code: 4, text: '雷阵雨' },
-  { code: 5, text: '雷阵雨并伴有冰雹' },
-  { code: 6, text: '雨夹雪' },
-  { code: 7, text: '小雨' },
-  { code: 8, text: '中雨' },
-  { code: 9, text: '大雨' },
-  { code: 10, text: '暴雨' },
-  { code: 11, text: '大暴雨' },
-  { code: 12, text: '特大暴雨' },
-  { code: 13, text: '阵雪' },
-  { code: 14, text: '小雪' },
-  { code: 15, text: '中雪' },
-  { code: 16, text: '大雪' },
-  { code: 17, text: '暴雪' },
-  { code: 18, text: '雾' },
-  { code: 19, text: '冻雨' },
-  { code: 20, text: '沙尘暴' },
-  { code: 21, text: '小雨-中雨' },
-  { code: 22, text: '中雨-大雨' },
-  { code: 23, text: '大雨-暴雨' },
-  { code: 24, text: '暴雨-大暴雨' },
-  { code: 25, text: '大暴雨-特大暴雨' },
-  { code: 26, text: '小雪-中雪' },
-  { code: 27, text: '中雪-大雪' },
-  { code: 28, text: '大雪-暴雪' },
-  { code: 29, text: '浮尘' },
-  { code: 30, text: '扬沙' },
-  { code: 31, text: '强沙尘暴' },
-  { code: 32, text: '飑' },
-  { code: 33, text: '龙卷风' },
-  { code: 34, text: '弱高吹雪' },
-  { code: 35, text: '轻雾' },
-  { code: 53, text: '霾' },
-  { code: 301, text: '雨' },
-  { code: 302, text: '雪' },
-  { code: 99, text: '未知' }
+  { code: 0, text: 'weather_code_0' },
+  { code: 1, text: 'weather_code_1' },
+  { code: 2, text: 'weather_code_2' },
+  { code: 3, text: 'weather_code_3' },
+  { code: 4, text: 'weather_code_4' },
+  { code: 5, text: 'weather_code_5' },
+  { code: 6, text: 'weather_code_6' },
+  { code: 7, text: 'weather_code_7' },
+  { code: 8, text: 'weather_code_8' },
+  { code: 9, text: 'weather_code_9' },
+  { code: 10, text: 'weather_code_10' },
+  { code: 11, text: 'weather_code_11' },
+  { code: 12, text: 'weather_code_12' },
+  { code: 13, text: 'weather_code_13' },
+  { code: 14, text: 'weather_code_14' },
+  { code: 15, text: 'weather_code_15' },
+  { code: 16, text: 'weather_code_16' },
+  { code: 17, text: 'weather_code_17' },
+  { code: 18, text: 'weather_code_18' },
+  { code: 19, text: 'weather_code_19' },
+  { code: 20, text: 'weather_code_20' },
+  { code: 21, text: 'weather_code_21' },
+  { code: 22, text: 'weather_code_22' },
+  { code: 23, text: 'weather_code_23' },
+  { code: 24, text: 'weather_code_24' },
+  { code: 25, text: 'weather_code_25' },
+  { code: 26, text: 'weather_code_26' },
+  { code: 27, text: 'weather_code_27' },
+  { code: 28, text: 'weather_code_28' },
+  { code: 29, text: 'weather_code_29' },
+  { code: 30, text: 'weather_code_30' },
+  { code: 31, text: 'weather_code_31' },
+  { code: 32, text: 'weather_code_32' },
+  { code: 33, text: 'weather_code_33' },
+  { code: 34, text: 'weather_code_34' },
+  { code: 35, text: 'weather_code_35' },
+  { code: 53, text: 'weather_code_53' },
+  { code: 301, text: 'weather_code_301' },
+  { code: 302, text: 'weather_code_302' },
+  { code: 99, text: 'weather_code_99' }
 ];
 
 /** 对应桌面版 `IWeatherService.GetWeatherTextByCode`。 */
 export function weatherTextByCode(code: string): string {
   for (const entry of WEATHER_CODE_TABLE) {
     if (`${entry.code}` === code) {
-      return entry.text;
+      return t(entry.text);
     }
   }
   return WEATHER_TEXT_UNKNOWN;

@@ -24,6 +24,7 @@
  * 极难排查。所以这里只接收一个集合。
  */
 
+import { t } from '../i18n/I18n';
 import { CronExpression } from '../automation/CronExpression';
 import { ActionCatalog } from '../automation/ActionCatalog';
 import { TriggerCatalog } from '../automation/TriggerCatalog';
@@ -158,7 +159,7 @@ export function blockingIssues(issues: PluginIssue[]): PluginIssue[] {
 /** 一句话汇总（给状态栏用）。 */
 export function summarizeIssues(issues: PluginIssue[]): string {
   if (issues.length === 0) {
-    return '没有发现问题';
+    return t('plugin_no_issues');
   }
   const errors: number = blockingIssues(issues).length;
   const warnings: number = issues.length - errors;
@@ -183,7 +184,7 @@ export function validateManifest(manifest: ExtensionManifest, sandbox: PluginSan
     manifest.actions.length + manifest.notificationProviders.length + manifest.themes.length;
   if (count === 0) {
     out.push(PluginIssue.create(PluginIssueCode.NothingDeclared, '',
-      '这份清单一个扩展条目都没声明，装上不会有任何东西出现。',
+      t('plugin_no_entries_declared'),
       PluginIssueSeverity.Warning));
   }
   // 从这里开始的问题全是**条目级**的，一律降级成提醒（理由见 downgradeToWarning）。
@@ -274,7 +275,7 @@ function checkEntryId(id: string, path: string, out: PluginIssue[]): boolean {
     const code: number = trimmed.charCodeAt(i);
     if (code <= 32 || code === 127) {
       out.push(PluginIssue.create(PluginIssueCode.EntryIdInvalid, path,
-        '条目 id 里不能有空白或控制字符（它是配置里的一项，会被原样写进用户档案）。'));
+        t('plugin_entry_id_blank')));
       return false;
     }
   }
@@ -321,7 +322,7 @@ function validateComponents(manifest: ExtensionManifest, sandbox: PluginSandbox,
     if (guid === undefined) {
       out.push(PluginIssue.create(PluginIssueCode.EntryIdInvalid, `${path}.id`,
         `组件 id「${entry.id}」必须是 GUID（32 位十六进制 + 4 个横线）。` +
-        '组件 id 会写进用户档案，与内置组件共用同一套查找表。'));
+        t('plugin_component_id_collide')));
       continue;
     }
     // 归一后判占用：用户档案里存的是小写 D 格式，判重必须按归一后的值。
@@ -367,7 +368,7 @@ function validateTriggers(manifest: ExtensionManifest, out: PluginIssue[]): void
     if (entry.scheduleKind === PluginScheduleKind.None) {
       // 不拦：留一个「装上但不响」的口子是允许的，扩展作者可能先发骨架。
       out.push(PluginIssue.create(PluginIssueCode.TriggerScheduleNone, `${path}.scheduleKind`,
-        '这个触发器没有日程，装上之后永远不会触发。',
+        t('plugin_trigger_no_schedule'),
         PluginIssueSeverity.Warning));
       continue;
     }
@@ -429,7 +430,7 @@ function validateActions(manifest: ExtensionManifest, sandbox: PluginSandbox,
     }
     if (entry.actionKind === PluginActionKind.None) {
       out.push(PluginIssue.create(PluginIssueCode.ActionKindUnsupported, `${path}.actionKind`,
-        '这个行动没有类别，跑起来什么也不做。',
+        t('plugin_action_no_kind'),
         PluginIssueSeverity.Warning));
       continue;
     }
@@ -449,7 +450,7 @@ function validateActions(manifest: ExtensionManifest, sandbox: PluginSandbox,
     if (!sandbox.writableSettingKeys.has(entry.settingKey)) {
       out.push(PluginIssue.create(PluginIssueCode.ActionSettingKeyNotWritable, `${path}.settingKey`,
         `设置键「${entry.settingKey}」不在允许改的名单里。` +
-        '声明式扩展只能改应用明确开放给扩展的键。'));
+        t('plugin_action_setting_not_allowed')));
     }
   }
 }
@@ -498,7 +499,7 @@ function validateThemes(manifest: ExtensionManifest, out: PluginIssue[]): void {
     }
     if (entry.colors.size === 0) {
       out.push(PluginIssue.create(PluginIssueCode.ThemeColorsEmpty, `${path}.colors`,
-        '主题一个颜色都没给。'));
+        t('plugin_theme_no_colors')));
       continue;
     }
     const bad: string[] = [];

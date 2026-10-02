@@ -26,6 +26,7 @@
  * 面板里少了个东西，却不知道它去了哪。
  */
 
+import { t } from '../i18n/I18n';
 import { ComponentSettings, JsonObject, JsonValue, ModelCodec } from 'common_shared';
 import {
   ClockPayload,
@@ -381,40 +382,40 @@ export function componentDecoderOfKind(kind: string): ((node: JsonObject | undef
 }
 
 /** 一次性注册 11 个内置组件。 */
-ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_CLOCK, '时钟',
-  '显示现在的时间，支持精确到秒。', true, false, (node: JsonObject | undefined): ComponentPayload => {
+ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_CLOCK, t('component_clock'),
+  t('component_clock_desc'), true, false, (node: JsonObject | undefined): ComponentPayload => {
     return ClockPayload.decode(node ?? new JsonObject());
   }));
-ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_COUNTDOWN, '倒计时',
-  '显示距离某一天的倒计时。', true, false, (node: JsonObject | undefined): ComponentPayload => {
+ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_COUNTDOWN, t('component_countdown'),
+  t('component_countdown_desc'), true, false, (node: JsonObject | undefined): ComponentPayload => {
     return CountDownPayload.decode(node ?? new JsonObject());
   }));
-ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_DATE, '日期',
-  '显示今天的日期和星期。', false, false, (): ComponentPayload => new ComponentPayload()));
-ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_GROUP, '分组容器',
-  '将多个组件组合到一个组件中显示。', true, true, (): ComponentPayload => new ContainerPayload()));
-ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_ROLLING, '滚动容器',
-  '滚动显示组件内的内容。', true, true, (node: JsonObject | undefined): ComponentPayload => {
+ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_DATE, t('component_date'),
+  t('component_date_desc'), false, false, (): ComponentPayload => new ComponentPayload()));
+ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_GROUP, t('component_group'),
+  t('component_group_desc'), true, true, (): ComponentPayload => new ContainerPayload()));
+ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_ROLLING, t('component_rolling'),
+  t('component_rolling_desc'), true, true, (node: JsonObject | undefined): ComponentPayload => {
     return RollingPayload.decode(node ?? new JsonObject());
   }));
-ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_SCHEDULE, '课程表',
-  '显示当前的课程表信息。', true, false, (node: JsonObject | undefined): ComponentPayload => {
+ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_SCHEDULE, t('component_schedule'),
+  t('component_schedule_desc'), true, false, (node: JsonObject | undefined): ComponentPayload => {
     return SchedulePayload.decode(node ?? new JsonObject());
   }));
-ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_SEPARATOR, '分割线',
-  '显示一个分割线，视觉上对组件进行分组。', false, false, (): ComponentPayload => new ComponentPayload()));
-ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_SLIDE, '轮播容器',
-  '轮播多个组件。', true, true, (node: JsonObject | undefined): ComponentPayload => {
+ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_SEPARATOR, t('component_separator'),
+  t('component_separator_desc'), false, false, (): ComponentPayload => new ComponentPayload()));
+ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_SLIDE, t('component_slide'),
+  t('component_slide_desc'), true, true, (node: JsonObject | undefined): ComponentPayload => {
     return SlidePayload.decode(node ?? new JsonObject());
   }));
-ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_STACK, '堆叠容器',
-  '将多个容器堆叠显示。', true, true, (): ComponentPayload => new ContainerPayload()));
-ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_TEXT, '文本',
-  '显示自定义文本。', true, false, (node: JsonObject | undefined): ComponentPayload => {
+ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_STACK, t('component_stack'),
+  t('component_stack_desc'), true, true, (): ComponentPayload => new ContainerPayload()));
+ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_TEXT, t('component_text'),
+  t('component_text_desc'), true, false, (node: JsonObject | undefined): ComponentPayload => {
     return TextPayload.decode(node ?? new JsonObject());
   }));
-ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_WEATHER, '天气简报',
-  '显示当前的天气概况和气象预警。', true, false, (node: JsonObject | undefined): ComponentPayload => {
+ComponentCatalog.register(ComponentDescriptor.create(COMPONENT_WEATHER, t('component_weather'),
+  t('component_weather_desc'), true, false, (node: JsonObject | undefined): ComponentPayload => {
     return WeatherPayload.decode(node ?? new JsonObject());
   }));
 

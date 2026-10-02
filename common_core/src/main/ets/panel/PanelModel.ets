@@ -34,6 +34,7 @@
  * 用户看到文案能判断该不该等，看到空白只会以为面板坏了。
  */
 
+import { t } from '../i18n/I18n';
 import {
   ClassPlan,
   ColorValue,
@@ -99,12 +100,12 @@ const MAX_DEPTH: number = 12;
 const EMPTY_SUBJECT_TEXT: string = '（无）';
 
 /** 引擎给出的兜底文案。 */
-const NO_CLASS_TODAY: string = '今天没有课程。';
-const ALL_CLASS_ENDED: string = '今日课程已全部结束。';
+const NO_CLASS_TODAY: string = t('panel_no_class_today');
+const ALL_CLASS_ENDED: string = t('panel_all_class_ended');
 /** 倒计时组件在非紧凑模式下、名称前面那一段固定文字。抄桌面版模板里的 TextBlockTo。 */
 const COUNTDOWN_PREFIX: string = '距离';
 
-const NO_PROFILE: string = '还没有课表档案，先去编辑页导入或新建一份。';
+const NO_PROFILE: string = t('panel_no_profile');
 
 /** 跨零点的课（第二节上到凌晨）时用来把负的秒差掰回来的天数。 */
 const SECONDS_PER_DAY: number = 86400;

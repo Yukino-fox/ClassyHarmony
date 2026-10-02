@@ -905,7 +905,7 @@ function testEditorRowsOrderedSchedules(): void {
   check('悬空那条能按日期找到', dangleRow !== undefined);
   check('悬空那条 planExists 为 false', dangleRow !== undefined && !dangleRow.planExists);
   check('悬空那条不生效', dangleRow !== undefined && !dangleRow.isActive);
-  checkEqual('悬空那条显示已失效', dangleRow === undefined ? '' : dangleRow.planName, '（已失效）');
+  checkEqual('悬空那条显示已失效', dangleRow === undefined ? '' : dangleRow.planName, 'editor_stale');
 
   // 叠加班表 + 叠加班表总开关关着：有预定，但引擎不会用它。
   // 用 createOverlayClassPlan 建而不是手搓：ClassPlan 自己没有 guid 字段
@@ -1343,7 +1343,7 @@ function testEditorRowsClassPlanAfterLayoutDeleted(): void {
   ScheduleMutations.removeTimeLayout(profile, layoutId);
   const row = EditorRows.classPlans(profile, '')[0];
   checkNum('标记为未绑定', row.hasTimeLayout ? 1 : 0, 0);
-  checkEqual('时间表名显示已失效', row.timeLayoutName, '（已失效）');
+  checkEqual('时间表名显示已失效', row.timeLayoutName, 'editor_stale');
   checkNum('没有课次可排', row.slots.length, 0);
   checkNum('没有行可渲染', row.editRows.length, 0);
   checkEqual('摘要清空', row.filledText, '');
@@ -1358,7 +1358,7 @@ function testEditorRowsClassPlanGroupFallsBack(): void {
     Guid.fromCanonical('99999999-9999-9999-9999-999999999999');
   ScheduleMutations.settle(profile);
   const row = EditorRows.classPlans(profile, '')[0];
-  checkEqual('悬空群显示已失效', row.groupName, '（已失效）');
+  checkEqual('悬空群显示已失效', row.groupName, 'editor_stale');
 
   // 全局群 guid 是 Guid.Empty，也不在字典里
   (profile.tryGetClassPlan(planId) as ClassPlan).associatedGroup = ClassPlanGroup.globalGroupGuid();
@@ -1483,11 +1483,11 @@ function testEditorRowsProfileDanglingPointers(): void {
   const row = EditorRows.profile(profile);
   check('临时课表指针仍在', row.tempPlanId === dangling.toString());
   checkNum('标记为失效', row.tempPlanExists ? 1 : 0, 0);
-  checkEqual('名字显示已失效', row.tempPlanName, '（已失效）');
+  checkEqual('名字显示已失效', row.tempPlanName, 'editor_stale');
   checkNum('临时群标记为失效', row.tempGroupExists ? 1 : 0, 0);
-  checkEqual('临时群名显示已失效', row.tempGroupName, '（已失效）');
+  checkEqual('临时群名显示已失效', row.tempGroupName, 'editor_stale');
   checkEqual('临时群类型文案', row.tempGroupTypeText, '覆盖');
-  checkEqual('当前群显示已失效', row.selectedGroupName, '（已失效）');
+  checkEqual('当前群显示已失效', row.selectedGroupName, 'editor_stale');
 
   // 临时课表存在时，摘要要给出名字与建立日期
   const live = seededProfile();

@@ -40,6 +40,7 @@
  * 没有任何地方能看出「这个行动在这台设备上不会发生」。所以照常列出、标出来。
  */
 
+import { t } from '../i18n/I18n';
 import {
   AppRestartActionSettings,
   JsonNode,
@@ -124,14 +125,14 @@ const APP_RESTART_REASON: string =
   '鸿蒙上没有这套。';
 
 const REGISTRY: ActionInfo[] = [
-  entry(ActionIds.APP_QUIT, '退出 ClassIsland', '', ActionSettingsKind.None, false),
-  entry(ActionIds.APP_RESTART, '重启 ClassIsland', '', ActionSettingsKind.AppRestart, false,
+  entry(ActionIds.APP_QUIT, t('action_app_quit'), '', ActionSettingsKind.None, false),
+  entry(ActionIds.APP_RESTART, t('action_app_restart'), '', ActionSettingsKind.AppRestart, false,
     APP_RESTART_REASON),
-  entry(ActionIds.SETTINGS, '应用设置', '', ActionSettingsKind.ModifyAppSettings, true),
-  entry(ActionIds.SHOW_NOTIFICATION, '显示提醒', '', ActionSettingsKind.Notification, false),
-  entry(ActionIds.OS_RUN, '运行', '', ActionSettingsKind.Run, false, OS_RUN_REASON),
-  entry(ActionIds.SLEEP, '等待时长', '', ActionSettingsKind.Sleep, false),
-  entry(ActionIds.NOTIFICATION_WEATHER, '显示天气提醒', '',
+  entry(ActionIds.SETTINGS, t('action_settings'), '', ActionSettingsKind.ModifyAppSettings, true),
+  entry(ActionIds.SHOW_NOTIFICATION, t('action_show_notification'), '', ActionSettingsKind.Notification, false),
+  entry(ActionIds.OS_RUN, t('action_os_run'), '', ActionSettingsKind.Run, false, OS_RUN_REASON),
+  entry(ActionIds.SLEEP, t('action_sleep'), '', ActionSettingsKind.Sleep, false),
+  entry(ActionIds.NOTIFICATION_WEATHER, t('action_notification_weather'), '',
     ActionSettingsKind.WeatherNotification, false)
 ];
 

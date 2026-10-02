@@ -20,6 +20,7 @@
  * 是进程级的、由 entry 在启动时重建，widget 侧可以独立再重建一份，两者不共享）。
  */
 
+import { t } from '../i18n/I18n';
 import {
   ActionExtension,
   ComponentExtension,
@@ -308,7 +309,7 @@ export class ExtensionRegistry {
   /** 一句话汇总（设置页状态行用）。 */
   static summaryText(): string {
     if (ExtensionRegistry.order.length === 0) {
-      return '没有安装扩展';
+      return t('plugin_none_installed');
     }
     let active: number = 0;
     let broken: number = 0;

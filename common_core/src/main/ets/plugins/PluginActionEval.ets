@@ -25,6 +25,7 @@
  * 校验是为了给作者回话，执行前这道是为了「即使校验被绕过也不越权」。
  */
 
+import { t } from '../i18n/I18n';
 import { JsonNode, JsonNumber, JsonObject, JsonString, JsonValue } from 'common_shared';
 import { ActionExtension, PluginActionKind } from './PluginManifest';
 
@@ -80,7 +81,7 @@ export function planPluginAction(settings: JsonNode | undefined,
   const out: PluginActionPlan = new PluginActionPlan();
   const obj: JsonObject | undefined = JsonValue.asObject(settings);
   if (obj === undefined) {
-    out.reason = '行动配置不是一个对象。';
+    out.reason = t('plugin_action_settings_not_object');
     return out;
   }
   out.kind = parseActionKindText(JsonValue.asStringLoose(obj.tryGet('actionKind'), ''));

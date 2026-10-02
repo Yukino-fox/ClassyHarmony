@@ -27,6 +27,7 @@
  * 为了这些手填值，写清单的人不该因为少打两个数字而装不上。
  */
 
+import { t } from '../i18n/I18n';
 /** 本实现认的扩展 API 版本。清单里写的必须是同主版本且不低于下限。 */
 export const PLUGIN_API_VERSION: string = '1.0.0';
 
@@ -187,7 +188,7 @@ export class ApiCompatibility {
 export function checkPluginApiVersion(apiVersion: string): ApiCompatibility {
   const out: ApiCompatibility = new ApiCompatibility();
   if (apiVersion.trim().length === 0) {
-    out.reason = '清单里没写 apiVersion。声明式扩展必须写明它针对哪一版 API 写的。';
+    out.reason = t('plugin_api_version_missing');
     return out;
   }
   const parsed: SemVer | undefined = SemVer.tryParse(apiVersion);

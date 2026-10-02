@@ -35,6 +35,7 @@
  * Unsupported 并说明原因，而不是像规则那样假装它被判定过。
  */
 
+import { t } from '../i18n/I18n';
 import {
   CronTriggerSettings,
   JsonNode,
@@ -154,36 +155,30 @@ function entry(id: string, name: string, glyph: string, kind: TriggerSettingsKin
   return out;
 }
 
-const RULESET_CHANGED_REASON: string =
-  '桌面版这个触发器挂在「规则集状态更新」事件上。鸿蒙侧规则集只在面板里被求值，' +
-  '没有一个全局的状态更新事件源 —— 硬造一个只会让工作流收到大量无意义的触发。';
-const SIGNAL_REASON: string =
-  '信号由 v2 行动 classisland.broadcastSignal 发出，鸿蒙侧没有 v2 行动，' +
-  '等于永远收不到这个信号。';
-const TRAY_MENU_REASON: string = '鸿蒙没有托盘，从托盘菜单运行这一条没有对应物。';
-const URI_REASON: string =
-  '鸿蒙侧的对应物是 ability 的 want.uri（深链），需要先在 module.json5 里声明 ' +
-  'skills 匹配规则才能收到，那一步还没做。';
+const RULESET_CHANGED_REASON: string = t('trigger_ruleset_changed_reason');
+const SIGNAL_REASON: string = t('trigger_signal_reason');
+const TRAY_MENU_REASON: string = t('trigger_tray_menu_reason');
+const URI_REASON: string = t('trigger_uri_reason');
 
 /** 12 个内置触发器，顺序照 Services/Automation/Triggers 目录下的文件顺序。 */
 const REGISTRY: TriggerInfo[] = [
-  entry(TriggerIds.LIFETIME_STARTUP, '应用启动时', '', TriggerSettingsKind.None),
-  entry(TriggerIds.LIFETIME_STOPPING, '应用退出时', '', TriggerSettingsKind.None),
-  entry(TriggerIds.CRON, 'cron', '', TriggerSettingsKind.Cron),
-  entry(TriggerIds.LESSONS_CURRENT_TIME_STATE_CHANGED, '当前时间状态变化时', '',
+  entry(TriggerIds.LIFETIME_STARTUP, t('trigger_lifetime_startup'), '', TriggerSettingsKind.None),
+  entry(TriggerIds.LIFETIME_STOPPING, t('trigger_lifetime_stopping'), '', TriggerSettingsKind.None),
+  entry(TriggerIds.CRON, t('trigger_cron'), '', TriggerSettingsKind.Cron),
+  entry(TriggerIds.LESSONS_CURRENT_TIME_STATE_CHANGED, t('trigger_lessons_current_time_state_changed'), '',
     TriggerSettingsKind.None),
-  entry(TriggerIds.LESSONS_ON_AFTER_SCHOOL, '放学时', '', TriggerSettingsKind.None),
-  entry(TriggerIds.LESSONS_ON_BREAKING_TIME, '课间休息时', '',
+  entry(TriggerIds.LESSONS_ON_AFTER_SCHOOL, t('trigger_lessons_on_after_school'), '', TriggerSettingsKind.None),
+  entry(TriggerIds.LESSONS_ON_BREAKING_TIME, t('trigger_lessons_on_breaking_time'), '',
     TriggerSettingsKind.None),
-  entry(TriggerIds.LESSONS_ON_CLASS, '上课时', '', TriggerSettingsKind.None),
-  entry(TriggerIds.LESSONS_PRE_TIME_POINT, '特定时间点前', '',
+  entry(TriggerIds.LESSONS_ON_CLASS, t('trigger_lessons_on_class'), '', TriggerSettingsKind.None),
+  entry(TriggerIds.LESSONS_PRE_TIME_POINT, t('trigger_lessons_pre_time_point'), '',
     TriggerSettingsKind.PreTimePoint, '', true),
-  entry(TriggerIds.RULESET_CHANGED, '规则集更新时', '', TriggerSettingsKind.None,
+  entry(TriggerIds.RULESET_CHANGED, t('trigger_ruleset_changed'), '', TriggerSettingsKind.None,
     RULESET_CHANGED_REASON),
-  entry(TriggerIds.SIGNAL, '收到信号时', '', TriggerSettingsKind.Signal, SIGNAL_REASON, true),
-  entry(TriggerIds.TRAY_MENU, '从托盘菜单运行时', '', TriggerSettingsKind.TrayMenu,
+  entry(TriggerIds.SIGNAL, t('trigger_signal'), '', TriggerSettingsKind.Signal, SIGNAL_REASON, true),
+  entry(TriggerIds.TRAY_MENU, t('trigger_tray_menu'), '', TriggerSettingsKind.TrayMenu,
     TRAY_MENU_REASON),
-  entry(TriggerIds.URI, '调用 Uri 时', '', TriggerSettingsKind.Uri, URI_REASON)
+  entry(TriggerIds.URI, t('trigger_uri'), '', TriggerSettingsKind.Uri, URI_REASON)
 ];
 
 export class TriggerCatalog {

@@ -24,6 +24,8 @@
  * 好处是「什么情况下该申请」这件事可以在 Node 测试台里全量枚举。
  */
 
+import { t } from '../i18n/I18n';
+
 /** 连续任务类型：多设备互联。对应 BackgroundMode.MULTI_DEVICE_CONNECTION。 */
 export const KEEP_ALIVE_MODE_MULTI_DEVICE: string = 'MULTI_DEVICE_CONNECTION';
 /** 连续任务类型：任务保持。对应 BackgroundMode.TASK_KEEPING。 */
@@ -53,7 +55,7 @@ export function planKeepAlive(
   automationEnabled: boolean): KeepAlivePlan {
   const plan: KeepAlivePlan = new KeepAlivePlan();
   if (!keepAliveEnabled) {
-    plan.reason = '已关闭后台保活';
+    plan.reason = t('keepalive_disabled');
     return plan;
   }
   // 跨设备优先于自动化：多设备互联在手机上也能申请，自动化那条在手机上
@@ -70,7 +72,7 @@ export function planKeepAlive(
     plan.reason = '自动化需要在后台继续运行';
     return plan;
   }
-  plan.reason = '当前没有需要后台运行的功能';
+  plan.reason = t('keepalive_nothing_needed');
   return plan;
 }
 
@@ -84,9 +86,9 @@ export function planKeepAlive(
 export function keepAliveErrorText(code: number): string {
   switch (code) {
     case 201:
-      return '没有后台运行权限';
+      return t('keepalive_no_permission');
     case 202:
-      return '非系统应用不能申请该类型';
+      return t('keepalive_not_system_app');
     case 401:
       return '申请参数不合法';
     case 9800004:

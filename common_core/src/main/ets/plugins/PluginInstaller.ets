@@ -25,6 +25,7 @@
  * 而不是笼统的「安装失败」。
  */
 
+import { t } from '../i18n/I18n';
 import {
   ActionCatalog,
   ActionInfo,
@@ -118,7 +119,7 @@ export function installPlugin(manifest: ExtensionManifest,
   out.issues = issues.concat(conflicts);
   out.loaded = true;
   out.entryCount = count;
-  out.reason = count === 0 ? '这份清单一个可用条目都没装上。'
+  out.reason = count === 0 ? t('plugin_no_usable_entries')
     : conflicts.length === 0 ? '' : `${conflicts.length} 条条目因为冲突或非法被跳过。`;
   record.entryCount = count;
   record.reason = out.reason;
@@ -363,7 +364,7 @@ export function defaultSettingsOfPluginAction(actionId: string): PluginActionPla
 
 /** 提醒级别供设置页区分「装上但不生效」的条目。 */
 export const PLUGIN_INACTIVE_REMINDER: string =
-  '声明式通知提供者与主题只登记元信息，本版本没有对应的运行时。';
+  t('plugin_provider_theme_meta_only');
 
 /** 一条提醒（供设置页复用）。 */
 export function inactiveReminder(): PluginIssue {

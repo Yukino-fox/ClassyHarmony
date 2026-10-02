@@ -23,6 +23,7 @@
  * 「读」保持原样才不会在只读一遍之后凭空多出十几个键。
  */
 
+import { t } from '../i18n/I18n';
 import {
   ColorValue,
   ComponentSettings,
@@ -99,7 +100,7 @@ export class CountDownPayload extends ComponentPayload {
   fontColor: ColorValue = ColorValue.red();
   fontSize: number = 16;
   isCompactModeEnabled: boolean = false;
-  countDownConnector: string = '还有';
+  countDownConnector: string = t('countdown_connector');
   isConnectorColorEmphasized: boolean = false;
   startTime: DateTimeValue = DateTimeValue.now().dateOnly();
   useAccentOnProgressBar: boolean = true;
@@ -135,7 +136,7 @@ export class CountDownPayload extends ComponentPayload {
     out.fontColor = readColor(node, 'FontColor', ColorValue.red());
     out.fontSize = ModelCodec.int(node, 'FontSize', 16);
     out.isCompactModeEnabled = ModelCodec.bool(node, 'IsCompactModeEnabled', false);
-    out.countDownConnector = ModelCodec.string(node, 'CountDownConnector', '还有');
+    out.countDownConnector = ModelCodec.string(node, 'CountDownConnector', t('countdown_connector'));
     out.isConnectorColorEmphasized = ModelCodec.bool(node, 'IsConnectorColorEmphasized', false);
     out.startTime = ModelCodec.readDateTime(node, 'StartTime');
     out.useAccentOnProgressBar = ModelCodec.bool(node, 'UseAccentOnProgressBar', true);
@@ -254,8 +255,8 @@ export class SchedulePayload extends ComponentPayload {
   showCurrentLessonOnlyOnClass: boolean = false;
   hideFinishedClass: boolean = false;
   showPlaceholderOnEmptyClassPlan: boolean = true;
-  placeholderTextNoClass: string = '今天没有课程。';
-  placeholderTextAllClassEnded: string = '今日课程已全部结束。';
+  placeholderTextNoClass: string = t('panel_no_class_today');
+  placeholderTextAllClassEnded: string = t('panel_all_class_ended');
   showTomorrowSchedules: boolean = false;
   tomorrowScheduleShowMode: number = 1;
   highlightChangedClass: boolean = false;
@@ -273,9 +274,9 @@ export class SchedulePayload extends ComponentPayload {
     out.showCurrentLessonOnlyOnClass = ModelCodec.bool(node, 'ShowCurrentLessonOnlyOnClass', false);
     out.hideFinishedClass = ModelCodec.bool(node, 'HideFinishedClass', false);
     out.showPlaceholderOnEmptyClassPlan = ModelCodec.bool(node, 'ShowPlaceholderOnEmptyClassPlan', true);
-    out.placeholderTextNoClass = ModelCodec.string(node, 'PlaceholderTextNoClass', '今天没有课程。');
+    out.placeholderTextNoClass = ModelCodec.string(node, 'PlaceholderTextNoClass', t('panel_no_class_today'));
     out.placeholderTextAllClassEnded =
-      ModelCodec.string(node, 'PlaceholderTextAllClassEnded', '今日课程已全部结束。');
+      ModelCodec.string(node, 'PlaceholderTextAllClassEnded', t('panel_all_class_ended'));
     out.showTomorrowSchedules = ModelCodec.bool(node, 'ShowTomorrowSchedules', false);
     out.tomorrowScheduleShowMode = ModelCodec.int(node, 'TomorrowScheduleShowMode', 1);
     out.highlightChangedClass = ModelCodec.bool(node, 'HighlightChangedClass', false);

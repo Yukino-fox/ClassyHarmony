@@ -784,7 +784,7 @@ function testCountDownTodaySource(): void {
     'OverTime': '2026-10-01T00:00:00',
     'StartTime': '2026-09-01T00:00:00'
   }), `${BASE_DAY}T06:00:00`, weekday);
-  checkEqual('自然日口径 1 用整天', countdownRow(node0(whole)), '距离 倒计时 还有 18');
+  checkEqual('自然日口径 1 用整天', countdownRow(node0(whole)), '距离 倒计时 countdown_connector 18');
 
   // 口径 0 + 今天没课：退回整天（同为 18 小时，走的是 dayRange 的 fallback）。
   const fallback: PanelModel = build(oneOf(COMPONENT_COUNTDOWN, {
@@ -795,7 +795,7 @@ function testCountDownTodaySource(): void {
     'StartTime': '2026-09-01T00:00:00'
   }), `${BASE_DAY}T06:00:00`, weekday);
   checkEqual('自然日口径 0 无课时退回整天',
-    countdownRow(node0(fallback)), '距离 倒计时 还有 18');
+    countdownRow(node0(fallback)), '距离 倒计时 countdown_connector 18');
 
   // 口径 2：起止都是此刻，delta 夹到 0。
   const none: PanelModel = build(oneOf(COMPONENT_COUNTDOWN, {
@@ -805,14 +805,14 @@ function testCountDownTodaySource(): void {
     'OverTime': '2026-10-01T00:00:00',
     'StartTime': '2026-09-01T00:00:00'
   }), `${BASE_DAY}T06:00:00`, weekday);
-  checkEqual('自然日口径 2 落到空区间', countdownRow(node0(none)), '距离 倒计时 还有 0');
+  checkEqual('自然日口径 2 落到空区间', countdownRow(node0(none)), '距离 倒计时 countdown_connector 0');
 
   // 没档案（编辑预览）时按整天算，而不是崩。
   const bare: PanelModel = PanelBuilder.build(oneOf(COMPONENT_COUNTDOWN, {
     'CountdownSource': 2, 'CustomStringFormat': '%H',
     'OverTime': '2026-10-01T00:00:00', 'StartTime': '2026-09-01T00:00:00'
   }), undefined, engineSettings(), dt(`${BASE_DAY}T06:00:00`));
-  checkEqual('没档案时今天档按整天算', countdownRow(node0(bare)), '距离 倒计时 还有 18');
+  checkEqual('没档案时今天档按整天算', countdownRow(node0(bare)), '距离 倒计时 countdown_connector 18');
 }
 
 function testCountDownWeekSource(): void {
@@ -886,7 +886,7 @@ function testCountDownWeekSource(): void {
     'CountdownSource': 3, 'CustomStringFormat': '%H',
     'OverTime': '2026-10-01T00:00:00', 'StartTime': '2026-09-01T00:00:00'
   }), undefined, engineSettings(), dt(`${BASE_DAY}T00:00:00`));
-  checkEqual('没档案时本周档按整周算', countdownRow(node0(bare)), '距离 倒计时 还有 24');
+  checkEqual('没档案时本周档按整周算', countdownRow(node0(bare)), '距离 倒计时 countdown_connector 24');
 }
 
 function testCountDownCycleSource(): void {
@@ -1047,7 +1047,7 @@ function testWeather(): void {
   snapshot.info = info;
   const filled: PanelModel = PanelBuilder.build(oneOf(COMPONENT_WEATHER),
     fullWeekProfile(), engineSettings(), dt(`${BASE_DAY}T12:00:00`), snapshot);
-  checkEqual('有缓存时主信息', node0(filled).weather.mainText, '晴 26°C');
+  checkEqual('有缓存时主信息', node0(filled).weather.mainText, 'weather_code_0 26°C');
   checkEqual('有缓存时不再给提示', node0(filled).hintText, '');
   checkNum('有缓存时主信息种类是天气', node0(filled).weather.mainKind, 0);
 }
@@ -1191,7 +1191,7 @@ function testScheduleEmptyKinds(): void {
   const noProfile: PanelModel = PanelBuilder.build(oneOf(COMPONENT_SCHEDULE),
     undefined, engineSettings(), dt(`${BASE_DAY}T08:20:00`));
   checkEqual('没档案的提示', node0(noProfile).hintText,
-    '还没有课表档案，先去编辑页导入或新建一份。');
+    'panel_no_profile');
 
   // 二、课表分组是空的。与桌面版一致：CurrentClassPlan 为 null 时
   // TodayScheduleEmpty 伪类成立，用的是同一句占位文案。
@@ -1199,13 +1199,13 @@ function testScheduleEmptyKinds(): void {
   noGroup.selectedClassPlanGroupId = Guid.empty();
   noGroup.refreshDerivedState();
   const emptyGroup: PanelModel = build(oneOf(COMPONENT_SCHEDULE), `${BASE_DAY}T08:20:00`, noGroup);
-  checkEqual('空课表分组的占位', node0(emptyGroup).hintText, '今天没有课程。');
+  checkEqual('空课表分组的占位', node0(emptyGroup).hintText, 'panel_no_class_today');
 
   // 三、今天没课（只有工作日的课表，今天是周六）。与第二种是同一句话 ——
   // 桌面版也分不出来，不在这里硬分。
   const weekday: Profile = profileForDays([1, 2, 3, 4, 5]);
   const noClass: PanelModel = build(oneOf(COMPONENT_SCHEDULE), `${BASE_DAY}T08:20:00`, weekday);
-  checkEqual('今天没课的占位', node0(noClass).hintText, '今天没有课程。');
+  checkEqual('今天没课的占位', node0(noClass).hintText, 'panel_no_class_today');
 
   // 四、今天上完了 —— 必须是另一句，不能也说「没有课程」。
   // 桌面版这一句只在 AfterSchool 伪类与 HideFinishedClass 同时成立时才出现
@@ -1214,7 +1214,7 @@ function testScheduleEmptyKinds(): void {
     'HideFinishedClass': true
   }), `${BASE_DAY}T23:00:00`, fullWeekProfile());
   checkNum('隐藏后列表空', node0(ended).lessons.length, 0);
-  checkEqual('今天上完的占位', node0(ended).hintText, '今日课程已全部结束。');
+  checkEqual('今天上完的占位', node0(ended).hintText, 'panel_all_class_ended');
 
   // 五、默认不隐藏已上完的课（桌面版默认也是 false）时列表不空，占位不出现。
   const kept: PanelModel = build(oneOf(COMPONENT_SCHEDULE), `${BASE_DAY}T23:00:00`);
@@ -1246,7 +1246,7 @@ function testScheduleEmptyStringPlaceholder(): void {
   const blanked: PanelModel = build(oneOf(COMPONENT_SCHEDULE, {
     'PlaceholderTextNoClass': ''
   }), `${BASE_DAY}T08:20:00`, profileForDays([1, 2, 3, 4, 5]));
-  checkEqual('空占位文案退回兜底', node0(blanked).hintText, '今天没有课程。');
+  checkEqual('空占位文案退回兜底', node0(blanked).hintText, 'panel_no_class_today');
 }
 
 function testScheduleDisabledClass(): void {
@@ -1582,7 +1582,7 @@ function testDefaultProfileRenders(): void {
 function testDisplayNameFallback(): void {
   // 逐级退化，从不为空串。
   const known: ComponentSettings = component(COMPONENT_TEXT);
-  checkEqual('内置名', PanelBuilder.displayNameOf(known), '文本');
+  checkEqual('内置名', PanelBuilder.displayNameOf(known), 'component_text');
 
   const cached: ComponentSettings = component('99999999-9999-9999-9999-999999999999');
   cached.nameCache = '我的组件';

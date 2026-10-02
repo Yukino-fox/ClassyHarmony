@@ -410,6 +410,11 @@ export {
   ExtensionRegistry
 } from './src/main/ets/plugins/ExtensionRegistry';
 export {
+  clearCache,
+  t,
+  tf
+} from './src/main/ets/i18n/I18n';
+export {
   DESKTOP_FIELD_API_VERSION,
   DESKTOP_FIELD_AUTHOR,
   DESKTOP_FIELD_DESCRIPTION,
