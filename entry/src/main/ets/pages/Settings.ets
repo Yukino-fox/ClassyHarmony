@@ -33,6 +33,7 @@
  * 来说不构成问题。
  */
 
+import { t } from 'common_core';
 import { common } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import {
@@ -1248,12 +1249,12 @@ struct SettingsPage {
 
         if (row.expanded) {
           Column() {
-            this.noteRow('状态', row.statusText())
+            this.noteRow(t('settings_status'), row.statusText())
             if (row.description.length > 0) {
-              this.noteRow('描述', row.description)
+              this.noteRow(t('settings_description'), row.description)
             }
-            this.noteRow('声明了什么', row.declaredText())
-            this.noteRow('作者', row.author.length > 0 ? row.author : '没写')
+            this.noteRow(t('settings_declared'), row.declaredText())
+            this.noteRow(t('settings_author'), row.author.length > 0 ? row.author : '没写')
             ForEach(row.issueLines(), (line: string) => {
               Text(`· ${line}`)
                 .fontSize(13)
@@ -1264,10 +1265,10 @@ struct SettingsPage {
             if (row.issueLines().length > 0) {
               Blank()
             }
-            this.actionRow('导出清单', true, () => {
+            this.actionRow(t('settings_export_manifest'), true, () => {
               this.exportPlugin(row);
             })
-            this.actionRow('卸载', true, () => {
+            this.actionRow(t('settings_uninstall'), true, () => {
               this.uninstallPlugin(row);
             })
           }
@@ -1292,69 +1293,69 @@ struct SettingsPage {
       } else {
         List() {
           // ---- 界面
-          this.groupTitle('界面')
-          this.valueRow('主题', this.themeLabel(), () => {
+          this.groupTitle(t('settings_group_ui'))
+          this.valueRow(t('settings_theme'), this.themeLabel(), () => {
             this.cycleTheme();
           })
-          this.valueRow('字体缩放', this.fontScaleLabel(), () => {
+          this.valueRow(t('settings_font_scale'), this.fontScaleLabel(), () => {
             this.cycleFontScale();
           })
-          this.valueRow('首页默认页', this.defaultPageLabel(), () => {
+          this.valueRow(t('settings_default_page'), this.defaultPageLabel(), () => {
             this.cycleDefaultPage();
           })
 
           // ---- 课表
-          this.groupTitle('课表')
-          this.toggleRow('显示周数', this.showWeekNum, (on: boolean) => {
+          this.groupTitle(t('settings_group_schedule'))
+          this.toggleRow(t('settings_show_week_num'), this.showWeekNum, (on: boolean) => {
             this.showWeekNum = on;
             this.writeBool(PrefKeys.SHOW_WEEK_NUM, on);
           })
-          this.toggleRow('显示课间空档', this.showFreeTime, (on: boolean) => {
+          this.toggleRow(t('settings_show_free_time'), this.showFreeTime, (on: boolean) => {
             this.showFreeTime = on;
             this.writeBool(PrefKeys.SHOW_FREE_TIME, on);
           })
-          this.toggleRow('检测时间冲突', this.conflictDetection, (on: boolean) => {
+          this.toggleRow(t('settings_conflict_detection'), this.conflictDetection, (on: boolean) => {
             this.conflictDetection = on;
             this.writeBool(PrefKeys.CONFLICT_DETECTION, on);
           })
-          this.toggleRow('自动定位到当前周', this.autoSelectCurrentWeek, (on: boolean) => {
+          this.toggleRow(t('settings_auto_week'), this.autoSelectCurrentWeek, (on: boolean) => {
             this.autoSelectCurrentWeek = on;
             this.writeBool(PrefKeys.AUTO_SELECT_CURRENT_WEEK, on);
           })
 
           // ---- 课前提醒
-          this.groupTitle('课前提醒')
-          this.toggleRow('启用课前提醒', this.reminderEnabled, (on: boolean) => {
+          this.groupTitle(t('settings_group_reminder'))
+          this.toggleRow(t('settings_enable_reminder'), this.reminderEnabled, (on: boolean) => {
             this.reminderEnabled = on;
             this.writeBool(PrefKeys.REMINDER_ENABLED, on);
           })
-          this.valueRow('室内课提前', this.advanceLabel(this.advanceIndoor), () => {
+          this.valueRow(t('settings_advance_indoor'), this.advanceLabel(this.advanceIndoor), () => {
             this.cycleAdvanceIndoor();
           })
-          this.valueRow('室外课提前', this.advanceLabel(this.advanceOutdoor), () => {
+          this.valueRow(t('settings_advance_outdoor'), this.advanceLabel(this.advanceOutdoor), () => {
             this.cycleAdvanceOutdoor();
           })
-          this.valueRow('提醒形态', this.reminderModeLabel(), () => {
+          this.valueRow(t('settings_reminder_mode'), this.reminderModeLabel(), () => {
             this.cycleReminderMode();
           })
 
           // ---- 自动化
-          this.groupTitle('自动化')
-          this.toggleRow('启用自动化', this.automationEnabled, (on: boolean) => {
+          this.groupTitle(t('settings_group_automation'))
+          this.toggleRow(t('settings_enable_automation'), this.automationEnabled, (on: boolean) => {
             this.automationEnabled = on;
             this.writeBool(PrefKeys.AUTOMATION_ENABLED, on);
             this.refreshKeepAlive();
           })
-          this.valueRow('自动化方案', this.automationConfig, () => {
+          this.valueRow(t('settings_automation_config'), this.automationConfig, () => {
             this.goAutomation();
           })
 
           // ---- 精确时间
-          this.groupTitle('精确时间')
-          this.toggleRow('启用精确时间', this.exactTimeEnabled, (on: boolean) => {
+          this.groupTitle(t('settings_group_time'))
+          this.toggleRow(t('settings_enable_exact_time'), this.exactTimeEnabled, (on: boolean) => {
             this.toggleExactTime(on);
           })
-          this.valueRow('NTP 服务器', this.exactTimeServer, () => {
+          this.valueRow(t('settings_ntp_server'), this.exactTimeServer, () => {
             this.editingServer = !this.editingServer;
           })
           if (this.editingServer) {
@@ -1380,52 +1381,52 @@ struct SettingsPage {
               .padding({ left: 16, right: 16, top: 10, bottom: 10 })
             }
           }
-          this.valueRow('手动偏移', this.offsetLabel(), () => {
+          this.valueRow(t('settings_manual_offset'), this.offsetLabel(), () => {
             this.cycleOffset();
           })
-          this.toggleRow('每日自动补偿', this.timeAutoAdjustEnabled, (on: boolean) => {
+          this.toggleRow(t('settings_daily_compensate'), this.timeAutoAdjustEnabled, (on: boolean) => {
             this.toggleAutoAdjust(on);
           })
-          this.valueRow('每日补偿量', this.autoAdjustLabel(), () => {
+          this.valueRow(t('settings_daily_compensate_amount'), this.autoAdjustLabel(), () => {
             this.cycleAutoAdjust();
           })
-          this.noteRow('同步状态', this.syncStatus.length === 0 ? '尚未开始' : this.syncStatus)
+          this.noteRow(t('settings_sync_status'), this.syncStatus.length === 0 ? '尚未开始' : this.syncStatus)
           this.actionRow(this.syncing ? '正在校时…' : '立即校时',
             this.exactTimeEnabled && !this.syncing, () => {
               this.syncNow();
             })
 
           // ---- 语音朗读
-          this.groupTitle('语音朗读')
-          this.toggleRow('启用语音', this.speechEnabled, (on: boolean) => {
+          this.groupTitle(t('settings_group_speech'))
+          this.toggleRow(t('settings_enable_speech'), this.speechEnabled, (on: boolean) => {
             this.toggleSpeech(on);
           })
-          this.toggleRow('通知朗读', this.allowNotificationSpeech, (on: boolean) => {
+          this.toggleRow(t('settings_speech_notification'), this.allowNotificationSpeech, (on: boolean) => {
             this.toggleAllowNotificationSpeech(on);
           })
-          this.valueRow('语音引擎', this.speechProviderLabel(), () => {
+          this.valueRow(t('settings_speech_provider'), this.speechProviderLabel(), () => {
             this.cycleSpeechProvider();
           })
           if (this.speechProviderId === SPEECH_PROVIDER_SYSTEM) {
             // 只在真的用系统 TTS 时才显示音色。挂在 EdgeTTS 上显示一个改不动
             // 的音色，是一件需要解释的事。
-            this.valueRow('系统音色', this.personLabel(), () => {
+            this.valueRow(t('settings_speech_person'), this.personLabel(), () => {
               this.cycleSystemPerson();
             })
           }
-          this.noteRow('朗读状态',
+          this.noteRow(t('settings_speech_status'),
             this.speechStatus.length === 0 ? '尚未初始化' : this.speechStatus)
-          this.noteRow('音量', '跟随系统媒体音量（系统 TTS 不支持单独调节）')
+          this.noteRow(t('settings_speech_volume'), '跟随系统媒体音量（系统 TTS 不支持单独调节）')
           this.actionRow(this.testingSpeech ? '正在试听…' : '试听', !this.testingSpeech, () => {
             this.testSpeak();
           })
 
           // ---- 天气
-          this.groupTitle('天气')
-          this.valueRow('定位方式', this.weatherLocationLabel(), () => {
+          this.groupTitle(t('settings_group_weather'))
+          this.valueRow(t('settings_weather_location'), this.weatherLocationLabel(), () => {
             this.cycleWeatherLocationSource();
           })
-          this.valueRow('城市',
+          this.valueRow(t('settings_city'),
             this.cityName.length > 0 ? this.cityName : this.cityId, () => {
               this.editingCity = !this.editingCity;
             })
@@ -1458,13 +1459,13 @@ struct SettingsPage {
               .padding({ left: 16, right: 16, top: 10, bottom: 10 })
             }
           }
-          this.toggleRow('每次刷新重新定位', this.autoRefreshWeatherLocation, (on: boolean) => {
+          this.toggleRow(t('settings_auto_refresh_location'), this.autoRefreshWeatherLocation, (on: boolean) => {
             this.toggleAutoRefreshWeatherLocation(on);
           })
-          this.toggleRow('允许明文 HTTP', this.noTlsWeatherRequests, (on: boolean) => {
+          this.toggleRow(t('settings_no_tls'), this.noTlsWeatherRequests, (on: boolean) => {
             this.toggleNoTlsWeatherRequests(on);
           })
-          this.valueRow('排除的预警',
+          this.valueRow(t('settings_excluded_alerts'),
             this.excludedAlertsText.length === 0 ? '不排除' : this.excludedAlertsText, () => {
               this.editingExclusions = !this.editingExclusions;
             })
@@ -1489,16 +1490,16 @@ struct SettingsPage {
               .padding({ left: 16, right: 16, top: 10, bottom: 10 })
             }
           }
-          this.noteRow('图标方案', `${this.weatherIconId}（图标字体未移植，该键只读写不生效）`)
-          this.noteRow('预警图标', '不加载：预警图标是明文 HTTP 的远程图片')
-          this.noteRow('状态', this.weatherStatus.length === 0 ? '尚未初始化' : this.weatherStatus)
+          this.noteRow(t('settings_icon_scheme'), `${this.weatherIconId}（图标字体未移植，该键只读写不生效）`)
+          this.noteRow(t('settings_alert_icon'), '不加载：预警图标是明文 HTTP 的远程图片')
+          this.noteRow(t('settings_status'), this.weatherStatus.length === 0 ? '尚未初始化' : this.weatherStatus)
           this.actionRow(this.refreshingWeather ? '正在刷新…' : '立即刷新',
             !this.refreshingWeather, () => {
               this.refreshWeather();
             })
 
           // ---- 跨设备
-          this.groupTitle('跨设备')
+          this.groupTitle(t('settings_group_ipc'))
           this.toggleRow('开启跨设备同步', this.distributedEnabled, (on: boolean) => {
             this.toggleDistributed(on);
           })
@@ -1532,15 +1533,15 @@ struct SettingsPage {
           this.actionRow('生成新会话 ID', true, () => {
             this.generateDistributedSessionId();
           })
-          this.noteRow('状态',
+          this.noteRow(t('settings_status'),
             this.distributedStatus.length === 0 ? '未开启' : this.distributedStatus)
 
           // ---- 后台保活
-          this.groupTitle('后台保活')
+          this.groupTitle(t('settings_group_background'))
           this.toggleRow('允许后台运行', this.backgroundKeepAlive, (on: boolean) => {
             this.toggleBackgroundKeepAlive(on);
           })
-          this.noteRow('状态',
+          this.noteRow(t('settings_status'),
             this.backgroundKeepAliveStatus.length === 0 ? '未启动' : this.backgroundKeepAliveStatus)
           ListItem() {
             Text('开启后应用退到后台仍会继续算课表并按时提醒。部分手机不允许普通应用长时间驻留，' +
@@ -1552,7 +1553,7 @@ struct SettingsPage {
           }
 
           // ---- 扩展
-          this.groupTitle('扩展')
+          this.groupTitle(t('settings_group_plugins'))
           this.noteRow('已装扩展', this.pluginSummary)
           this.actionRow('导入扩展（.json）', !this.importing, () => {
             this.importPluginJson();
@@ -1572,7 +1573,7 @@ struct SettingsPage {
           }, (row: PluginListRow) => row.pluginId)
 
           // ---- 诊断
-          this.groupTitle('诊断')
+          this.groupTitle(t('settings_group_debug'))
           this.toggleRow('调试日志', this.debugLog, (on: boolean) => {
             this.debugLog = on;
             this.writeBool(PrefKeys.DEBUG_LOG, on);
@@ -1583,7 +1584,7 @@ struct SettingsPage {
           })
 
           // ---- 重置
-          this.groupTitle('重置')
+          this.groupTitle(t('settings_group_reset'))
           ListItem() {
             Text('恢复全部默认设置')
               .fontSize(16)

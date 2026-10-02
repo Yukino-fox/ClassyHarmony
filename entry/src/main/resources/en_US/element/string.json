@@ -1,264 +1,228 @@
 {
   "string": [
     {
-      "name": "module_desc",
-      "value": "课程表：课表、课表编辑与每日提醒"
-    },
-    {
-      "name": "EntryAbility_desc",
-      "value": "课程表应用主界面"
-    },
-    {
-      "name": "EntryAbility_label",
-      "value": "ClassIsland"
-    },
-    {
-      "name": "EntryFormAbility_desc",
-      "value": "今日课程表桌面卡片"
-    },
-    {
-      "name": "EntryFormAbility_label",
-      "value": "今日课程表"
-    },
-    {
-      "name": "form_today_display_name",
-      "value": "今日课程表"
-    },
-    {
-      "name": "form_today_description",
-      "value": "在桌面显示接下来的课程与当前状态"
-    },
-    {
-      "name": "location_permission_reason",
-      "value": "用于按当前位置自动选择天气城市"
-    },
-    {
-      "name": "distributed_permission_reason",
-      "value": "用于在可信设备间同步当前课表状态（默认关闭，需手动开启）"
-    },
-    {
       "name": "settings_group_ui",
-      "value": "界面"
+      "value": "Appearance"
     },
     {
       "name": "settings_group_schedule",
-      "value": "课表"
+      "value": "Schedule"
     },
     {
       "name": "settings_group_reminder",
-      "value": "课前提醒"
+      "value": "Reminders"
     },
     {
       "name": "settings_group_automation",
-      "value": "自动化"
+      "value": "Automation"
     },
     {
       "name": "settings_group_time",
-      "value": "精确时间"
+      "value": "Time"
     },
     {
       "name": "settings_group_speech",
-      "value": "语音朗读"
+      "value": "Speech"
     },
     {
       "name": "settings_group_weather",
-      "value": "天气"
+      "value": "Weather"
     },
     {
       "name": "settings_group_ipc",
-      "value": "跨设备"
+      "value": "Cross-Device"
     },
     {
       "name": "settings_group_background",
-      "value": "后台保活"
+      "value": "Background"
     },
     {
       "name": "settings_group_plugins",
-      "value": "扩展"
+      "value": "Extensions"
     },
     {
       "name": "settings_group_debug",
-      "value": "诊断"
+      "value": "Diagnostics"
     },
     {
       "name": "settings_group_reset",
-      "value": "重置"
+      "value": "Reset"
     },
     {
       "name": "settings_theme",
-      "value": "主题"
+      "value": "Theme"
     },
     {
       "name": "settings_font_scale",
-      "value": "字体缩放"
+      "value": "Font Scale"
     },
     {
       "name": "settings_default_page",
-      "value": "首页默认页"
+      "value": "Default Page"
     },
     {
       "name": "settings_show_week_num",
-      "value": "显示周数"
+      "value": "Show Week Number"
     },
     {
       "name": "settings_show_free_time",
-      "value": "显示课间空档"
+      "value": "Show Break Gaps"
     },
     {
       "name": "settings_conflict_detection",
-      "value": "检测时间冲突"
+      "value": "Detect Conflicts"
     },
     {
       "name": "settings_auto_week",
-      "value": "自动定位到当前周"
+      "value": "Auto-select Current Week"
     },
     {
       "name": "settings_enable_reminder",
-      "value": "启用课前提醒"
+      "value": "Enable Reminders"
     },
     {
       "name": "settings_advance_indoor",
-      "value": "室内课提前"
+      "value": "Advance (Indoor)"
     },
     {
       "name": "settings_advance_outdoor",
-      "value": "室外课提前"
+      "value": "Advance (Outdoor)"
     },
     {
       "name": "settings_reminder_mode",
-      "value": "提醒形态"
+      "value": "Reminder Style"
     },
     {
       "name": "settings_enable_automation",
-      "value": "启用自动化"
+      "value": "Enable Automation"
     },
     {
       "name": "settings_automation_config",
-      "value": "自动化方案"
+      "value": "Automation Profile"
     },
     {
       "name": "settings_enable_exact_time",
-      "value": "启用精确时间"
+      "value": "Enable Precise Time"
     },
     {
       "name": "settings_ntp_server",
-      "value": "NTP 服务器"
+      "value": "NTP Server"
     },
     {
       "name": "settings_manual_offset",
-      "value": "手动偏移"
+      "value": "Manual Offset"
     },
     {
       "name": "settings_daily_compensate",
-      "value": "每日自动补偿"
+      "value": "Daily Auto-compensation"
     },
     {
       "name": "settings_daily_compensate_amount",
-      "value": "每日补偿量"
+      "value": "Daily Compensation"
     },
     {
       "name": "settings_sync_status",
-      "value": "同步状态"
+      "value": "Sync Status"
     },
     {
       "name": "settings_sync_now",
-      "value": "立即校时"
+      "value": "Sync Now"
     },
     {
       "name": "settings_syncing",
-      "value": "正在校时…"
+      "value": "Syncing…"
     },
     {
       "name": "settings_enable_speech",
-      "value": "启用语音"
+      "value": "Enable Speech"
     },
     {
       "name": "settings_speech_notification",
-      "value": "通知朗读"
+      "value": "Read Notifications"
     },
     {
       "name": "settings_speech_provider",
-      "value": "语音引擎"
+      "value": "Speech Engine"
     },
     {
       "name": "settings_speech_person",
-      "value": "系统音色"
+      "value": "System Voice"
     },
     {
       "name": "settings_speech_status",
-      "value": "朗读状态"
+      "value": "Speech Status"
     },
     {
       "name": "settings_speech_volume",
-      "value": "音量"
+      "value": "Volume"
     },
     {
       "name": "settings_test_speech",
-      "value": "试听"
+      "value": "Test"
     },
     {
       "name": "settings_testing_speech",
-      "value": "正在试听…"
+      "value": "Testing…"
     },
     {
       "name": "settings_weather_location",
-      "value": "定位方式"
+      "value": "Location Mode"
     },
     {
       "name": "settings_city",
-      "value": "城市"
+      "value": "City"
     },
     {
       "name": "settings_auto_refresh_location",
-      "value": "每次刷新重新定位"
+      "value": "Relocate on Each Refresh"
     },
     {
       "name": "settings_no_tls",
-      "value": "允许明文 HTTP"
+      "value": "Allow Plain HTTP"
     },
     {
       "name": "settings_excluded_alerts",
-      "value": "排除的预警"
+      "value": "Excluded Alerts"
     },
     {
       "name": "settings_icon_scheme",
-      "value": "图标方案"
+      "value": "Icon Scheme"
     },
     {
       "name": "settings_alert_icon",
-      "value": "预警图标"
+      "value": "Alert Icon"
     },
     {
       "name": "settings_status",
-      "value": "状态"
+      "value": "Status"
     },
     {
       "name": "settings_export_manifest",
-      "value": "导出清单"
+      "value": "Export Manifest"
     },
     {
       "name": "settings_uninstall",
-      "value": "卸载"
+      "value": "Uninstall"
     },
     {
       "name": "settings_declared",
-      "value": "声明了什么"
+      "value": "Declared"
     },
     {
       "name": "settings_author",
-      "value": "作者"
+      "value": "Author"
     },
     {
       "name": "settings_description",
-      "value": "描述"
+      "value": "Description"
     },
     {
       "name": "settings_not_excluded",
-      "value": "不排除"
+      "value": "None"
     },
     {
       "name": "settings_no_author",
-      "value": "没写"
+      "value": "—"
     }
   ]
 }
