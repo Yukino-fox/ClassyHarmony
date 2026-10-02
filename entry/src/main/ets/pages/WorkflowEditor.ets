@@ -3,6 +3,7 @@
  */
 import { AutomationViewModel } from '../viewmodel/AutomationViewModel';
 import { Workflow, TriggerSettings, ActionItem } from 'common_shared';
+import { t } from 'common_core';
 import { TriggerCatalog } from 'common_core';
 import { ActionCatalog } from 'common_core';
 import { ProfileRepository } from '../data/ProfileRepository';
@@ -121,12 +122,12 @@ export struct WorkflowEditor {
           .margin({ left: 16, right: 16, bottom: 8 })
 
           if (this.wf!.isConditionEnabled) {
-            Text('条件编辑器：复用 RulesetEditorView（待接入）')
+            Text(t('wf_cond_editor_pending'))
               .fontSize(14)
               .fontColor($r('app.color.ch_text_hint'))
               .margin({ left: 16, right: 16, top: 8, bottom: 8 })
           } else {
-            Text('条件已关闭，工作流将无条件触发')
+            Text(t('wf_cond_off'))
               .fontSize(14)
               .fontColor($r('app.color.ch_text_hint'))
               .margin({ left: 16, right: 16, top: 8, bottom: 8 })

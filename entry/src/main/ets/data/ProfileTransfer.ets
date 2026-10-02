@@ -24,6 +24,7 @@
  * 旧档案等于骗人。所以这个类只管字节的进出，导出哪一份由调用方决定。
  */
 
+import { t } from 'common_core';
 import { common } from '@kit.AbilityKit';
 import { fileIo as fs, picker } from '@kit.CoreFileKit';
 import { Profile } from 'common_shared';
@@ -242,7 +243,7 @@ function closeQuietly(file: fs.File): void {
  * 将来有人改了口径（比如决定把 code 也带上）就会漏掉别处。
  */
 export function describe(err: Error): string {
-  return err.message.length > 0 ? err.message : '未知原因';
+  return err.message.length > 0 ? err.message : t('ps_unknown');
 }
 
 /** 文件名的小写后缀（不含点）。没有点时给 json：picker 的过滤器不接受空后缀。 */

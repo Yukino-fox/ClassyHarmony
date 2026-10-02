@@ -29,6 +29,7 @@
  */
 
 import { common } from '@kit.AbilityKit';
+import { t } from 'common_core';
 import { LayoutForm, layoutFormOf } from 'common_core';
 import { resolveClassTableViewModel } from '../common/AppServices';
 import { UiFeedback } from '../common/UiFeedback';
@@ -221,7 +222,7 @@ struct Index {
   @Builder
   private noProfileView() {
     Column() {
-      Text('还没有课表')
+      Text(t('ctv_no_schedule'))
         .fontSize(18)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('app.color.ch_text_primary'))

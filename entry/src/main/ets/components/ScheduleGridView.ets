@@ -21,6 +21,7 @@
  * 宽屏排：老师名照常显示，行高也不压缩。
  */
 
+import { t } from 'common_core';
 import { ScheduleCell, ScheduleColumn, ScheduleGrid, ScheduleRow } from 'common_core';
 import { ScheduleCellView } from './ScheduleCellView';
 
@@ -33,7 +34,7 @@ const DAY_HEADER_WIDTH: number = 62;
 /** 行高。课程格要放科目名 + 老师名，课间格用不满但保持对齐。 */
 const ROW_HEIGHT: number = 52;
 
-const WEEKDAY_LABELS: string[] = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+const WEEKDAY_LABELS: string[] = [t('week_sunday'), t('week_monday'), t('week_tuesday'), t('week_wednesday'), t('week_thursday'), t('week_friday'), t('week_saturday')];
 
 @ComponentV2
 export struct ScheduleGridView {

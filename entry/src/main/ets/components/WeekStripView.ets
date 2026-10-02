@@ -9,9 +9,10 @@
  * 必须是另一条通道。
  */
 
+import { t } from 'common_core';
 import { ScheduleGrid, ScheduleRow } from 'common_core';
 
-const WEEKDAY_SHORT: string[] = ['日', '一', '二', '三', '四', '五', '六'];
+const WEEKDAY_SHORT: string[] = [t('week_sun'), t('week_mon'), t('week_tue'), t('week_wed'), t('week_thu'), t('week_fri'), t('week_sat')];
 
 @ComponentV2
 export struct WeekStripView {

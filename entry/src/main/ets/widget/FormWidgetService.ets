@@ -20,6 +20,7 @@
  * 同样的卡片，可以接受。
  */
 
+import { t } from 'common_core';
 import { common } from '@kit.AbilityKit';
 import { formProvider } from '@kit.FormKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
@@ -55,7 +56,7 @@ export class FormWidgetService {
       report.count = reloaded;
     } catch (err) {
       const e = err as BusinessError;
-      report.reason = '桌面服务暂时不可用，卡片会在下次被唤醒时更新';
+      report.reason = t('fws_unavailable');
       hilog.info(LOG_DOMAIN, LOG_TAG, 'reloadAllForms 失败 code=%{public}d', e.code);
     }
     return report;

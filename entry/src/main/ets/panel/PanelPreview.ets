@@ -16,6 +16,7 @@
  * 间距，这里铺一层浅底与一圈描边；换成深色只是配色，不影响行为。
  */
 
+import { t } from 'common_core';
 import { PanelLine, PanelModel, PanelNode } from 'common_core';
 import { HIDDEN_DIM_OPACITY, panelHiddenMark } from './HiddenMark';
 import { PanelNodeView } from './PanelNodeView';
@@ -94,10 +95,10 @@ export struct PanelPreview {
   @Builder
   private emptyState() {
     Column() {
-      Text('这个方案还没有显示中的行')
+      Text(t('pp_no_visible_rows'))
         .fontSize(14)
         .fontColor($r('app.color.ch_text_secondary'))
-      Text('在上面加一行，面板就会有内容了')
+      Text(t('pp_add_row_hint'))
         .fontSize(12)
         .fontColor($r('app.color.ch_text_hint'))
         .margin({ top: 4 })

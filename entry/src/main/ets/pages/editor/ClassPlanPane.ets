@@ -45,7 +45,7 @@ import {
 
 /** 周几下拉的可选项，与引擎的 0=周日 一致。 */
 const WEEKDAY_LABELS: string[] =
-  ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+  [t('week_sunday'), t('week_monday'), t('week_tuesday'), t('week_wednesday'), t('week_thursday'), t('week_friday'), t('week_saturday')];
 
 /** 单双周分母的可选项。0 之外只给常见的 1/2/3/4。 */
 const ROTATION_TOTALS: string[] = ['每周', '单周', '双周', '每 3 周', '每 4 周'];

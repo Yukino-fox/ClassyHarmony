@@ -487,6 +487,34 @@
     {
       "name": "time_weekday_saturday",
       "value": "星期六"
+    },
+    {
+      "name": "week_sunday",
+      "value": "周日"
+    },
+    {
+      "name": "week_monday",
+      "value": "周一"
+    },
+    {
+      "name": "week_tuesday",
+      "value": "周二"
+    },
+    {
+      "name": "week_wednesday",
+      "value": "周三"
+    },
+    {
+      "name": "week_thursday",
+      "value": "周四"
+    },
+    {
+      "name": "week_friday",
+      "value": "周五"
+    },
+    {
+      "name": "week_saturday",
+      "value": "周六"
     }
   ]
 }

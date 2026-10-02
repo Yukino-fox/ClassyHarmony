@@ -22,6 +22,7 @@
  * 不可逆 —— 没有第二次机会。把提示放在动作发生之前，而不是事后写进提示行。
  */
 
+import { t } from 'common_core';
 import { common } from '@kit.AbilityKit';
 import { resolveScheduleEditorViewModel } from '../common/AppServices';
 import { UiFeedback } from '../common/UiFeedback';
@@ -115,7 +116,7 @@ struct Editor {
     const vm: ScheduleEditorViewModel = this.vm as ScheduleEditorViewModel;
     UiFeedback.confirmDiscardOrSave(
       this.getUIContext(),
-      '有未保存的改动',
+      t('ed_unsaved'),
       '返回之前要怎么处理这些改动？',
       '丢掉改动并返回',
       () => { this.leave(); },
@@ -182,7 +183,7 @@ struct Editor {
   private saveBar(vm: ScheduleEditorViewModel) {
     Column() {
       Row() {
-        Text('有未保存的改动')
+        Text(t('ed_unsaved'))
           .fontSize(12)
           .fontColor($r('app.color.ch_accent'))
           .layoutWeight(1)
@@ -194,7 +195,7 @@ struct Editor {
             UiFeedback.confirm(
               this.getUIContext(),
               '重新读取档案',
-              '这会丢掉所有未保存的改动，从磁盘重读一遍。',
+              t('ed_reload_confirm'),
               '重新读取',
               () => { vm.reload(); }
             );

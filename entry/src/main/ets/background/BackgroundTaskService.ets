@@ -38,6 +38,7 @@ import { common, wantAgent, WantAgent } from '@kit.AbilityKit';
 import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
+import { t } from 'common_core';
 import {
   KEEP_ALIVE_MODE_MULTI_DEVICE,
   KeepAlivePlan,
@@ -102,7 +103,7 @@ export class BackgroundTaskService {
   /** 给设置页显示的文案。 */
   statusText(): string {
     if (!this.isEnabled()) {
-      return '已关闭';
+      return t('bt_off');
     }
     return this.status.length === 0 ? '未启动' : this.status;
   }

@@ -24,6 +24,7 @@
  * 决定，面板里的分组/堆叠/滚动/轮播四层随便嵌，所以这里让 struct 引用自己。
  */
 
+import { t } from 'common_core';
 import {
   PanelLesson,
   PanelNode,
@@ -455,7 +456,7 @@ export struct PanelNodeView {
         .fontSize(this.node.secondaryFontSize)
         .fontColor($r('app.color.ch_text_hint'))
     } else if (this.node.isTruncated) {
-      Text('这一层没展开')
+      Text(t('pnv_not_expanded'))
         .fontSize(this.node.secondaryFontSize)
         .fontColor($r('app.color.ch_text_hint'))
     } else if (this.node.kind === PanelNodeKind.CLOCK || this.node.kind === PanelNodeKind.DATE ||

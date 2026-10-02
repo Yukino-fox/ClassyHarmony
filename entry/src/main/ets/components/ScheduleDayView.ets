@@ -14,6 +14,7 @@
  * 也就是说周视图里能看到的东西，这里一样不少，只是排布不同。
  */
 
+import { t } from 'common_core';
 import { EMPTY_SUBJECT_TEXT, ScheduleCell, ScheduleColumn, ScheduleGrid, ScheduleRow } from 'common_core';
 
 @ComponentV2
@@ -113,7 +114,7 @@ export struct ScheduleDayView {
 
   @Builder
   private noPlanHint() {
-    Text('这一天没有课表')
+    Text(t('sdv_no_schedule_day'))
       .fontSize(14)
       .fontColor($r('app.color.ch_text_hint'))
       .margin({ top: 40 })

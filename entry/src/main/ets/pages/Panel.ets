@@ -22,6 +22,7 @@
  * 好好干活」。
  */
 
+import { t } from 'common_core';
 import { common } from '@kit.AbilityKit';
 import { resolveComponentLayoutViewModel } from '../common/AppServices';
 import { UiFeedback } from '../common/UiFeedback';
@@ -61,7 +62,7 @@ struct PanelPage {
     const vm: ComponentLayoutViewModel = this.vm as ComponentLayoutViewModel;
     UiFeedback.confirmDiscardOrSave(
       this.getUIContext(),
-      '有未保存的改动',
+      t('ed_unsaved'),
       '返回之前要怎么处理信息面板的改动？',
       '丢掉改动并返回',
       () => { this.leave(); },

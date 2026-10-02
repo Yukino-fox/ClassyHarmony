@@ -18,6 +18,7 @@
  * 一个丢一批课表）。所以两个按钮分开摆，不做成「删除 / 解散」的下拉。
  */
 
+import { t } from 'common_core';
 import { ClassPlanGroupRow } from 'common_core';
 import { ScheduleEditorViewModel } from '../../viewmodel/ScheduleEditorViewModel';
 import { UiFeedback } from '../../common/UiFeedback';
@@ -47,14 +48,14 @@ export struct ClassPlanGroupPane {
 
         Scroll() {
           Column() {
-            Text('课表群用来按单双周、学期这类维度切一套课表。选中哪个群，选课就只在那个群里找课表。')
+            Text(t('cgp_desc'))
               .fontSize(11)
               .fontColor($r('app.color.ch_text_hint'))
               .width('100%')
               .margin({ bottom: 8 })
 
             if (this.vm.groups.length === 0) {
-              EditorEmptyHint({ text: '还没有课表群。' })
+              EditorEmptyHint({ text: t('cgp_no_groups') })
             }
 
             ForEach(this.vm.groups, (row: ClassPlanGroupRow) => {
@@ -68,7 +69,7 @@ export struct ClassPlanGroupPane {
                       this.getUIContext(),
                       '解散课表群',
                       `群会被删掉，里面 ${row.planCount} 张课表留着，落到默认群。` +
-                        '想连课表一起删请用「删除」。',
+                        t('cgp_delete_hint'),
                       '解散',
                       () => { this.vm.disbandClassPlanGroup(row.guid); }
                     );

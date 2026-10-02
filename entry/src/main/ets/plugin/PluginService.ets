@@ -31,6 +31,7 @@
  */
 
 import { common } from '@kit.AbilityKit';
+import { t } from 'common_core';
 import {
   ExtensionManifest,
   ExtensionManifestCodec,
@@ -248,7 +249,7 @@ export class PluginService {
     this.dropIssue(pluginId);
     const out: PluginLoadIssue = new PluginLoadIssue();
     out.pluginId = pluginId;
-    out.reason = reason.length > 0 ? reason : '未知原因';
+    out.reason = reason.length > 0 ? reason : t('ps_unknown');
     this.issues.push(out);
   }
 

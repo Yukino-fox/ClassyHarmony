@@ -483,6 +483,34 @@
     {
       "name": "time_weekday_saturday",
       "value": "Saturday"
+    },
+    {
+      "name": "week_sunday",
+      "value": "Sunday"
+    },
+    {
+      "name": "week_monday",
+      "value": "Monday"
+    },
+    {
+      "name": "week_tuesday",
+      "value": "Tuesday"
+    },
+    {
+      "name": "week_wednesday",
+      "value": "Wednesday"
+    },
+    {
+      "name": "week_thursday",
+      "value": "Thursday"
+    },
+    {
+      "name": "week_friday",
+      "value": "Friday"
+    },
+    {
+      "name": "week_saturday",
+      "value": "Saturday"
     }
   ]
 }

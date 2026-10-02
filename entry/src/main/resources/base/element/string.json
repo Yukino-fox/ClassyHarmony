@@ -1279,6 +1279,110 @@
     {
       "name": "exec_quit_failed",
       "value": "退出应用失败"
+    },
+    {
+      "name": "eh_temp_header",
+      "value": "临时课表与叠加"
+    },
+    {
+      "name": "eh_temp_desc",
+      "value": "临时切换、叠加调课、预定某天"
+    },
+    {
+      "name": "eh_import_export_hint",
+      "value": "导入会整份替换当前草稿。导出的是你现在看到的这一份（含未保存的改动）。"
+    },
+    {
+      "name": "cgp_desc",
+      "value": "课表群用来按单双周、学期这类维度切一套课表。选中哪个群，选课就只在那个群里找课表。"
+    },
+    {
+      "name": "cgp_no_groups",
+      "value": "还没有课表群。"
+    },
+    {
+      "name": "cgp_delete_hint",
+      "value": "想连课表一起删请用「删除」。"
+    },
+    {
+      "name": "ed_unsaved",
+      "value": "有未保存的改动"
+    },
+    {
+      "name": "ed_reload_confirm",
+      "value": "这会丢掉所有未保存的改动，从磁盘重读一遍。"
+    },
+    {
+      "name": "ws_no_data",
+      "value": "还没有天气数据，下拉或点「立即刷新」重试"
+    },
+    {
+      "name": "ddo_enabled_waiting",
+      "value": "已开启，等待启动"
+    },
+    {
+      "name": "ddo_no_session",
+      "value": "已开启，还没有会话 ID"
+    },
+    {
+      "name": "bt_off",
+      "value": "已关闭"
+    },
+    {
+      "name": "clv_saved",
+      "value": "已保存"
+    },
+    {
+      "name": "clv_component_moved",
+      "value": "已移动组件"
+    },
+    {
+      "name": "clv_hide_rules_on",
+      "value": "已打开按规则隐藏"
+    },
+    {
+      "name": "clv_hide_rules_off",
+      "value": "已取消按规则隐藏"
+    },
+    {
+      "name": "pp_no_visible_rows",
+      "value": "这个方案还没有显示中的行"
+    },
+    {
+      "name": "pp_add_row_hint",
+      "value": "在上面加一行，面板就会有内容了"
+    },
+    {
+      "name": "wf_cond_editor_pending",
+      "value": "条件编辑器：复用 RulesetEditorView（待接入）"
+    },
+    {
+      "name": "wf_cond_off",
+      "value": "条件已关闭，工作流将无条件触发"
+    },
+    {
+      "name": "fws_unavailable",
+      "value": "桌面服务暂时不可用，卡片会在下次被唤醒时更新"
+    },
+    {
+      "name": "ps_unknown",
+      "value": "未知原因"
+    },
+    {
+      "name": "pnv_not_expanded",
+      "value": "这一层没展开"
+    },
+    {
+      "name": "sdv_no_schedule_day",
+      "value": "这一天没有课表"
+    },
+    {
+      "name": "settings_volume_hint",
+      "value": "跟随系统媒体音量（系统 TTS 不支持单独调节）"
+    },
+    {
+      "name": "settings_alert_icon_hint",
+      "value": "不加载：预警图标是明文 HTTP 的远程图片"
     }
   ]
 }

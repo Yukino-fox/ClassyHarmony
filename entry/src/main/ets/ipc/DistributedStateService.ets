@@ -40,6 +40,7 @@ import { distributedDataObject } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { deviceInfo } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
+import { t } from 'common_core';
 import {
   DISTRIBUTED_SESSION_ID_MAX_LENGTH,
   PublicLessonState,
@@ -383,10 +384,10 @@ export class DistributedStateService {
       return this.failure;
     }
     if (!this.started) {
-      return '已开启，等待启动';
+      return t('ddo_enabled_waiting');
     }
     if (this.sessionId.length === 0) {
-      return '已开启，还没有会话 ID';
+      return t('ddo_no_session');
     }
     const parts: string[] = [];
     parts.push(`会话 ${this.sessionId}`);

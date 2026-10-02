@@ -17,6 +17,7 @@
  * 放最外层反而最不容易被漏掉 —— 放在课表分页里，用户会以为导出只导课表。
  */
 
+import { t } from 'common_core';
 import { common } from '@kit.AbilityKit';
 import { ScheduleEditorViewModel } from '../../viewmodel/ScheduleEditorViewModel';
 import { EditorHeader, EditorTextField } from '../../components/EditorWidgets';
@@ -188,8 +189,8 @@ export struct EditorHomePane {
       })
       Divider().color($r('app.color.ch_outline'))
       EntryRow({
-        title: '临时课表与叠加',
-        hint: '临时切换、叠加调课、预定某天',
+        title: t('eh_temp_header'),
+        hint: t('eh_temp_desc'),
         onTap: () => { this.go(ROUTE_TEMP); }
       })
     }
@@ -225,7 +226,7 @@ export struct EditorHomePane {
         .width('100%')
         .margin({ bottom: 4 })
 
-      Text('导入会整份替换当前草稿。导出的是你现在看到的这一份（含未保存的改动）。')
+      Text(t('eh_import_export_hint'))
         .fontSize(11)
         .fontColor($r('app.color.ch_text_hint'))
         .width('100%')

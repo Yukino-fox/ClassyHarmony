@@ -1243,6 +1243,110 @@
     {
       "name": "exec_quit_failed",
       "value": "Failed to quit the app"
+    },
+    {
+      "name": "eh_temp_header",
+      "value": "Temporary & Overlay"
+    },
+    {
+      "name": "eh_temp_desc",
+      "value": "Temporary switch, overlay adjustment, booking a day"
+    },
+    {
+      "name": "eh_import_export_hint",
+      "value": "Import replaces the entire draft. Export saves what you currently see (including unsaved changes)."
+    },
+    {
+      "name": "cgp_desc",
+      "value": "Schedule groups switch schedules by dimensions like biweekly or term. The selected group is the only one used for selection."
+    },
+    {
+      "name": "cgp_no_groups",
+      "value": "No schedule groups yet."
+    },
+    {
+      "name": "cgp_delete_hint",
+      "value": "Use \"Delete\" to remove the schedules along with it."
+    },
+    {
+      "name": "ed_unsaved",
+      "value": "Unsaved changes"
+    },
+    {
+      "name": "ed_reload_confirm",
+      "value": "This discards all unsaved changes and reloads from disk."
+    },
+    {
+      "name": "ws_no_data",
+      "value": "No weather data yet; pull down or tap \"Refresh Now\" to retry"
+    },
+    {
+      "name": "ddo_enabled_waiting",
+      "value": "Enabled, waiting to start"
+    },
+    {
+      "name": "ddo_no_session",
+      "value": "Enabled, but no session ID yet"
+    },
+    {
+      "name": "bt_off",
+      "value": "Off"
+    },
+    {
+      "name": "clv_saved",
+      "value": "Saved"
+    },
+    {
+      "name": "clv_component_moved",
+      "value": "Component moved"
+    },
+    {
+      "name": "clv_hide_rules_on",
+      "value": "Hide-by-rules turned on"
+    },
+    {
+      "name": "clv_hide_rules_off",
+      "value": "Hide-by-rules turned off"
+    },
+    {
+      "name": "pp_no_visible_rows",
+      "value": "This scheme has no visible rows"
+    },
+    {
+      "name": "pp_add_row_hint",
+      "value": "Add a row above and the panel will have content"
+    },
+    {
+      "name": "wf_cond_editor_pending",
+      "value": "Condition editor: reuses RulesetEditorView (not wired yet)"
+    },
+    {
+      "name": "wf_cond_off",
+      "value": "Conditions are off; the workflow fires unconditionally"
+    },
+    {
+      "name": "fws_unavailable",
+      "value": "Desktop service is temporarily unavailable; the card will update on next wake"
+    },
+    {
+      "name": "ps_unknown",
+      "value": "Unknown reason"
+    },
+    {
+      "name": "pnv_not_expanded",
+      "value": "This layer is not expanded"
+    },
+    {
+      "name": "sdv_no_schedule_day",
+      "value": "No schedule for this day"
+    },
+    {
+      "name": "settings_volume_hint",
+      "value": "Follows the system media volume (system TTS does not support separate adjustment)"
+    },
+    {
+      "name": "settings_alert_icon_hint",
+      "value": "Not loaded: alert icons are remote images over plain HTTP"
     }
   ]
 }

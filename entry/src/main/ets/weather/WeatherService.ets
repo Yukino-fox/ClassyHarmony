@@ -45,6 +45,7 @@ import {
   DEFAULT_CITY_ID
 } from '../common/AppPreferences';
 import { WeatherStore } from './WeatherStore';
+import { t } from 'common_core';
 import { filterWeatherAlerts, WeatherSnapshot } from 'common_core';
 import {
   CityInfo,
@@ -152,7 +153,7 @@ export class WeatherService {
       return `上次刷新失败：${this.lastError}`;
     }
     if (!this.current.info.hasData()) {
-      return '还没有天气数据，下拉或点「立即刷新」重试';
+      return t('ws_no_data');
     }
     const updated: DateTimeValue = DateTimeValue.fromLocalMillis(this.current.info.updateTime);
     if (this.degradedPrecision >= 0) {

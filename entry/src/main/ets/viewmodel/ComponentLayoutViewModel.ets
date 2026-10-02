@@ -349,7 +349,7 @@ export class ComponentLayoutViewModel {
     this.loadErrorText = '';
     this.refreshSchemeNames();
     this.rebuild();
-    this.say('已保存');
+    this.say(t('clv_saved'));
     return true;
   }
 
@@ -495,7 +495,7 @@ export class ComponentLayoutViewModel {
       this.say(t('clv_cannot_move_into_self'));
       return;
     }
-    this.settle('已移动组件');
+    this.settle(t('clv_component_moved'));
   }
 
   /**
@@ -732,7 +732,7 @@ export class ComponentLayoutViewModel {
       host.hidingRules = undefined;
     }
     this.writeHost(host, location, false);
-    this.settle(value ? '已打开按规则隐藏' : '已取消按规则隐藏');
+    this.settle(value ? t('clv_hide_rules_on') : t('clv_hide_rules_off'));
   }
 
   /** 改一行的「按规则隐藏」开关。 */

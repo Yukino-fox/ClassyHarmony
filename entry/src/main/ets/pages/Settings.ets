@@ -1416,7 +1416,7 @@ struct SettingsPage {
           }
           this.noteRow(t('settings_speech_status'),
             this.speechStatus.length === 0 ? '尚未初始化' : this.speechStatus)
-          this.noteRow(t('settings_speech_volume'), '跟随系统媒体音量（系统 TTS 不支持单独调节）')
+          this.noteRow(t('settings_speech_volume'), t('settings_volume_hint'))
           this.actionRow(this.testingSpeech ? '正在试听…' : '试听', !this.testingSpeech, () => {
             this.testSpeak();
           })
@@ -1491,7 +1491,7 @@ struct SettingsPage {
             }
           }
           this.noteRow(t('settings_icon_scheme'), `${this.weatherIconId}（图标字体未移植，该键只读写不生效）`)
-          this.noteRow(t('settings_alert_icon'), '不加载：预警图标是明文 HTTP 的远程图片')
+          this.noteRow(t('settings_alert_icon'), t('settings_alert_icon_hint'))
           this.noteRow(t('settings_status'), this.weatherStatus.length === 0 ? '尚未初始化' : this.weatherStatus)
           this.actionRow(this.refreshingWeather ? '正在刷新…' : '立即刷新',
             !this.refreshingWeather, () => {
