@@ -27,6 +27,7 @@
  * confirm/cancel，做不了多行选项列表；弹窗还会遮住用户正在看的那个组件。
  */
 
+import { t } from 'common_core';
 import { ComponentLocation } from 'common_core';
 import { EditorChip, EditorEmptyHint, EditorToggleRow } from '../../components/EditorWidgets';
 import { RulesetEditorView } from '../../panel/RulesetEditorView';
@@ -124,18 +125,18 @@ struct ComponentRowView {
       }
 
       EditorChip({
-        text: '前移',
+        text: t('ct_move_front'),
         disabled: this.row.siblingIndex === 0,
         onTap: () => { this.vm.shiftSibling(this.row.location, -1); }
       })
       EditorChip({
-        text: '后移',
+        text: t('ct_move_back'),
         disabled: this.row.siblingIndex >= this.row.siblingCount - 1,
         onTap: () => { this.vm.shiftSibling(this.row.location, 1); }
       })
       if (this.row.location.path.length > 1) {
         EditorChip({
-          text: '移出容器',
+          text: t('ct_remove_from_container'),
           onTap: () => { this.vm.moveOutToLine(this.row.location); }
         })
       }
@@ -179,7 +180,7 @@ struct ComponentRowView {
           this.tag('容器')
         }
         if (this.row.hideOnRule) {
-          this.tag('按规则隐藏')
+          this.tag(t('ct_hide_by_rules'))
         }
         if (this.row.isRuleHidden) {
           // 「开着开关」与「当下正被藏着」是两件事，得分开标：前者是配置，
@@ -201,7 +202,7 @@ struct ComponentRowView {
       })
 
       if (this.row.isTruncated) {
-        Text('嵌套太深，子组件没有展开')
+        Text(t('ct_too_deep'))
           .fontSize(11)
           .fontColor($r('app.color.ch_accent'))
           .width('100%')
@@ -323,14 +324,14 @@ export struct ComponentLineView {
         })
 
       EditorChip({
-        text: '前移',
+        text: t('ct_move_front'),
         disabled: this.lineRow.lineIndex === 0,
         onTap: () => {
           this.vm.moveLine(this.lineRow.lineIndex, this.lineRow.lineIndex - 1);
         }
       })
       EditorChip({
-        text: '后移',
+        text: t('ct_move_back'),
         disabled: this.lineRow.lineIndex >= this.vm.lines.length - 1,
         onTap: () => {
           this.vm.moveLine(this.lineRow.lineIndex, this.lineRow.lineIndex + 1);
@@ -360,9 +361,9 @@ export struct ComponentLineView {
       return '规则（正藏着）';
     }
     if (this.lineRow.hideOnRule) {
-      return '隐藏规则';
+      return t('ct_hide_rules');
     }
-    return '隐藏规则';
+    return t('ct_hide_rules');
   }
 
   /**
@@ -376,8 +377,8 @@ export struct ComponentLineView {
   private lineRules() {
     Column() {
       EditorToggleRow({
-        label: '按规则隐藏',
-        hint: '规则成立时，这一整行都不显示。与组件上的规则各自独立。',
+        label: t('ct_hide_by_rules'),
+        hint: t('ct_hide_rules_hint'),
         isOn: this.lineRow.hideOnRule,
         onToggle: (next: boolean) => {
           this.vm.setLineHideOnRule(this.lineRow.lineIndex, next);
@@ -419,7 +420,7 @@ export struct ComponentLineView {
       }
 
       if (this.rows.length === 0) {
-        EditorEmptyHint({ text: '这一行还没有组件' })
+        EditorEmptyHint({ text: t('ct_no_components') })
       } else {
         ForEach(this.rows, (row: PanelComponentRow) => {
           ComponentRowView({

@@ -24,6 +24,7 @@
  * 先问。
  */
 
+import { t } from 'common_core';
 import { ComponentLocation } from 'common_core';
 import { UiFeedback } from '../../common/UiFeedback';
 import { EditorCard, EditorChip, EditorEmptyHint } from '../../components/EditorWidgets';
@@ -93,7 +94,7 @@ export struct ComponentLayoutPane {
     UiFeedback.confirm(
       this.getUIContext(),
       '复制当前方案',
-      '会新建一份内容相同的方案，改名字之后保存才会落盘。',
+      t('cl_duplicate_hint'),
       '复制',
       () => {
         this.vm.duplicateScheme(`${this.vm.schemeName}${COPY_SUFFIX}`);
@@ -125,12 +126,12 @@ export struct ComponentLayoutPane {
   @Builder
   private previewCard() {
     EditorCard({
-      title: '预览',
-      hint: '按当前排法显示。课表用磁盘上已保存的那份，所以编辑页里改了课表还没保存时，这里看不到。'
+      title: t('cl_preview'),
+      hint: t('cl_preview_hint')
     })
     Row() {
       EditorChip({
-        text: this.showPreview ? '收起预览' : '展开预览',
+        text: this.showPreview ? t('cl_collapse_preview') : t('cl_expand_preview'),
         tone: 1,
         onTap: () => { this.showPreview = !this.showPreview; }
       })
@@ -160,7 +161,7 @@ export struct ComponentLayoutPane {
   private schemeCard() {
     EditorCard({
       title: '方案',
-      hint: '桌面版把它放在设置里的「组件配置方案」，对应桌面版配置目录下的同名文件。'
+      hint: t('cl_scheme_hint')
     })
     Row() {
       Text(this.vm.schemeName)
@@ -186,7 +187,7 @@ export struct ComponentLayoutPane {
     if (this.switching) {
       Column() {
         if (this.vm.schemeNames.length === 0) {
-          EditorEmptyHint({ text: '还没有别的方案' })
+          EditorEmptyHint({ text: t('cl_no_other_schemes') })
         }
         ForEach(this.vm.schemeNames, (name: string) => {
           Row() {
@@ -259,7 +260,7 @@ export struct ComponentLayoutPane {
   private saveBar() {
     Column() {
       Row() {
-        Text('有未保存的改动')
+        Text(t('cl_unsaved_changes'))
           .fontSize(12)
           .fontColor($r('app.color.ch_accent'))
           .layoutWeight(1)
@@ -271,7 +272,7 @@ export struct ComponentLayoutPane {
             UiFeedback.confirm(
               this.getUIContext(),
               '重新读取布局',
-              '这会丢掉所有未保存的改动，从磁盘重读一遍。',
+              t('cl_reload_confirm'),
               '重新读取',
               () => {
                 this.editing = undefined;
@@ -325,7 +326,7 @@ export struct ComponentLayoutPane {
             this.previewCard()
 
             if (this.vm.lines.length === 0) {
-              EditorEmptyHint({ text: '还没有任何一行。先加一行，再往里加组件。' })
+              EditorEmptyHint({ text: t('cl_no_rows') })
             } else {
               ForEach(this.vm.lines, (lineRow: PanelLineRow) => {
                 ComponentLineView({
@@ -341,12 +342,12 @@ export struct ComponentLayoutPane {
 
             Row() {
               EditorChip({
-                text: '加一行',
+                text: t('cl_add_row'),
                 tone: 1,
                 onTap: () => { this.vm.addLine(this.vm.lines.length - 1); }
               })
               EditorChip({
-                text: '在最前面加一行',
+                text: t('cl_add_row_top'),
                 onTap: () => { this.vm.addLine(-1); }
               })
             }

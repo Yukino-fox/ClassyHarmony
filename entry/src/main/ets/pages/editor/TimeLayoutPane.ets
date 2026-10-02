@@ -21,6 +21,7 @@
  * 删的确认文案必须写明「对应课次会一并删除」。
  */
 
+import { t } from 'common_core';
 import {
   SubjectRow,
   TimeLayoutRow,
@@ -52,11 +53,11 @@ struct QuickAddRow {
 
   build() {
     Row() {
-      EditorChip({ text: '加一节课', onTap: () => { this.onAddClass(); } })
+      EditorChip({ text: t('tl_add_class'), onTap: () => { this.onAddClass(); } })
         .margin({ right: 8 })
-      EditorChip({ text: '加一个课间', onTap: () => { this.onAddBreak(); } })
+      EditorChip({ text: t('tl_add_break'), onTap: () => { this.onAddBreak(); } })
         .margin({ right: 8 })
-      EditorChip({ text: '加一条分割线', onTap: () => { this.onAddSeparator(); } })
+      EditorChip({ text: t('tl_add_separator'), onTap: () => { this.onAddSeparator(); } })
     }
     .width('100%')
     .padding({ top: 8 })
@@ -139,7 +140,7 @@ export struct TimeLayoutPane {
         Scroll() {
           Column() {
             if (this.vm.timeLayouts.length === 0) {
-              EditorEmptyHint({ text: '还没有时间表。课表要绑定一张时间表才能排课。' })
+              EditorEmptyHint({ text: t('tl_no_timelayout') })
             }
             ForEach(this.vm.timeLayouts, (row: TimeLayoutRow) => {
               Column() {
@@ -194,7 +195,7 @@ export struct TimeLayoutPane {
 
       Text(row.boundPlanNames.length > 0
         ? `被这些课表使用：${row.boundPlanNames}`
-        : '还没有课表用这张时间表。')
+        : t('tl_no_schedule_uses'))
         .fontSize(11)
         .fontColor($r('app.color.ch_text_hint'))
         .width('100%')
@@ -210,7 +211,7 @@ export struct TimeLayoutPane {
           text: '删除时间表',
           message: row.usedByPlans > 0
             ? `有 ${row.usedByPlans} 张课表绑在这张时间表上，删除后它们会被解绑、不再参与选课。`
-            : '这张时间表没有课表在用，删了不会影响课表。',
+            : t('tl_unused_safe'),
           onConfirm: () => { vm.removeTimeLayout(row.guid); }
         })
       }
@@ -226,7 +227,7 @@ export struct TimeLayoutPane {
       Divider().color($r('app.color.ch_outline')).margin({ top: 8, bottom: 4 })
 
       if (row.rows.length === 0) {
-        EditorEmptyHint({ text: '这张时间表还没有时段。' })
+        EditorEmptyHint({ text: t('tl_no_periods') })
       }
       ForEach(row.rows, (point: TimePointRow) => {
         Column() {
@@ -256,12 +257,12 @@ export struct TimeLayoutPane {
       } else {
         Row() {
           EditorChip({
-            text: '上移',
+            text: t('tl_move_up'),
             onTap: () => { vm.moveTimePoint(layout.guid, point.rowIndex, -1); }
           })
             .margin({ right: 8 })
           EditorChip({
-            text: '下移',
+            text: t('tl_move_down'),
             onTap: () => { vm.moveTimePoint(layout.guid, point.rowIndex, 1); }
           })
             .margin({ right: 8 })
@@ -277,7 +278,7 @@ export struct TimeLayoutPane {
             text: '删除',
             message: point.isClass
               ? `第 ${point.classSlot + 1} 节课。删除会一并删掉所有用这张时间表的课表里` +
-                '对应的那一节课。'
+                t('tl_corresponding_class')
               : '删除这个时段。',
             onConfirm: () => { vm.removeTimePoint(layout.guid, point.rowIndex); }
           })
@@ -304,7 +305,7 @@ export struct TimeLayoutPane {
   private defaultSubjectRow(vm: ScheduleEditorViewModel, layout: TimeLayoutRow,
     point: TimePointRow) {
     Row() {
-      Text('预置')
+      Text(t('tl_preset'))
         .fontSize(11)
         .fontColor($r('app.color.ch_text_hint'))
         .width(36)
@@ -346,7 +347,7 @@ export struct TimeLayoutPane {
   @Builder
   private subjectMenu(vm: ScheduleEditorViewModel, layout: TimeLayoutRow, point: TimePointRow) {
     Menu() {
-      MenuItem({ content: '清除预置' }).onChange(() => {
+      MenuItem({ content: t('tl_clear_preset') }).onChange(() => {
         vm.setDefaultClass(layout.guid, point.rowIndex, '', false);
       })
       ForEach(vm.subjects, (subject: SubjectRow) => {

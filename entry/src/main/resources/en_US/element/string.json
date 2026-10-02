@@ -863,6 +863,206 @@
     {
       "name": "edit_timelayout_added",
       "value": "Time layout added"
+    },
+    {
+      "name": "tl_add_class",
+      "value": "Add a Class"
+    },
+    {
+      "name": "tl_add_break",
+      "value": "Add a Break"
+    },
+    {
+      "name": "tl_add_separator",
+      "value": "Add a Separator"
+    },
+    {
+      "name": "tl_no_timelayout",
+      "value": "No time layouts yet. Schedules need a bound time layout to arrange classes."
+    },
+    {
+      "name": "tl_no_schedule_uses",
+      "value": "No schedule uses this time layout yet."
+    },
+    {
+      "name": "tl_unused_safe",
+      "value": "No schedule uses this time layout; deleting it affects nothing."
+    },
+    {
+      "name": "tl_no_periods",
+      "value": "This time layout has no periods yet."
+    },
+    {
+      "name": "tl_move_up",
+      "value": "Move Up"
+    },
+    {
+      "name": "tl_move_down",
+      "value": "Move Down"
+    },
+    {
+      "name": "tl_corresponding_class",
+      "value": "the corresponding class."
+    },
+    {
+      "name": "tl_preset",
+      "value": "Preset"
+    },
+    {
+      "name": "tl_clear_preset",
+      "value": "Clear Preset"
+    },
+    {
+      "name": "cp_has_default",
+      "value": "Has Default"
+    },
+    {
+      "name": "cp_no_timelayout_first",
+      "value": "Create a time layout in \"Time Layout\" first"
+    },
+    {
+      "name": "cp_no_schedule",
+      "value": "No schedules yet. A schedule defines what class is on which day."
+    },
+    {
+      "name": "cp_disabled",
+      "value": "Disabled"
+    },
+    {
+      "name": "cp_timelayout_stale",
+      "value": "The bound time layout no longer exists; this schedule is not used. Re-bind one in \"Time Layout\"."
+    },
+    {
+      "name": "cp_enable_schedule",
+      "value": "Enable This Schedule"
+    },
+    {
+      "name": "cp_disable_hint",
+      "value": "When disabled it is not selected, but the schedule itself is kept"
+    },
+    {
+      "name": "cp_edit_class_hint",
+      "value": "Tap a subject name to change it. Turning off the right switch marks the class as off (e.g. a swapped class)."
+    },
+    {
+      "name": "cp_timelayout_no_periods",
+      "value": "The bound time layout has no periods yet; add some first."
+    },
+    {
+      "name": "cp_overlay_children_affected",
+      "value": "overlay schedules based on it will also lose their overlay relationship."
+    },
+    {
+      "name": "ct_move_front",
+      "value": "Move Front"
+    },
+    {
+      "name": "ct_move_back",
+      "value": "Move Back"
+    },
+    {
+      "name": "ct_remove_from_container",
+      "value": "Remove from Container"
+    },
+    {
+      "name": "ct_hide_by_rules",
+      "value": "Hide by Rules"
+    },
+    {
+      "name": "ct_too_deep",
+      "value": "Too deep; children not expanded"
+    },
+    {
+      "name": "ct_hide_rules",
+      "value": "Hide Rules"
+    },
+    {
+      "name": "ct_hide_rules_hint",
+      "value": "When the rules hold, this whole row is hidden. Independent from the component-level rules."
+    },
+    {
+      "name": "ct_no_components",
+      "value": "This row has no components yet"
+    },
+    {
+      "name": "cl_duplicate_hint",
+      "value": "Creates a new scheme with identical content; it is only saved to disk after renaming."
+    },
+    {
+      "name": "cl_preview",
+      "value": "Preview"
+    },
+    {
+      "name": "cl_preview_hint",
+      "value": "Shows the current layout. Schedules come from the saved file, so unsaved edits in the editor are not reflected here."
+    },
+    {
+      "name": "cl_collapse_preview",
+      "value": "Collapse Preview"
+    },
+    {
+      "name": "cl_expand_preview",
+      "value": "Expand Preview"
+    },
+    {
+      "name": "cl_scheme_hint",
+      "value": "On desktop this lives under \"Component config scheme\" in settings, matching the same-named file under the desktop config directory."
+    },
+    {
+      "name": "cl_no_other_schemes",
+      "value": "No other schemes yet"
+    },
+    {
+      "name": "cl_unsaved_changes",
+      "value": "Unsaved changes"
+    },
+    {
+      "name": "cl_reload_confirm",
+      "value": "This discards all unsaved changes and reloads from disk."
+    },
+    {
+      "name": "cl_no_rows",
+      "value": "No rows yet. Add a row before adding components."
+    },
+    {
+      "name": "cl_add_row",
+      "value": "Add a Row"
+    },
+    {
+      "name": "cl_add_row_top",
+      "value": "Add a Row at the Top"
+    },
+    {
+      "name": "rm_biweekly_note",
+      "value": "The schedule has biweekly schedules, but system reminders fire every week — for such weeks, trust the schedule."
+    },
+    {
+      "name": "rm_nothing_to_remind",
+      "value": "The current schedule has no classes to remind"
+    },
+    {
+      "name": "rm_use_system_hint",
+      "value": "Uses the system reminder, ringing once before class by the advance time below"
+    },
+    {
+      "name": "rm_advance_indoor",
+      "value": "Advance (Indoor)"
+    },
+    {
+      "name": "rm_advance_indoor_hint",
+      "value": "For ordinary classroom classes; one ring is enough to head back"
+    },
+    {
+      "name": "sub_no_subjects",
+      "value": "No subjects yet. Add subjects before arranging classes."
+    },
+    {
+      "name": "sub_name_placeholder",
+      "value": "One or two characters shown in the schedule"
+    },
+    {
+      "name": "sub_no_classes_use",
+      "value": "No classes reference this subject yet."
     }
   ]
 }

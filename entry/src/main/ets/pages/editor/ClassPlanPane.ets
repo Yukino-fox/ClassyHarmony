@@ -23,6 +23,7 @@
  * 「每周都不匹配」——界面上什么都不显示，而用户看不出是哪错了。
  */
 
+import { t } from 'common_core';
 import {
   ClassPlanRow,
   ClassSlotRow,
@@ -91,7 +92,7 @@ struct PlanSlotLine {
           .layoutWeight(1)
 
         if (this.slot.hasDefault) {
-          Text('有默认')
+          Text(t('cp_has_default'))
             .fontSize(11)
             .fontColor($r('app.color.ch_text_hint'))
             .margin({ right: 8 })
@@ -158,7 +159,7 @@ export struct ClassPlanPane {
     // 新建要绑一张时间表，而选哪张是用户的事。绑不上的课表不参与选课，
     // 建出来就是一张空壳。所以先让用户选时间表，选不下去就不建。
     if (this.vm.timeLayouts.length === 0) {
-      UiFeedback.toast(this.getUIContext(), '先到「时间表」建一张时间表');
+      UiFeedback.toast(this.getUIContext(), t('cp_no_timelayout_first'));
       return;
     }
     const first: string = this.vm.timeLayouts[0].guid;
@@ -173,7 +174,7 @@ export struct ClassPlanPane {
         Scroll() {
           Column() {
             if (this.vm.classPlans.length === 0) {
-              EditorEmptyHint({ text: '还没有课表。课表决定「周几上什么课」。' })
+              EditorEmptyHint({ text: t('cp_no_schedule') })
             }
             ForEach(this.vm.classPlans, (row: ClassPlanRow) => {
               Column() {
@@ -221,7 +222,7 @@ export struct ClassPlanPane {
               .margin({ left: 6 })
           }
           if (!row.isEnabled) {
-            Text('停用')
+            Text(t('cp_disabled'))
               .fontSize(11)
               .fontColor($r('app.color.ch_text_hint'))
               .margin({ left: 6 })
@@ -288,7 +289,7 @@ export struct ClassPlanPane {
       .bindMenu(this.layoutMenu(vm, row))
 
       if (!row.hasTimeLayout) {
-        Text('绑的时间表已经不存在了，这张课表不参与选课。到「时间表」重新绑一张。')
+        Text(t('cp_timelayout_stale'))
           .fontSize(11)
           .fontColor($r('app.color.ch_accent'))
           .width('100%')
@@ -319,8 +320,8 @@ export struct ClassPlanPane {
       .padding({ top: 4, bottom: 4 })
 
       EditorToggleRow({
-        label: '启用这张课表',
-        hint: '停用后不参与选课，但课表本身保留',
+        label: t('cp_enable_schedule'),
+        hint: t('cp_disable_hint'),
         isOn: row.isEnabled,
         onToggle: (isOn: boolean) => { vm.setClassPlanEnabled(row.guid, isOn); }
       })
@@ -333,14 +334,14 @@ export struct ClassPlanPane {
         .fontWeight(FontWeight.Medium)
         .fontColor($r('app.color.ch_text_primary'))
         .width('100%')
-      Text('点科目名换科目。关掉右边的小开关表示这节课不上（比如调课）。')
+      Text(t('cp_edit_class_hint'))
         .fontSize(11)
         .fontColor($r('app.color.ch_text_hint'))
         .width('100%')
         .margin({ top: 2, bottom: 6 })
 
       if (row.editRows.length === 0) {
-        EditorEmptyHint({ text: '绑定的时间表还没有时段，先去时间表里加。' })
+        EditorEmptyHint({ text: t('cp_timelayout_no_periods') })
       }
       ForEach(row.editRows, (edit: PlanEditRow, index: number) => {
         PlanSlotLine({
@@ -365,7 +366,7 @@ export struct ClassPlanPane {
         EditorDeleteButton({
           text: '删除课表',
           message: `「${row.name}」会被删除。${
-            row.isOverlay ? '以它为源的叠加表也会一并清掉叠加关系。' : ''}`,
+            row.isOverlay ? t('cp_overlay_children_affected') : ''}`,
           onConfirm: () => { vm.removeClassPlan(row.guid); }
         })
       }

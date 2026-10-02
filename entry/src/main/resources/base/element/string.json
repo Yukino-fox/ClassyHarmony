@@ -899,6 +899,206 @@
     {
       "name": "edit_timelayout_added",
       "value": "已添加时间表"
+    },
+    {
+      "name": "tl_add_class",
+      "value": "加一节课"
+    },
+    {
+      "name": "tl_add_break",
+      "value": "加一个课间"
+    },
+    {
+      "name": "tl_add_separator",
+      "value": "加一条分割线"
+    },
+    {
+      "name": "tl_no_timelayout",
+      "value": "还没有时间表。课表要绑定一张时间表才能排课。"
+    },
+    {
+      "name": "tl_no_schedule_uses",
+      "value": "还没有课表用这张时间表。"
+    },
+    {
+      "name": "tl_unused_safe",
+      "value": "这张时间表没有课表在用，删了不会影响课表。"
+    },
+    {
+      "name": "tl_no_periods",
+      "value": "这张时间表还没有时段。"
+    },
+    {
+      "name": "tl_move_up",
+      "value": "上移"
+    },
+    {
+      "name": "tl_move_down",
+      "value": "下移"
+    },
+    {
+      "name": "tl_corresponding_class",
+      "value": "对应的那一节课。"
+    },
+    {
+      "name": "tl_preset",
+      "value": "预置"
+    },
+    {
+      "name": "tl_clear_preset",
+      "value": "清除预置"
+    },
+    {
+      "name": "cp_has_default",
+      "value": "有默认"
+    },
+    {
+      "name": "cp_no_timelayout_first",
+      "value": "先到「时间表」建一张时间表"
+    },
+    {
+      "name": "cp_no_schedule",
+      "value": "还没有课表。课表决定「周几上什么课」。"
+    },
+    {
+      "name": "cp_disabled",
+      "value": "停用"
+    },
+    {
+      "name": "cp_timelayout_stale",
+      "value": "绑的时间表已经不存在了，这张课表不参与选课。到「时间表」重新绑一张。"
+    },
+    {
+      "name": "cp_enable_schedule",
+      "value": "启用这张课表"
+    },
+    {
+      "name": "cp_disable_hint",
+      "value": "停用后不参与选课，但课表本身保留"
+    },
+    {
+      "name": "cp_edit_class_hint",
+      "value": "点科目名换科目。关掉右边的小开关表示这节课不上（比如调课）。"
+    },
+    {
+      "name": "cp_timelayout_no_periods",
+      "value": "绑定的时间表还没有时段，先去时间表里加。"
+    },
+    {
+      "name": "cp_overlay_children_affected",
+      "value": "以它为源的叠加表也会一并清掉叠加关系。"
+    },
+    {
+      "name": "ct_move_front",
+      "value": "前移"
+    },
+    {
+      "name": "ct_move_back",
+      "value": "后移"
+    },
+    {
+      "name": "ct_remove_from_container",
+      "value": "移出容器"
+    },
+    {
+      "name": "ct_hide_by_rules",
+      "value": "按规则隐藏"
+    },
+    {
+      "name": "ct_too_deep",
+      "value": "嵌套太深，子组件没有展开"
+    },
+    {
+      "name": "ct_hide_rules",
+      "value": "隐藏规则"
+    },
+    {
+      "name": "ct_hide_rules_hint",
+      "value": "规则成立时，这一整行都不显示。与组件上的规则各自独立。"
+    },
+    {
+      "name": "ct_no_components",
+      "value": "这一行还没有组件"
+    },
+    {
+      "name": "cl_duplicate_hint",
+      "value": "会新建一份内容相同的方案，改名字之后保存才会落盘。"
+    },
+    {
+      "name": "cl_preview",
+      "value": "预览"
+    },
+    {
+      "name": "cl_preview_hint",
+      "value": "按当前排法显示。课表用磁盘上已保存的那份，所以编辑页里改了课表还没保存时，这里看不到。"
+    },
+    {
+      "name": "cl_collapse_preview",
+      "value": "收起预览"
+    },
+    {
+      "name": "cl_expand_preview",
+      "value": "展开预览"
+    },
+    {
+      "name": "cl_scheme_hint",
+      "value": "桌面版把它放在设置里的「组件配置方案」，对应桌面版配置目录下的同名文件。"
+    },
+    {
+      "name": "cl_no_other_schemes",
+      "value": "还没有别的方案"
+    },
+    {
+      "name": "cl_unsaved_changes",
+      "value": "有未保存的改动"
+    },
+    {
+      "name": "cl_reload_confirm",
+      "value": "这会丢掉所有未保存的改动，从磁盘重读一遍。"
+    },
+    {
+      "name": "cl_no_rows",
+      "value": "还没有任何一行。先加一行，再往里加组件。"
+    },
+    {
+      "name": "cl_add_row",
+      "value": "加一行"
+    },
+    {
+      "name": "cl_add_row_top",
+      "value": "在最前面加一行"
+    },
+    {
+      "name": "rm_biweekly_note",
+      "value": "课表里有单双周课表，而系统提醒只会每周都响 —— 这一周的偏差请以课表为准"
+    },
+    {
+      "name": "rm_nothing_to_remind",
+      "value": "当前课表没有需要提醒的课"
+    },
+    {
+      "name": "rm_use_system_hint",
+      "value": "用系统提醒，上课前按下面的提前量响一次"
+    },
+    {
+      "name": "rm_advance_indoor",
+      "value": "室内课提前"
+    },
+    {
+      "name": "rm_advance_indoor_hint",
+      "value": "普通教室里的课，响一下就该回座位"
+    },
+    {
+      "name": "sub_no_subjects",
+      "value": "还没有科目。先添加科目，再去课表里排课。"
+    },
+    {
+      "name": "sub_name_placeholder",
+      "value": "课表里显示的一两个字"
+    },
+    {
+      "name": "sub_no_classes_use",
+      "value": "还没有课次引用这个科目。"
     }
   ]
 }

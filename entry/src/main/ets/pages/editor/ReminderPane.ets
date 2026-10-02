@@ -29,6 +29,7 @@
 
 import { common } from '@kit.AbilityKit';
 import { DateTimeValue } from 'common_shared';
+import { t } from 'common_core';
 import { ReminderMode } from 'common_core';
 import {
   EditorChip,
@@ -114,7 +115,7 @@ export struct ReminderPane {
   /** 把同步结果翻译成一行给用户看的话。 */
   private report(result: ReminderSyncResult): void {
     this.rotationHint = result.hasRotation
-      ? '课表里有单双周课表，而系统提醒只会每周都响 —— 这一周的偏差请以课表为准'
+      ? t('rm_biweekly_note')
       : '';
     if (result.status === SYNC_BUSY) {
       this.statusText = '正在同步…';
@@ -143,7 +144,7 @@ export struct ReminderPane {
       return;
     }
     if (result.plannedCount === 0) {
-      this.statusText = '当前课表没有需要提醒的课';
+      this.statusText = t('rm_nothing_to_remind');
       this.statusIsWarning = false;
       return;
     }
@@ -243,7 +244,7 @@ export struct ReminderPane {
             Column() {
               EditorToggleRow({
                 label: '开启课前提醒',
-                hint: '用系统提醒，上课前按下面的提前量响一次',
+                hint: t('rm_use_system_hint'),
                 isOn: this.settings.enabled,
                 onToggle: (isOn: boolean) => {
                   this.toggleEnabled(isOn);
@@ -253,7 +254,7 @@ export struct ReminderPane {
               Divider().color($r('app.color.ch_outline')).margin({ top: 8, bottom: 8 })
 
               if (this.settings.enabled) {
-                this.advanceRow('室内课提前', '普通教室里的课，响一下就该回座位', true)
+                this.advanceRow(t('rm_advance_indoor'), t('rm_advance_indoor_hint'), true)
                 Divider().color($r('app.color.ch_outline'))
                 this.advanceRow('室外课提前', '要去操场的课，得留出走过去的时间', false)
                 Divider().color($r('app.color.ch_outline')).margin({ top: 8, bottom: 8 })

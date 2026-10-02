@@ -16,6 +16,7 @@
  * 以为没建成功（看不到新名字），或者手动去找哪一行是新的。
  */
 
+import { t } from 'common_core';
 import { SubjectRow } from 'common_core';
 import { ScheduleEditorViewModel } from '../../viewmodel/ScheduleEditorViewModel';
 import {
@@ -55,7 +56,7 @@ export struct SubjectPane {
         Scroll() {
           Column() {
             if (this.vm.subjects.length === 0) {
-              EditorEmptyHint({ text: '还没有科目。先添加科目，再去课表里排课。' })
+              EditorEmptyHint({ text: t('sub_no_subjects') })
             }
             ForEach(this.vm.subjects, (row: SubjectRow) => {
               Column() {
@@ -105,7 +106,7 @@ export struct SubjectPane {
       EditorTextField({
         label: '简称',
         value: row.initial,
-        placeholder: '课表里显示的一两个字',
+        placeholder: t('sub_name_placeholder'),
         onCommit: (text: string) => { vm.setSubjectInitial(row.guid, text); }
       })
       EditorTextField({
@@ -128,7 +129,7 @@ export struct SubjectPane {
           .width('100%')
           .margin({ top: 6 })
       } else {
-        Text('还没有课次引用这个科目。')
+        Text(t('sub_no_classes_use'))
           .fontSize(11)
           .fontColor($r('app.color.ch_text_hint'))
           .width('100%')
