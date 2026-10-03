@@ -31,9 +31,10 @@
  */
 
 import { DateTimeValue } from 'common_shared';
+import { t } from '../i18n/I18n';
 
 /** 空课程格的占位文案，与桌面版一致。 */
-export const EMPTY_SUBJECT_TEXT: string = '（无）';
+export const EMPTY_SUBJECT_TEXT: string = t('wg_no_subject');
 
 /** 网格的一列，对应时间表里的一个「需要显示的时间点」。 */
 export class ScheduleColumn {

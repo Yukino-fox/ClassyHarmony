@@ -36,13 +36,7 @@
 
 import { socket } from '@kit.NetworkKit';
 import { connection } from '@kit.NetworkKit';
-import {
-  NTP_PACKET_SIZE,
-  NtpParseResult,
-  NtpResponse,
-  buildNtpRequest,
-  parseNtpResponse
-} from 'common_core';
+import { NTP_PACKET_SIZE, NtpParseResult, NtpResponse, buildNtpRequest, parseNtpResponse, t, tf } from 'common_core';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 
 const DOMAIN: number = 0x0000;
@@ -80,7 +74,7 @@ export interface NtpQueryResult {
 export async function queryNtp(host: string): Promise<NtpQueryResult> {
   const trimmed: string = host.trim();
   if (trimmed.length === 0) {
-    return { ok: false, t1Millis: 0, response: undefined, t4Millis: 0, detail: '服务器地址为空' };
+    return { ok: false, t1Millis: 0, response: undefined, t4Millis: 0, detail: t('ntp_empty_server') };
   }
 
   const client: socket.UDPSocket = socket.constructUDPSocketInstance();
@@ -147,7 +141,7 @@ export async function queryNtp(host: string): Promise<NtpQueryResult> {
         t1Millis: 0,
         response: undefined,
         t4Millis: 0,
-        detail: `响应不合法：${parsed.reason}`
+        detail: tf('ntp_bad_response', `${parsed.reason}`)
       };
     }
     return { ok: true, t1Millis: t1, response: parsed.response, t4Millis: t4, detail: '' };

@@ -70,6 +70,7 @@ import { PLUGIN_REASON_BAD_SETTINGS, PLUGIN_REASON_FIRED } from '../plugins/Plug
 import { PluginTriggerVerdict, judgePluginTrigger } from '../plugins/PluginTriggerEval';
 import { ExtensionKind } from '../plugins/PluginManifest';
 import { ExtensionRegistry } from '../plugins/ExtensionRegistry';
+import { t, tf } from '../i18n/I18n';
 
 /** 判定原因代码。界面按它翻译文案，这一层不写界面文案。 */
 export class AutomationReason {
@@ -263,7 +264,7 @@ export class AutomationEngine {
       if (this.conditionSatisfied(workflow, input)) {
         continue;
       }
-      out.runs.push(AutomationEngine.runOf(w, workflow, true, '条件不再满足'));
+      out.runs.push(AutomationEngine.runOf(w, workflow, true, t('automation_cond_gone')));
     }
   }
 
@@ -272,9 +273,9 @@ export class AutomationEngine {
     out: AutomationTickResult): void {
     for (let w: number = 0; w < workflows.length; w++) {
       const workflow: Workflow = workflows[w];
-      for (let t: number = 0; t < workflow.triggers.length; t++) {
-        const verdict: TriggerVerdict = this.evaluateTrigger(workflows, workflow.triggers[t],
-          input, w, t);
+      for (let ti: number = 0; ti < workflow.triggers.length; ti++) {
+        const verdict: TriggerVerdict = this.evaluateTrigger(workflows, workflow.triggers[ti],
+          input, w, ti);
         out.verdicts.push(verdict);
         if (!verdict.fired) {
           continue;
@@ -292,7 +293,7 @@ export class AutomationEngine {
             continue;
           }
           out.runs.push(AutomationEngine.runOf(w, workflow, true,
-            `${verdict.displayName} 要求撤销`));
+            tf('automation_revert', verdict.displayName)));
           continue;
         }
         if (!set.isEnabled) {
@@ -311,7 +312,7 @@ export class AutomationEngine {
           continue;
         }
         out.runs.push(AutomationEngine.runOf(w, workflow, false,
-          `${verdict.displayName} 触发`));
+          tf('automation_fired', verdict.displayName)));
       }
     }
   }
@@ -348,7 +349,7 @@ export class AutomationEngine {
 
     const info: TriggerInfo | undefined = TriggerCatalog.find(trigger.id);
     if (info === undefined) {
-      verdict.displayName = trigger.id.length === 0 ? '（还没挑触发器）' : trigger.id;
+      verdict.displayName = trigger.id.length === 0 ? t('trigger_not_chosen') : trigger.id;
       verdict.support = TriggerSupport.Unknown;
       verdict.reason = trigger.id.length === 0
         ? AutomationReason.NotChosen
@@ -502,7 +503,7 @@ export class AutomationEngine {
     const cron: CronExpression = slot.cron;
     if (!cron.valid) {
       verdict.reason = AutomationReason.BadSettings;
-      verdict.detail = `cron 表达式解不出来：${cron.reason}`;
+      verdict.detail = tf('cron_invalid', cron.reason);
       return verdict;
     }
     return AutomationEngine.mark(verdict, cron.matches(input.now));

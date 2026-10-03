@@ -29,6 +29,7 @@
  * 而这张表是纯数据，写成数据更清楚。新增规则要动的地方也只有 settingsOf 一处。
  */
 
+import { t } from '../i18n/I18n';
 import { JsonNode } from 'common_shared';
 import {
   CurrentSubjectRuleSettings,
@@ -98,31 +99,31 @@ function entry(id: string, name: string, glyph: string, support: RuleSupport,
 
 /** 13 条内置规则，顺序照 App.Services.xaml.cs 的注册顺序。 */
 const REGISTRY: RuleInfo[] = [
-  entry(RuleIds.WINDOW_CLASS_NAME, '前台窗口类名', '', RuleSupport.Unsupported,
+  entry(RuleIds.WINDOW_CLASS_NAME, t('rule_window_class_name'), '', RuleSupport.Unsupported,
     RuleSettingsKind.StringMatching),
-  entry(RuleIds.WINDOW_TEXT, '前台窗口标题', '', RuleSupport.Unsupported,
+  entry(RuleIds.WINDOW_TEXT, t('rule_window_text'), '', RuleSupport.Unsupported,
     RuleSettingsKind.StringMatching),
-  entry(RuleIds.WINDOW_STATUS, '前台窗口状态是', '', RuleSupport.Unsupported,
+  entry(RuleIds.WINDOW_STATUS, t('rule_window_status'), '', RuleSupport.Unsupported,
     RuleSettingsKind.WindowStatus),
-  entry(RuleIds.WINDOW_PROCESS_NAME, '前台窗口进程', '', RuleSupport.Unsupported,
+  entry(RuleIds.WINDOW_PROCESS_NAME, t('rule_window_process'), '', RuleSupport.Unsupported,
     RuleSettingsKind.StringMatching),
-  entry(RuleIds.LESSONS_CURRENT_SUBJECT, '科目是', '', RuleSupport.Implemented,
+  entry(RuleIds.LESSONS_CURRENT_SUBJECT, t('rule_current_subject'), '', RuleSupport.Implemented,
     RuleSettingsKind.CurrentSubject),
-  entry(RuleIds.LESSONS_NEXT_SUBJECT, '下节课科目是', '', RuleSupport.Implemented,
+  entry(RuleIds.LESSONS_NEXT_SUBJECT, t('rule_next_subject'), '', RuleSupport.Implemented,
     RuleSettingsKind.CurrentSubject),
-  entry(RuleIds.LESSONS_PREVIOUS_SUBJECT, '上节课科目是', '', RuleSupport.Implemented,
+  entry(RuleIds.LESSONS_PREVIOUS_SUBJECT, t('rule_previous_subject'), '', RuleSupport.Implemented,
     RuleSettingsKind.CurrentSubject),
-  entry(RuleIds.LESSONS_TIME_STATE, '当前时间状态是', '', RuleSupport.Implemented,
+  entry(RuleIds.LESSONS_TIME_STATE, t('rule_time_state'), '', RuleSupport.Implemented,
     RuleSettingsKind.TimeState),
-  entry(RuleIds.WEATHER_CURRENT, '当前天气是', '', RuleSupport.Implemented,
+  entry(RuleIds.WEATHER_CURRENT, t('rule_weather_now'), '', RuleSupport.Implemented,
     RuleSettingsKind.CurrentWeather),
-  entry(RuleIds.WEATHER_TOMORROW, '明天天气是', '', RuleSupport.Implemented,
+  entry(RuleIds.WEATHER_TOMORROW, t('rule_weather_tomorrow'), '', RuleSupport.Implemented,
     RuleSettingsKind.CurrentWeather),
-  entry(RuleIds.WEATHER_ALERT, '存在气象预警', '', RuleSupport.Implemented,
+  entry(RuleIds.WEATHER_ALERT, t('rule_weather_alert'), '', RuleSupport.Implemented,
     RuleSettingsKind.StringMatching),
-  entry(RuleIds.WEATHER_RAIN_TIME, '距离降水开始/结束还剩', '', RuleSupport.Implemented,
+  entry(RuleIds.WEATHER_RAIN_TIME, t('rule_rain_time'), '', RuleSupport.Implemented,
     RuleSettingsKind.RainTime),
-  entry(RuleIds.WEATHER_SUN_RISE_SET, '是否日出/日落', '', RuleSupport.Implemented,
+  entry(RuleIds.WEATHER_SUN_RISE_SET, t('rule_sun_rise_set'), '', RuleSupport.Implemented,
     RuleSettingsKind.SunRiseSet)
 ];
 

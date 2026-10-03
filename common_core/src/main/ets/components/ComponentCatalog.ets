@@ -176,7 +176,7 @@ export class ComponentCatalog {
   }
 
   /** Id 与 NameCache 都为空时的占位名。 */
-  static readonly UNKNOWN_NAME: string = '未识别组件';
+  static readonly UNKNOWN_NAME: string = t('component_unknown');
 
   /**
    * 组件的显示名。

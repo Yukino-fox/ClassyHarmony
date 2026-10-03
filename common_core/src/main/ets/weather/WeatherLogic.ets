@@ -14,6 +14,7 @@
  * 天气的**取数**（HTTP、定位、5 分钟定时器）在 entry 的 WeatherService。
  * 这里只负责把取回来的 `WeatherInfo` 变成「界面要显示的那几个数」。
  */
+import { t } from '../i18n/I18n';
 
 import {
   DateTimeValue,
@@ -192,19 +193,19 @@ export function windDirectionDegrees(directionText: string): number {
  */
 export function aqiLevelName(level: number): string {
   if (level <= 1) {
-    return '优';
+    return t('aqi_excellent');
   }
   if (level === 2) {
-    return '良';
+    return t('aqi_good');
   }
   if (level === 3) {
-    return '轻度污染';
+    return t('aqi_light');
   }
   if (level === 4) {
-    return '中度污染';
+    return t('aqi_moderate');
   }
   if (level === 5) {
-    return '重度污染';
+    return t('aqi_heavy');
   }
-  return '严重污染';
+  return t('aqi_severe');
 }

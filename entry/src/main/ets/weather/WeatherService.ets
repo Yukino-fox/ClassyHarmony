@@ -45,7 +45,7 @@ import {
   DEFAULT_CITY_ID
 } from '../common/AppPreferences';
 import { WeatherStore } from './WeatherStore';
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import { filterWeatherAlerts, WeatherSnapshot } from 'common_core';
 import {
   CityInfo,
@@ -150,16 +150,16 @@ export class WeatherService {
    */
   statusText(): string {
     if (this.lastError.length > 0) {
-      return `上次刷新失败：${this.lastError}`;
+      return tf('ws_last_refresh_failed', this.lastError);
     }
     if (!this.current.info.hasData()) {
       return t('ws_no_data');
     }
     const updated: DateTimeValue = DateTimeValue.fromLocalMillis(this.current.info.updateTime);
     if (this.degradedPrecision >= 0) {
-      return `更新于 ${updated.toString()}（定位精度降到 ${this.degradedPrecision} 位）`;
+      return tf('ws_updated_at_degraded', updated.toString(), `${this.degradedPrecision}`);
     }
-    return `更新于 ${updated.toString()}`;
+    return tf('ws_updated_at', updated.toString());
   }
 
   // ------------------------------------------------------------ 生命周期
@@ -226,13 +226,13 @@ export class WeatherService {
 
     const city: CityResolution | undefined = await this.resolveCity(schema);
     if (city === undefined) {
-      this.lastError = '无法获取城市信息';
+      this.lastError = t('ws_city_failed');
       return;
     }
 
     const info: WeatherInfo | undefined = await this.fetchWeather(schema, city);
     if (info === undefined) {
-      this.lastError = '无法获取天气信息';
+      this.lastError = t('ws_fetch_failed');
       return;
     }
 

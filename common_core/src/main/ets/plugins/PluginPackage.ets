@@ -39,6 +39,7 @@
 
 import { ExtensionManifest } from './PluginManifest';
 import { PLUGIN_API_VERSION } from './PluginApi';
+import { t, tf } from '../i18n/I18n';
 
 /** 桌面版 manifest.yml 里本端要迁的字段。全 PascalCase，与 YamlDotNet 序列化出的键名一致。 */
 export const DESKTOP_FIELD_ENTRANCE_ASSEMBLY: string = 'EntranceAssembly';
@@ -242,27 +243,25 @@ export function normalizeDesktopPluginId(id: string): string {
 }
 
 /** 导入说明的前缀。单独一个常量是为了让测试能断言它。 */
-export const DESKTOP_IMPORT_NOTE: string = '由桌面版插件包导入';
+export const DESKTOP_IMPORT_NOTE: string = t('plugin_desktop_import_tag');
 
 /** 描述后面追加的那段说明。 */
 export function desktopImportNote(meta: DesktopPluginMeta, normalizedId: string): string {
-  let out: string = `${DESKTOP_IMPORT_NOTE}。桌面版插件是 .NET 程序集，本端不加载它，` +
-    '所以这个扩展不提供任何可用条目；这里只留了元信息，方便认出它。';
+  let out: string = tf('plugin_desktop_import_note', DESKTOP_IMPORT_NOTE);
   if (meta.entranceAssembly.length > 0) {
-    out += `（程序集 ${meta.entranceAssembly}）`;
+    out += tf('plugin_desktop_assembly', meta.entranceAssembly);
   }
   if (meta.apiVersion.length > 0) {
-    out += `（桌面版 API 版本 ${meta.apiVersion}）`;
+    out += tf('plugin_desktop_api_version', meta.apiVersion);
   }
   if (meta.id.trim().length > 0 && meta.id.trim() !== normalizedId) {
-    out += `（原 id ${meta.id.trim()}，已改成小写形式）`;
+    out += tf('plugin_desktop_id_renamed', meta.id.trim());
   }
   if (meta.unreadableFields.length > 0) {
-    out += `（有 ${meta.unreadableFields.length} 个字段本端读不出来：` +
-      `${meta.unreadableFields.join('、')}）`;
+    out += tf('plugin_desktop_unreadable', `${meta.unreadableFields.length}`, meta.unreadableFields.join('、'));
   }
   if (meta.description.length > 0) {
-    out += ` 原描述：${meta.description}`;
+    out += tf('plugin_desktop_orig_desc', meta.description);
   }
   return out;
 }

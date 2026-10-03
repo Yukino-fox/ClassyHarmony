@@ -41,7 +41,7 @@
 
 import { common } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import {
   DEFAULT_SPEECH_PROVIDER,
   SPEECH_PROVIDER_SYSTEM,
@@ -170,15 +170,15 @@ export class SpeechService {
     if (resolved.providerId.length === 0) {
       const info = findSpeechProvider(selected);
       if (info !== undefined && !info.implemented) {
-        return `不可用：${info.displayName} 在本设备上尚未实现，且没有可回退的引擎`;
+        return tf('sp_unavailable_no_fallback', info.displayName);
       }
-      return `不可用：${speechProviderName(selected)} 在本设备上不可用`;
+      return tf('sp_unavailable', speechProviderName(selected));
     }
     const name: string = speechProviderName(resolved.providerId);
     if (!resolved.fellBack) {
-      return `当前：${name}`;
+      return tf('sp_current', name);
     }
-    return `当前：${name}（所选的 ${speechProviderName(selected)} 在本设备上不可用，已回退）`;
+    return tf('sp_current_fallback', name, speechProviderName(selected));
   }
 
   // ------------------------------------------------------------ 入队

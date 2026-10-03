@@ -40,7 +40,7 @@ import { distributedDataObject } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { deviceInfo } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import {
   DISTRIBUTED_SESSION_ID_MAX_LENGTH,
   PublicLessonState,
@@ -253,7 +253,7 @@ export class DistributedStateService {
 
     const id: string = this.ensureSessionId();
     if (!isValidDistributedSessionId(id)) {
-      this.failure = '会话 ID 无效（只允许字母、数字、下划线，且不超过 128 字符）';
+      this.failure = t('ddo_bad_session_id');
       return;
     }
 
@@ -278,11 +278,11 @@ export class DistributedStateService {
       created.setSessionId(id).then(() => {
         hilog.info(DOMAIN, TAG, 'joined session %{public}s', id);
       }).catch((error: Error) => {
-        this.failure = `加入会话失败：${error.message}`;
+        this.failure = tf('ddo_join_failed', error.message);
         hilog.warn(DOMAIN, TAG, 'setSessionId failed: %{public}s', this.failure);
       });
     } catch (error) {
-      this.failure = `同步不可用：${error}`;
+      this.failure = tf('ddo_sync_unavailable', `${error}`);
       this.object = undefined;
       this.fields = undefined;
       hilog.warn(DOMAIN, TAG, 'create distributed object failed: %{public}s', this.failure);
@@ -378,7 +378,7 @@ export class DistributedStateService {
   /** 界面上显示的一行状态。 */
   statusText(): string {
     if (!this.enabled) {
-      return '未开启';
+      return t('ddo_off');
     }
     if (this.failure.length > 0) {
       return this.failure;
@@ -390,11 +390,11 @@ export class DistributedStateService {
       return t('ddo_no_session');
     }
     const parts: string[] = [];
-    parts.push(`会话 ${this.sessionId}`);
-    parts.push(this.online.size > 0 ? `${this.online.size} 台对端在线` : '暂无对端');
+    parts.push(tf('ddo_session_line', this.sessionId));
+    parts.push(this.online.size > 0 ? tf('ddo_peers_online', `${this.online.size}`) : t('ddo_no_peers'));
     const remote: PublicLessonState | undefined = this.remoteState();
     if (remote !== undefined) {
-      parts.push(`最近来自「${remote.deviceName.length > 0 ? remote.deviceName : '未知设备'}」`);
+      parts.push(tf('ddo_last_from', remote.deviceName.length > 0 ? remote.deviceName : t('ddo_unknown_device')));
     }
     return parts.join(' · ');
   }
@@ -473,7 +473,7 @@ export class DistributedStateService {
     if (combined.length > 0) {
       return combined;
     }
-    return model.length > 0 ? model : 'HarmonyOS 设备';
+    return model.length > 0 ? model : t('ddo_default_model');
   }
 }
 

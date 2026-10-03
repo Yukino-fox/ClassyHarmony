@@ -47,6 +47,7 @@
 
 import { DateTimeValue } from 'common_shared';
 import { NtpResponse, ntpDelayMillis, ntpOffsetMillis } from './NtpProtocol';
+import { t, tf } from '../i18n/I18n';
 
 /**
  * 系统时间跳变的判定阈值（毫秒）。
@@ -167,18 +168,18 @@ export class ExactClock {
   /** 供界面显示的一句状态说明。 */
   statusText(): string {
     if (this.frozen) {
-      return '检测到系统时间变化，正在重新校时';
+      return t('clock_status_realign');
     }
     if (!this.enabled) {
-      return '未启用精确时间，使用系统时间';
+      return t('clock_status_disabled');
     }
     if (!this.synced) {
-      return '尚未同步时间';
+      return t('clock_status_unsynced');
     }
     const seconds: string = (Math.round(this.ntpOffset / 100) / 10).toString();
     return this.ntpOffset >= 0
-      ? `已校时，本机慢 ${seconds} 秒`
-      : `已校时，本机快 ${Math.abs(Number(seconds))} 秒`;
+      ? tf('clock_status_slow', seconds)
+      : tf('clock_status_fast', `${Math.abs(Number(seconds))}`);
   }
 
   // ------------------------------------------------------------ 同步
@@ -301,7 +302,7 @@ export class ExactClock {
     this.baselineUptime = uptimeMillis;
     if (Math.abs(drift) > SYSTEM_JUMP_THRESHOLD_MS) {
       this.frozen = true;
-      this.frozenReason = '系统时间被修改';
+      this.frozenReason = t('clock_frozen_reason');
       return true;
     }
     return false;

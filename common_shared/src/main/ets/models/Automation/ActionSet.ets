@@ -24,10 +24,11 @@ import { JsonBoolean, JsonNode, JsonNumber, JsonObject, JsonString } from '../..
 import { JsonValue } from '../../json/JsonValue';
 import { ModelCodec } from '../ModelCodec';
 import { ActionItem } from './ActionItem';
+import { t } from '../../i18n/I18n';
 
 export class ActionSet {
   /** 行动组名。桌面版默认 "新行动组"。 */
-  name: string = '新行动组';
+  name: string = t('sh_default_action_set');
 
   /** 行动项列表，落盘键名为 "Actions"。 */
   actions: ActionItem[] = [];
@@ -68,7 +69,7 @@ export class ActionSet {
 
   static fromJson(node: JsonObject): ActionSet {
     const out: ActionSet = new ActionSet();
-    out.name = ModelCodec.string(node, 'Name', '新行动组');
+    out.name = ModelCodec.string(node, 'Name', t('sh_default_action_set'));
     out.actions = ModelCodec.readArray(node, 'Actions', (item: JsonNode) => {
       // 元素类型不符时退化为默认实例，保住数组长度，避免静默丢项
       return ActionItem.fromJson(JsonValue.asObject(item) ?? new JsonObject());

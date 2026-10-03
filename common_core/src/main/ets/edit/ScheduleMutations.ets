@@ -18,6 +18,7 @@
  * 收进模型方法，是因为「什么时候该重算」取决于这次改了什么，模型自己
  * 不知道 —— 统一在改动层末尾调一次，规则就只有一条。
  */
+import { t, tf } from '../i18n/I18n';
 
 import {
   ClassInfo,
@@ -179,7 +180,7 @@ export class ScheduleMutations {
   static addTimeLayout(profile: Profile, name: string): Guid {
     const guid: Guid = Guid.newGuid();
     const layout: TimeLayout = new TimeLayout();
-    layout.name = name.length > 0 ? name : '新时间表';
+    layout.name = name.length > 0 ? name : t('sched_default_layout');
     layout.isActive = true;
     layout.layouts.push(ScheduleMutations.newPoint(TIME_TYPE_CLASS, 0, 45));
     profile.timeLayouts.set(guid.toString(), layout);
@@ -423,7 +424,7 @@ export class ScheduleMutations {
   static addClassPlan(profile: Profile, timeLayoutId: Guid, name: string): Guid {
     const guid: Guid = Guid.newGuid();
     const plan: ClassPlan = new ClassPlan();
-    plan.name = name.length > 0 ? name : '新课表';
+    plan.name = name.length > 0 ? name : t('sched_default_plan');
     plan.timeLayoutId = timeLayoutId;
     plan.isActive = true;
     profile.classPlans.set(guid.toString(), plan);
@@ -579,7 +580,7 @@ export class ScheduleMutations {
     }
     const guid: Guid = Guid.newGuid();
     const copy: ClassPlan = ClassPlan.fromJson(source.toJson());
-    copy.name = name.length > 0 ? name : `${source.name} 副本`;
+    copy.name = name.length > 0 ? name : tf('sched_copy_name', source.name);
     copy.isOverlay = true;
     copy.overlaySourceId = sourceGuid;
     copy.overlaySetupTime = DateTimeValue.now();
@@ -603,7 +604,7 @@ export class ScheduleMutations {
   static addClassPlanGroup(profile: Profile, name: string): Guid {
     const guid: Guid = Guid.newGuid();
     const group: ClassPlanGroup = new ClassPlanGroup();
-    group.name = name.length > 0 ? name : '新课表群';
+    group.name = name.length > 0 ? name : t('sched_default_group');
     group.isActive = true;
     profile.classPlanGroups.set(guid.toString(), group);
     return guid;
@@ -722,7 +723,7 @@ export class ScheduleMutations {
     point.startTime = TimeSpanValue.fromSeconds(startSeconds);
     point.endTime = TimeSpanValue.fromSeconds(startSeconds + minutes * 60);
     if (timeType === TIME_TYPE_BREAK) {
-      point.breakName = '课间';
+      point.breakName = t('fmt_type_break');
     }
     return point;
   }

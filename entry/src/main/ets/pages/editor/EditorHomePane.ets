@@ -17,7 +17,7 @@
  * 放最外层反而最不容易被漏掉 —— 放在课表分页里，用户会以为导出只导课表。
  */
 
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import { common } from '@kit.AbilityKit';
 import { ScheduleEditorViewModel } from '../../viewmodel/ScheduleEditorViewModel';
 import { EditorHeader, EditorTextField } from '../../components/EditorWidgets';
@@ -85,10 +85,10 @@ export struct EditorHomePane {
   build() {
     NavDestination() {
       Column() {
-        EditorHeader({ title: '编辑课表', stack: this.stack })
+        EditorHeader({ title: t('eh_title'), stack: this.stack })
 
         if (!this.vm.isReady) {
-          Text(this.vm.errorText.length > 0 ? this.vm.errorText : '正在读取课表…')
+          Text(this.vm.errorText.length > 0 ? this.vm.errorText : t('eh_loading'))
             .fontSize(13)
             .fontColor($r('app.color.ch_text_secondary'))
             .padding(20)
@@ -125,28 +125,28 @@ export struct EditorHomePane {
   private summary(vm: ScheduleEditorViewModel) {
     Column() {
       EditorTextField({
-        label: '档案名',
+        label: t('eh_profile_name'),
         value: vm.profile.name === '（未命名档案）' ? '' : vm.profile.name,
-        placeholder: '（未命名档案）',
+        placeholder: t('eh_unnamed_profile'),
         onCommit: (text: string) => {
           vm.renameProfile(text);
         }
       })
 
       Row() {
-        Text(`${vm.profile.subjectCount} 科目`)
+        Text(tf('eh_count_subjects', `${vm.profile.subjectCount}`))
           .fontSize(12)
           .fontColor($r('app.color.ch_text_hint'))
           .margin({ right: 12 })
-        Text(`${vm.profile.timeLayoutCount} 时间表`)
+        Text(tf('eh_count_layouts', `${vm.profile.timeLayoutCount}`))
           .fontSize(12)
           .fontColor($r('app.color.ch_text_hint'))
           .margin({ right: 12 })
-        Text(`${vm.profile.classPlanCount} 课表`)
+        Text(tf('eh_count_plans', `${vm.profile.classPlanCount}`))
           .fontSize(12)
           .fontColor($r('app.color.ch_text_hint'))
           .margin({ right: 12 })
-        Text(`${vm.profile.groupCount} 课表群`)
+        Text(tf('eh_count_groups', `${vm.profile.groupCount}`))
           .fontSize(12)
           .fontColor($r('app.color.ch_text_hint'))
       }
@@ -161,29 +161,29 @@ export struct EditorHomePane {
   private entries(vm: ScheduleEditorViewModel) {
     Column() {
       EntryRow({
-        title: '科目',
-        hint: '课程名称、简称、教师',
+        title: t('eh_entry_subjects'),
+        hint: t('eh_entry_subjects_hint'),
         count: `${vm.subjects.length}`,
         onTap: () => { this.go(ROUTE_SUBJECTS); }
       })
       Divider().color($r('app.color.ch_outline'))
       EntryRow({
-        title: '时间表',
-        hint: '每天几节课、每节多久',
+        title: t('eh_entry_layouts'),
+        hint: t('eh_entry_layouts_hint'),
         count: `${vm.timeLayouts.length}`,
         onTap: () => { this.go(ROUTE_LAYOUTS); }
       })
       Divider().color($r('app.color.ch_outline'))
       EntryRow({
-        title: '课表',
-        hint: '周几上什么课',
+        title: t('eh_entry_plans'),
+        hint: t('eh_entry_plans_hint'),
         count: `${vm.classPlans.length}`,
         onTap: () => { this.go(ROUTE_PLANS); }
       })
       Divider().color($r('app.color.ch_outline'))
       EntryRow({
-        title: '课表群',
-        hint: '按单双周 / 学期分组切换',
+        title: t('eh_entry_groups'),
+        hint: t('eh_entry_groups_hint'),
         count: `${vm.groups.length}`,
         onTap: () => { this.go(ROUTE_GROUPS); }
       })
@@ -208,8 +208,8 @@ export struct EditorHomePane {
   private operations(vm: ScheduleEditorViewModel) {
     Column() {
       EntryRow({
-        title: '课前提醒',
-        hint: '开关、提前多少分钟、合并还是逐条',
+        title: t('eh_entry_reminder'),
+        hint: t('eh_entry_reminder_hint'),
         onTap: () => { this.go(ROUTE_REMINDER); }
       })
     }
@@ -219,7 +219,7 @@ export struct EditorHomePane {
   @Builder
   private fileOps(vm: ScheduleEditorViewModel) {
     Column() {
-      Text('档案文件')
+      Text(t('eh_profile_file'))
         .fontSize(13)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('app.color.ch_text_primary'))
@@ -233,14 +233,14 @@ export struct EditorHomePane {
         .margin({ bottom: 8 })
 
       Row() {
-        Text('导入课表文件')
+        Text(t('eh_import_file'))
           .fontSize(13)
           .fontColor($r('app.color.ch_accent'))
           .padding({ right: 20 })
           .onClick(() => {
             this.doImport(vm);
           })
-        Text('导出课表文件')
+        Text(t('eh_export_file'))
           .fontSize(13)
           .fontColor($r('app.color.ch_accent'))
           .onClick(() => {
@@ -262,12 +262,12 @@ export struct EditorHomePane {
    */
   private doImport(vm: ScheduleEditorViewModel): void {
     this.getUIContext().showAlertDialog({
-      title: '导入课表文件',
-      message: '这会整份替换当前草稿，替换后需要保存才会写进档案。',
+      title: t('eh_import_file'),
+      message: t('eh_import_confirm'),
       buttons: [
-        { value: '取消', action: () => {} },
+        { value: t('common_cancel'), action: () => {} },
         {
-          value: '选择文件',
+          value: t('eh_pick_file'),
           fontColor: $r('app.color.ch_accent'),
           action: () => { void this.pickAndImport(vm); }
         }

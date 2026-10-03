@@ -24,7 +24,7 @@
  * 旧档案等于骗人。所以这个类只管字节的进出，导出哪一份由调用方决定。
  */
 
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import { common } from '@kit.AbilityKit';
 import { fileIo as fs, picker } from '@kit.CoreFileKit';
 import { Profile } from 'common_shared';
@@ -78,7 +78,7 @@ export class ProfileTransfer {
     // 导出后缀由 fileName 决定，所以过滤条件也从它推，而不是写死 .json ——
     // 导出扩展清单时用户要能看到 .json，写死会让弹窗把 .cipx 之外的东西也列出来，
     // 而用户挑一个别的后缀导出，得到的是一个名字与内容对不上的文件。
-    const suffixes: string[] = [`文件|.${suffixOf(fileName)}`];
+    const suffixes: string[] = [tf('pf_save_suffix_choice', `.${suffixOf(fileName)}`)];
     options.fileSuffixChoices = suffixes;
     try {
       const uris: string[] = await view.save(options);

@@ -25,6 +25,7 @@ import { ClassPlanGroup } from './ClassPlanGroup';
 import { TimeLayout } from './TimeLayout';
 import { TimeLayoutItem } from './TimeLayoutItem';
 import { TimeRule } from './TimeRule';
+import { t } from '../i18n/I18n';
 
 export class ClassPlan {
   timeLayoutId: Guid = Guid.empty();
@@ -34,7 +35,7 @@ export class ClassPlan {
 
   classes: ClassInfo[] = [];
 
-  name: string = '新课表';
+  name: string = t('sh_default_plan');
 
   isOverlay: boolean = false;
 
@@ -261,7 +262,7 @@ export class ClassPlan {
     out.classes = ModelCodec.readArray(node, 'Classes', (item: JsonNode) => {
       return ClassInfo.fromJson(JsonValue.asObject(item) ?? new JsonObject());
     });
-    out.name = ModelCodec.string(node, 'Name', '新课表');
+    out.name = ModelCodec.string(node, 'Name', t('sh_default_plan'));
     out.isOverlay = ModelCodec.bool(node, 'IsOverlay', false);
     out.overlaySourceId = ModelCodec.readNullableGuid(node, 'OverlaySourceId');
     out.overlaySetupTime = ModelCodec.readDateTime(node, 'OverlaySetupTime');

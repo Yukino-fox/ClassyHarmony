@@ -38,7 +38,7 @@ import {
   WeatherInfo,
   DateTimeValue
 } from 'common_shared';
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import { weatherTextByCode } from 'common_core';
 import { LessonsSnapshot } from 'common_core';
 import {
@@ -147,7 +147,7 @@ export class AutomationExecutor {
         if (this.isPluginAction(action.id)) {
           return this.execPlugin(action, causeText);
         }
-        causeText.value = `未知行动 id：${action.id}`;
+        causeText.value = tf('exec_unknown_action', action.id);
         return false;
     }
   }
@@ -183,7 +183,7 @@ export class AutomationExecutor {
     // kind 为 None 时 reason 是空的（core 只在「配置读不出来」或「越权」时给
     // reason），但这个行动确实什么也做不了 —— 照样要说一句，否则自动化里的
     // 失败原因会空着，用户看不懂为什么这条没动静。
-    causeText.value = '这条扩展行动什么都没做（清单里没写清楚要做什么）。';
+    causeText.value = t('exec_plugin_noop');
     return false;
   }
 
@@ -214,14 +214,14 @@ export class AutomationExecutor {
   private execPluginSetting(plan: PluginActionPlan, causeText: CauseText): ExecResult {
     const key: string = plan.setting.key;
     if (key.length === 0) {
-      causeText.value = '扩展的改设置行动没写设置键。';
+      causeText.value = t('exec_plugin_setting_no_key');
       return false;
     }
     const prefs: AppPreferences = new AppPreferences(this.ctx.context);
     const current: JsonNode | undefined = prefs.rawValueOf(key);
     const value: JsonNode | undefined = this.pluginSettingValue(plan.setting.value, current);
     if (value === undefined) {
-      causeText.value = `无法把「${plan.setting.value}」解释成设置项 ${key} 的值。`;
+      causeText.value = tf('exec_plugin_bad_value', plan.setting.value, key);
       return false;
     }
     if (current !== undefined && value !== undefined &&
@@ -291,12 +291,12 @@ export class AutomationExecutor {
   private async execSleep(action: ActionItem, causeText: CauseText): Promise<ExecResult> {
     const s: SleepActionSettings | undefined = SleepActionSettings.parse(action.settings ?? new JsonObject());
     if (s === undefined) {
-      causeText.value = 'Sleep 设置解析失败';
+      causeText.value = t('exec_sleep_parse_failed');
       return false;
     }
     const seconds: number = s.value;
     if (seconds <= 0) {
-      causeText.value = '睡眠时长必须 > 0';
+      causeText.value = t('exec_sleep_bad_duration');
       return false;
     }
     await new Promise<void>((resolve: () => void) => {
@@ -309,7 +309,7 @@ export class AutomationExecutor {
   private async execModifySettings(action: ActionItem, causeText: CauseText): Promise<ExecResult> {
     const s: ModifyAppSettingsActionSettings | undefined = ModifyAppSettingsActionSettings.parse(action.settings ?? new JsonObject());
     if (s === undefined) {
-      causeText.value = 'ModifyAppSettings 设置解析失败';
+      causeText.value = t('exec_settings_parse_failed');
       return false;
     }
     if (s.name === '' || s.name === undefined) {
@@ -349,7 +349,7 @@ export class AutomationExecutor {
         all = this.removeKey(all, s.name);
         break;
       default:
-        causeText.value = `未知的设置修改模式：${s.mode}`;
+        causeText.value = tf('exec_unknown_setting_mode', `${s.mode}`);
         return false;
     }
 
@@ -368,7 +368,7 @@ export class AutomationExecutor {
   private async execShowNotification(action: ActionItem, causeText: CauseText): Promise<ExecResult> {
     const s: NotificationActionSettings | undefined = NotificationActionSettings.parse(action.settings ?? new JsonObject());
     if (s === undefined) {
-      causeText.value = 'Notification 设置解析失败';
+      causeText.value = t('exec_notification_parse_failed');
       return false;
     }
 
@@ -429,7 +429,7 @@ export class AutomationExecutor {
     const s: WeatherNotificationActionSettings | undefined =
       WeatherNotificationActionSettings.parse(action.settings ?? new JsonObject());
     if (s === undefined) {
-      causeText.value = 'WeatherNotification 设置解析失败';
+      causeText.value = t('exec_weather_notification_parse_failed');
       return false;
     }
 
@@ -456,7 +456,7 @@ export class AutomationExecutor {
         ok = await this.publishHourly(info);
         break;
       default:
-        causeText.value = `未知的天气提醒种类：${s.notificationKind}`;
+        causeText.value = tf('exec_unknown_weather_kind', `${s.notificationKind}`);
         return false;
     }
     if (!ok) {
@@ -468,7 +468,7 @@ export class AutomationExecutor {
 
   /** 三天预报：今天 / 明天 / 后天。 */
   private async publishForecast(info: WeatherInfo): Promise<ExecResult> {
-    const labels: string[] = ['今天', '明天', '后天'];
+    const labels: string[] = [t('wf_day_today'), t('wf_day_tomorrow'), t('wf_day_day_after')];
     const weatherValues: RangedValue[] = info.forecastDaily.weather.value;
     const temperatureValues: RangedValue[] = info.forecastDaily.temperature.value;
     const parts: string[] = [];
@@ -602,7 +602,7 @@ function describeWeatherRange(range: RangedValue): string {
   if (from === to) {
     return from;
   }
-  return `${from}转${to}`;
+  return tf('wf_weather_range', from, to);
 }
 
 /** 把温度区间写成「21~29℃」。两端都空时返回空串。 */

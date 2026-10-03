@@ -24,7 +24,7 @@
  * 好处是「什么情况下该申请」这件事可以在 Node 测试台里全量枚举。
  */
 
-import { t } from '../i18n/I18n';
+import { t, tf } from '../i18n/I18n';
 
 /** 连续任务类型：多设备互联。对应 BackgroundMode.MULTI_DEVICE_CONNECTION。 */
 export const KEEP_ALIVE_MODE_MULTI_DEVICE: string = 'MULTI_DEVICE_CONNECTION';
@@ -63,13 +63,13 @@ export function planKeepAlive(
   if (distributedEnabled) {
     plan.request = true;
     plan.mode = KEEP_ALIVE_MODE_MULTI_DEVICE;
-    plan.reason = '跨设备同步需要在后台保持连接';
+    plan.reason = t('keepalive_reason_sync');
     return plan;
   }
   if (automationEnabled) {
     plan.request = true;
     plan.mode = KEEP_ALIVE_MODE_TASK_KEEPING;
-    plan.reason = '自动化需要在后台继续运行';
+    plan.reason = t('keepalive_reason_automation');
     return plan;
   }
   plan.reason = t('keepalive_nothing_needed');
@@ -90,16 +90,16 @@ export function keepAliveErrorText(code: number): string {
     case 202:
       return t('keepalive_not_system_app');
     case 401:
-      return '申请参数不合法';
+      return t('keepalive_err_param');
     case 9800004:
-      return '系统服务操作失败';
+      return t('keepalive_err_service');
     case 9800005:
-      return '长时任务校验未通过（该设备 / 该类型不支持）';
+      return t('keepalive_err_validation');
     case 9800006:
-      return '通知校验未通过';
+      return t('keepalive_err_notification');
     case 9800007:
-      return '落盘失败';
+      return t('keepalive_err_persist');
     default:
-      return `未知错误（${code}）`;
+      return tf('keepalive_err_unknown', `${code}`);
   }
 }

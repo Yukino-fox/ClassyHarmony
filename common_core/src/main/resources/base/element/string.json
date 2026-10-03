@@ -262,91 +262,91 @@
     },
     {
       "name": "component_clock",
-      "value": "显示现在的时间，支持精确到秒。"
+      "value": "时钟"
     },
     {
       "name": "component_clock_desc",
-      "value": "Shows the current time, precise to the second."
+      "value": "显示现在的时间，支持精确到秒。"
     },
     {
       "name": "component_countdown",
-      "value": "显示距离某一天的倒计时。"
+      "value": "倒计时"
     },
     {
       "name": "component_countdown_desc",
-      "value": "Shows the countdown to a specific day."
+      "value": "显示距离某一天的倒计时。"
     },
     {
       "name": "component_date",
-      "value": "显示今天的日期和星期。"
+      "value": "日期"
     },
     {
       "name": "component_date_desc",
-      "value": "Shows today's date and day of week."
+      "value": "显示今天的日期和星期。"
     },
     {
       "name": "component_group",
-      "value": "将多个组件组合到一个组件中显示。"
+      "value": "分组容器"
     },
     {
       "name": "component_group_desc",
-      "value": "Combines multiple components into one for display."
+      "value": "将多个组件组合到一个组件中显示。"
     },
     {
       "name": "component_rolling",
-      "value": "滚动显示组件内的内容。"
+      "value": "滚动容器"
     },
     {
       "name": "component_rolling_desc",
-      "value": "Scrolls the content within the component."
+      "value": "滚动显示组件内的内容。"
     },
     {
       "name": "component_schedule",
-      "value": "显示当前的课程表信息。"
+      "value": "课程表"
     },
     {
       "name": "component_schedule_desc",
-      "value": "Shows the current schedule information."
+      "value": "显示当前的课程表信息。"
     },
     {
       "name": "component_separator",
-      "value": "显示一个分割线，视觉上对组件进行分组。"
+      "value": "分割线"
     },
     {
       "name": "component_separator_desc",
-      "value": "Shows a separator line for visual grouping."
+      "value": "显示一个分割线，视觉上对组件进行分组。"
     },
     {
       "name": "component_slide",
-      "value": "轮播多个组件。"
+      "value": "轮播容器"
     },
     {
       "name": "component_slide_desc",
-      "value": "Slides through multiple components."
+      "value": "轮播多个组件。"
     },
     {
       "name": "component_stack",
-      "value": "将多个容器堆叠显示。"
+      "value": "堆叠容器"
     },
     {
       "name": "component_stack_desc",
-      "value": "Stacks multiple containers for display."
+      "value": "将多个容器堆叠显示。"
     },
     {
       "name": "component_text",
-      "value": "显示自定义文本。"
+      "value": "文本"
     },
     {
       "name": "component_text_desc",
-      "value": "Shows custom text."
+      "value": "显示自定义文本。"
     },
     {
       "name": "component_weather",
-      "value": "显示当前的天气概况和气象预警。"
+      "value": "天气简报"
     },
     {
       "name": "component_weather_desc",
-      "value": "Shows the current weather summary and alerts."
+      "value": "显示当前的天气概况和气象预警。"
     },
     {
       "name": "panel_no_class_today",
@@ -515,6 +515,746 @@
     {
       "name": "week_saturday",
       "value": "周六"
+    },
+    {
+      "name": "list_sep",
+      "value": "、"
+    },
+    {
+      "name": "plugin_issue_warn_only",
+      "value": "{0} 条提醒"
+    },
+    {
+      "name": "plugin_issue_error_only",
+      "value": "{0} 个错误，装不上"
+    },
+    {
+      "name": "plugin_issue_error_warn",
+      "value": "{0} 个错误、{1} 条提醒，装不上"
+    },
+    {
+      "name": "plugin_manifest_too_big",
+      "value": "清单有 {0} 字节，超过上限 {1} 字节。"
+    },
+    {
+      "name": "plugin_manifest_id_missing",
+      "value": "清单里没写 id。"
+    },
+    {
+      "name": "plugin_manifest_id_invalid",
+      "value": "id「{0}」不合法。只用小写字母、数字、点和横线，长度 1~64，且以字母或数字开头。"
+    },
+    {
+      "name": "plugin_manifest_name_missing",
+      "value": "清单里没写 name。"
+    },
+    {
+      "name": "plugin_manifest_version_missing",
+      "value": "清单里没写 version。"
+    },
+    {
+      "name": "plugin_manifest_version_invalid",
+      "value": "version「{0}」不是能认的版本号。写成 1.0 或 1.0.0 这样的形式。"
+    },
+    {
+      "name": "plugin_entry_id_missing",
+      "value": "条目没写 id。"
+    },
+    {
+      "name": "plugin_entry_id_too_long",
+      "value": "条目 id 有 {0} 个字符，超过上限 {1}。"
+    },
+    {
+      "name": "plugin_kind_too_many",
+      "value": "这一类有 {0} 条，超过上限 {1} 条。"
+    },
+    {
+      "name": "plugin_entry_name_missing",
+      "value": "条目没写 name。"
+    },
+    {
+      "name": "plugin_component_id_not_guid",
+      "value": "组件 id「{0}」必须是 GUID（32 位十六进制 + 4 个横线）。"
+    },
+    {
+      "name": "plugin_component_id_dup",
+      "value": "组件 id「{0}」在这一份清单里出现了两次。"
+    },
+    {
+      "name": "plugin_component_id_builtin",
+      "value": "组件 id「{0}」是内置组件的 id，换一个。"
+    },
+    {
+      "name": "plugin_payload_kind_unknown",
+      "value": "payloadKind「{0}」不认识。能借用的只有：{1}。"
+    },
+    {
+      "name": "plugin_trigger_id_dup",
+      "value": "触发器 id「{0}」在这一份清单里出现了两次。"
+    },
+    {
+      "name": "plugin_trigger_id_builtin",
+      "value": "触发器 id「{0}」是内置触发器的 id，换一个。"
+    },
+    {
+      "name": "plugin_schedule_cron_missing",
+      "value": "scheduleKind 是 cron，但没写 cronExpression。"
+    },
+    {
+      "name": "plugin_cron_unparsed",
+      "value": "cron 表达式「{0}」解不出来：{1}"
+    },
+    {
+      "name": "plugin_dailyat_range",
+      "value": "dailyAt 的 atSeconds 是 {0}，要落在 0~{1}。"
+    },
+    {
+      "name": "plugin_every_range",
+      "value": "everyMinutes 是 {0}，要落在 1~{1}。"
+    },
+    {
+      "name": "plugin_action_id_dup",
+      "value": "行动 id「{0}」在这一份清单里出现了两次。"
+    },
+    {
+      "name": "plugin_action_id_builtin",
+      "value": "行动 id「{0}」是内置行动的 id，换一个。"
+    },
+    {
+      "name": "plugin_notify_need_title_content",
+      "value": "发通知的行动要同时写 title 和 content。"
+    },
+    {
+      "name": "plugin_setting_key_missing",
+      "value": "改设置的行动没写 settingKey。"
+    },
+    {
+      "name": "plugin_setting_key_not_writable",
+      "value": "设置键「{0}」不在允许改的名单里。"
+    },
+    {
+      "name": "plugin_provider_id_dup",
+      "value": "通知提供者 id「{0}」在这一份清单里出现了两次。"
+    },
+    {
+      "name": "plugin_provider_trigger_unknown",
+      "value": "triggerId「{0}」不是已注册的触发器。"
+    },
+    {
+      "name": "plugin_theme_id_dup",
+      "value": "主题 id「{0}」在这一份清单里出现了两次。"
+    },
+    {
+      "name": "plugin_theme_mode_unknown",
+      "value": "mode「{0}」不认识。可用：{1}。"
+    },
+    {
+      "name": "plugin_theme_color_invalid",
+      "value": "颜色写法不对：{0}。要 #RRGGBB 或 #AARRGGBB。"
+    },
+    {
+      "name": "plugin_trigger_no_schedule_short",
+      "value": "这个触发器没有日程，永远不会触发。"
+    },
+    {
+      "name": "plugin_cron_judge_elsewhere",
+      "value": "cron 类别请走 judgePluginTrigger。"
+    },
+    {
+      "name": "plugin_cron_not_set",
+      "value": "未设置 cron"
+    },
+    {
+      "name": "plugin_schedule_daily_at",
+      "value": "每天 {0}"
+    },
+    {
+      "name": "plugin_schedule_every_minutes",
+      "value": "每 {0} 分钟"
+    },
+    {
+      "name": "plugin_never_fires",
+      "value": "不触发"
+    },
+    {
+      "name": "fmt_minutes",
+      "value": "{0} 分钟"
+    },
+    {
+      "name": "fmt_hours",
+      "value": "{0} 小时"
+    },
+    {
+      "name": "fmt_hours_min",
+      "value": "{0} 小时 {1} 分"
+    },
+    {
+      "name": "fmt_rot_weekly",
+      "value": "每周"
+    },
+    {
+      "name": "fmt_rot_odd",
+      "value": "单周"
+    },
+    {
+      "name": "fmt_rot_even",
+      "value": "双周"
+    },
+    {
+      "name": "fmt_rot_week_n",
+      "value": "第 {0}/{1} 周"
+    },
+    {
+      "name": "fmt_type_class",
+      "value": "上课"
+    },
+    {
+      "name": "fmt_type_break",
+      "value": "课间"
+    },
+    {
+      "name": "fmt_type_separator",
+      "value": "分割线"
+    },
+    {
+      "name": "fmt_type_action",
+      "value": "行动"
+    },
+    {
+      "name": "fmt_type_unknown",
+      "value": "未知"
+    },
+    {
+      "name": "fmt_wd_0",
+      "value": "周日"
+    },
+    {
+      "name": "fmt_wd_1",
+      "value": "周一"
+    },
+    {
+      "name": "fmt_wd_2",
+      "value": "周二"
+    },
+    {
+      "name": "fmt_wd_3",
+      "value": "周三"
+    },
+    {
+      "name": "fmt_wd_4",
+      "value": "周四"
+    },
+    {
+      "name": "fmt_wd_5",
+      "value": "周五"
+    },
+    {
+      "name": "fmt_wd_6",
+      "value": "周六"
+    },
+    {
+      "name": "fmt_wd_short_0",
+      "value": "日"
+    },
+    {
+      "name": "fmt_wd_short_1",
+      "value": "一"
+    },
+    {
+      "name": "fmt_wd_short_2",
+      "value": "二"
+    },
+    {
+      "name": "fmt_wd_short_3",
+      "value": "三"
+    },
+    {
+      "name": "fmt_wd_short_4",
+      "value": "四"
+    },
+    {
+      "name": "fmt_wd_short_5",
+      "value": "五"
+    },
+    {
+      "name": "fmt_wd_short_6",
+      "value": "六"
+    },
+    {
+      "name": "wg_no_subject",
+      "value": "（无）"
+    },
+    {
+      "name": "wg_today",
+      "value": "今天"
+    },
+    {
+      "name": "wg_no_class_this_week",
+      "value": "这一周没有课"
+    },
+    {
+      "name": "wg_no_schedule_yet",
+      "value": "还没有课表"
+    },
+    {
+      "name": "wg_no_class",
+      "value": "没有课"
+    },
+    {
+      "name": "wg_in_class",
+      "value": "正在上课"
+    },
+    {
+      "name": "wg_class_at",
+      "value": "{0} 上课"
+    },
+    {
+      "name": "wg_slot_n",
+      "value": "第 {0} 节"
+    },
+    {
+      "name": "wg_tag_temp",
+      "value": "临时"
+    },
+    {
+      "name": "wg_tag_ordered",
+      "value": "预定"
+    },
+    {
+      "name": "wg_tomorrow",
+      "value": "明天"
+    },
+    {
+      "name": "wg_days_later",
+      "value": "{0} 天后"
+    },
+    {
+      "name": "wg_date_weekday",
+      "value": "{0}月{1}日 {2}"
+    },
+    {
+      "name": "wg_loading",
+      "value": "正在载入…"
+    },
+    {
+      "name": "rule_window_class_name",
+      "value": "前台窗口类名"
+    },
+    {
+      "name": "rule_window_text",
+      "value": "前台窗口标题"
+    },
+    {
+      "name": "rule_window_status",
+      "value": "前台窗口状态是"
+    },
+    {
+      "name": "rule_window_process",
+      "value": "前台窗口进程"
+    },
+    {
+      "name": "rule_current_subject",
+      "value": "科目是"
+    },
+    {
+      "name": "rule_next_subject",
+      "value": "下节课科目是"
+    },
+    {
+      "name": "rule_previous_subject",
+      "value": "上节课科目是"
+    },
+    {
+      "name": "rule_time_state",
+      "value": "当前时间状态是"
+    },
+    {
+      "name": "rule_weather_now",
+      "value": "当前天气是"
+    },
+    {
+      "name": "rule_weather_tomorrow",
+      "value": "明天天气是"
+    },
+    {
+      "name": "rule_weather_alert",
+      "value": "存在气象预警"
+    },
+    {
+      "name": "rule_rain_time",
+      "value": "距离降水开始/结束还剩"
+    },
+    {
+      "name": "rule_sun_rise_set",
+      "value": "是否日出/日落"
+    },
+    {
+      "name": "re_no_rule_chosen",
+      "value": "（还没挑规则）"
+    },
+    {
+      "name": "re_pick_rule_hint",
+      "value": "选一条规则来开始"
+    },
+    {
+      "name": "re_unknown_rule_hint",
+      "value": "当前平台不认识这条规则，它会判为不成立，设置原样保留。"
+    },
+    {
+      "name": "re_hint_unsupported",
+      "value": "当前平台没有对应数据，这条规则恒为不成立。设置会原样保留。"
+    },
+    {
+      "name": "re_hint_string",
+      "value": "要匹配的文本，可选按正则解释。"
+    },
+    {
+      "name": "re_hint_time_state",
+      "value": "选择要匹配的时间状态。"
+    },
+    {
+      "name": "re_hint_subject",
+      "value": "选择一门科目。"
+    },
+    {
+      "name": "re_hint_weather",
+      "value": "选择天气类型，可选模糊匹配。"
+    },
+    {
+      "name": "re_hint_rain_time",
+      "value": "距离降水开始或结束还有多少分钟。"
+    },
+    {
+      "name": "re_hint_sun_rise_set",
+      "value": "日出前还是日落后多少分钟。"
+    },
+    {
+      "name": "re_hint_window_status",
+      "value": "前台窗口的状态。"
+    },
+    {
+      "name": "re_hint_no_settings",
+      "value": "这条规则没有设置。"
+    },
+    {
+      "name": "rp_class",
+      "value": "上课"
+    },
+    {
+      "name": "rp_title_time_up",
+      "value": "该上课了"
+    },
+    {
+      "name": "rp_content_check_schedule",
+      "value": "{0} 有课，记得看一下课表"
+    },
+    {
+      "name": "rp_title_subject_starts",
+      "value": "{0} 上课"
+    },
+    {
+      "name": "rp_now_starts",
+      "value": "现在上课"
+    },
+    {
+      "name": "rp_title_in_minutes",
+      "value": "{0} 分钟后 {1} 上课"
+    },
+    {
+      "name": "rp_content_starts_at",
+      "value": "{0} 上课"
+    },
+    {
+      "name": "rp_expired_in_class",
+      "value": "{0} 正在上课"
+    },
+    {
+      "name": "rp_in_class",
+      "value": "正在上课"
+    },
+    {
+      "name": "rp_snoozed",
+      "value": "已推迟，课表不变"
+    },
+    {
+      "name": "rp_line_no_teacher",
+      "value": "{0}：{1}"
+    },
+    {
+      "name": "rp_line_teacher",
+      "value": "{0}：{1}，{2}老师"
+    },
+    {
+      "name": "action_run_unsupported",
+      "value": "鸿蒙应用不能拉起任意进程，也不能执行命令行 —— 这一条在鸿蒙上没有对应物。"
+    },
+    {
+      "name": "action_restart_unsupported",
+      "value": "重启要走 startAbility + terminateSelf，而进程被杀时系统不保证回调，新起的进程也拿不到原来的状态。桌面版靠 Environment.Exit + Process.Start，鸿蒙上没有这套。"
+    },
+    {
+      "name": "automation_cond_gone",
+      "value": "条件不再满足"
+    },
+    {
+      "name": "automation_revert",
+      "value": "{0} 要求撤销"
+    },
+    {
+      "name": "automation_fired",
+      "value": "{0} 触发"
+    },
+    {
+      "name": "trigger_not_chosen",
+      "value": "（还没挑触发器）"
+    },
+    {
+      "name": "cron_invalid",
+      "value": "cron 表达式解不出来：{0}"
+    },
+    {
+      "name": "cron_field_count",
+      "value": "字段数应为 5 或 6（分别是「分 时 日 月 周」或「秒 分 时 日 月 周」），实际 {0} 段"
+    },
+    {
+      "name": "cron_field_bad",
+      "value": "第 {0} 段「{1}」无法解析"
+    },
+    {
+      "name": "wf_default_action_set",
+      "value": "新行动组"
+    },
+    {
+      "name": "keepalive_reason_sync",
+      "value": "跨设备同步需要在后台保持连接"
+    },
+    {
+      "name": "keepalive_reason_automation",
+      "value": "自动化需要在后台继续运行"
+    },
+    {
+      "name": "keepalive_err_param",
+      "value": "申请参数不合法"
+    },
+    {
+      "name": "keepalive_err_service",
+      "value": "系统服务操作失败"
+    },
+    {
+      "name": "keepalive_err_validation",
+      "value": "长时任务校验未通过（该设备 / 该类型不支持）"
+    },
+    {
+      "name": "keepalive_err_notification",
+      "value": "通知校验未通过"
+    },
+    {
+      "name": "keepalive_err_persist",
+      "value": "落盘失败"
+    },
+    {
+      "name": "keepalive_err_unknown",
+      "value": "未知错误（{0}）"
+    },
+    {
+      "name": "component_unknown",
+      "value": "未识别组件"
+    },
+    {
+      "name": "countdown_days_format",
+      "value": "%D天"
+    },
+    {
+      "name": "aqi_excellent",
+      "value": "优"
+    },
+    {
+      "name": "aqi_good",
+      "value": "良"
+    },
+    {
+      "name": "aqi_light",
+      "value": "轻度污染"
+    },
+    {
+      "name": "aqi_moderate",
+      "value": "中度污染"
+    },
+    {
+      "name": "aqi_heavy",
+      "value": "重度污染"
+    },
+    {
+      "name": "aqi_severe",
+      "value": "严重污染"
+    },
+    {
+      "name": "editor_type_override",
+      "value": "覆盖"
+    },
+    {
+      "name": "editor_type_inherit",
+      "value": "继承"
+    },
+    {
+      "name": "editor_default_group",
+      "value": "默认课表群"
+    },
+    {
+      "name": "editor_global_group",
+      "value": "全局课表群"
+    },
+    {
+      "name": "sched_default_layout",
+      "value": "新时间表"
+    },
+    {
+      "name": "sched_default_plan",
+      "value": "新课表"
+    },
+    {
+      "name": "sched_default_group",
+      "value": "新课表群"
+    },
+    {
+      "name": "sched_copy_name",
+      "value": "{0} 副本"
+    },
+    {
+      "name": "wg_countdown_prefix",
+      "value": "距离"
+    },
+    {
+      "name": "panel_unknown_component",
+      "value": "组件 id {0} 没有被识别，设置原样保留在文件里。"
+    },
+    {
+      "name": "panel_weather_missing",
+      "value": "天气数据还没取到"
+    },
+    {
+      "name": "panel_seconds_to_class",
+      "value": "{0} 秒后上课"
+    },
+    {
+      "name": "ext_summary_active",
+      "value": "{0} 个扩展在用"
+    },
+    {
+      "name": "ext_summary_broken",
+      "value": "{0} 个扩展在用，{1} 个没装上"
+    },
+    {
+      "name": "speech_provider_system",
+      "value": "系统 TTS"
+    },
+    {
+      "name": "clock_status_realign",
+      "value": "检测到系统时间变化，正在重新校时"
+    },
+    {
+      "name": "clock_status_disabled",
+      "value": "未启用精确时间，使用系统时间"
+    },
+    {
+      "name": "clock_status_unsynced",
+      "value": "尚未同步时间"
+    },
+    {
+      "name": "clock_status_slow",
+      "value": "已校时，本机慢 {0} 秒"
+    },
+    {
+      "name": "clock_status_fast",
+      "value": "已校时，本机快 {0} 秒"
+    },
+    {
+      "name": "clock_frozen_reason",
+      "value": "系统时间被修改"
+    },
+    {
+      "name": "weather_humidity",
+      "value": "湿度 {0}"
+    },
+    {
+      "name": "weather_pressure",
+      "value": "气压 {0}"
+    },
+    {
+      "name": "weather_feels_like",
+      "value": "体感 {0}"
+    },
+    {
+      "name": "plugin_action_key_denied",
+      "value": "设置键「{0}」不在允许改的名单里，行动已被跳过。"
+    },
+    {
+      "name": "plugin_api_version_bad",
+      "value": "apiVersion「{0}」不是能认的版本号。写成 1.0 或 1.0.0 这样的形式。"
+    },
+    {
+      "name": "plugin_api_major_mismatch",
+      "value": "扩展要的是 API {0}.x，当前应用是 {1}.x。跨主版本的字段含义可能不同，硬读会把设置写成另一种意思，所以不加载。"
+    },
+    {
+      "name": "plugin_api_below_floor",
+      "value": "扩展要的是 API {0}，当前应用最低支持 {1}。"
+    },
+    {
+      "name": "plugin_entries_skipped",
+      "value": "{0} 条条目因为冲突或非法被跳过。"
+    },
+    {
+      "name": "plugin_payload_kind_bad",
+      "value": "payloadKind「{0}」不认识，这条组件被跳过。"
+    },
+    {
+      "name": "plugin_component_id_taken",
+      "value": "组件 id「{0}」已经被占用（内置组件或另一个扩展），这条被跳过。"
+    },
+    {
+      "name": "plugin_trigger_id_taken",
+      "value": "触发器 id「{0}」已经被占用，这条被跳过。"
+    },
+    {
+      "name": "plugin_action_id_taken",
+      "value": "行动 id「{0}」已经被占用，这条被跳过。"
+    },
+    {
+      "name": "plugin_provider_no_id",
+      "value": "通知提供者没写 id，这条被跳过。"
+    },
+    {
+      "name": "plugin_theme_no_id",
+      "value": "主题没写 id，这条被跳过。"
+    },
+    {
+      "name": "plugin_desktop_import_tag",
+      "value": "由桌面版插件包导入"
+    },
+    {
+      "name": "plugin_desktop_import_note",
+      "value": "{0}。桌面版插件是 .NET 程序集，本端不加载它，所以这个扩展不提供任何可用条目；这里只留了元信息，方便认出它。"
+    },
+    {
+      "name": "plugin_desktop_assembly",
+      "value": "（程序集 {0}）"
+    },
+    {
+      "name": "plugin_desktop_api_version",
+      "value": "（桌面版 API 版本 {0}）"
+    },
+    {
+      "name": "plugin_desktop_id_renamed",
+      "value": "（原 id {0}，已改成小写形式）"
+    },
+    {
+      "name": "plugin_desktop_unreadable",
+      "value": "（有 {0} 个字段本端读不出来：{1}）"
+    },
+    {
+      "name": "plugin_desktop_orig_desc",
+      "value": " 原描述：{0}"
     }
   ]
 }

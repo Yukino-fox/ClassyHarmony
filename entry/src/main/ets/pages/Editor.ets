@@ -22,7 +22,7 @@
  * 不可逆 —— 没有第二次机会。把提示放在动作发生之前，而不是事后写进提示行。
  */
 
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import { common } from '@kit.AbilityKit';
 import { resolveScheduleEditorViewModel } from '../common/AppServices';
 import { UiFeedback } from '../common/UiFeedback';
@@ -90,7 +90,7 @@ struct Editor {
       ReminderPane({ stack: this.stack })
     } else {
       NavDestination() {
-        Text(`未知页面：${name}`)
+        Text(tf('ed_unknown_page', name))
           .fontSize(13)
           .fontColor($r('app.color.ch_text_hint'))
       }
@@ -117,8 +117,8 @@ struct Editor {
     UiFeedback.confirmDiscardOrSave(
       this.getUIContext(),
       t('ed_unsaved'),
-      '返回之前要怎么处理这些改动？',
-      '丢掉改动并返回',
+      t('ed_leave_ask'),
+      t('ed_discard_back'),
       () => { this.leave(); },
       () => {
         if (vm.save()) {
@@ -137,7 +137,7 @@ struct Editor {
     Column() {
       if (this.vm === undefined) {
         // aboutToAppear 早于首次 build，这个分支只在极端异常路径上出现
-        Text('正在准备…')
+        Text(t('ed_preparing'))
           .fontSize(13)
           .fontColor($r('app.color.ch_text_hint'))
       } else {
@@ -187,20 +187,20 @@ struct Editor {
           .fontSize(12)
           .fontColor($r('app.color.ch_accent'))
           .layoutWeight(1)
-        Text('重新读取')
+        Text(t('ed_reload'))
           .fontSize(13)
           .fontColor($r('app.color.ch_text_secondary'))
           .margin({ right: 16 })
           .onClick(() => {
             UiFeedback.confirm(
               this.getUIContext(),
-              '重新读取档案',
+              t('ed_reload_title'),
               t('ed_reload_confirm'),
-              '重新读取',
+              t('ed_reload'),
               () => { vm.reload(); }
             );
           })
-        Text('保存')
+        Text(t('common_save'))
           .fontSize(13)
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.ch_accent'))

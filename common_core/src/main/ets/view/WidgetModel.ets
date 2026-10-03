@@ -55,6 +55,7 @@ import {
   TimeLayout,
   TimeLayoutItem
 } from 'common_shared';
+import { t, tf } from '../i18n/I18n';
 import { ClassPlanResolver, ResolvedClassPlan, ResolvedSource } from '../engine/ClassPlanResolver';
 import { EngineSettings } from '../engine/EngineSettings';
 import { formatClock, weekDayName } from './TextFormat';
@@ -82,7 +83,7 @@ export const WIDGET_REFRESH_MAX_MINUTES: number = 720;
 const LOOKAHEAD_DAYS: number = 7;
 
 /** 空课表时显示的占位文案，与课表网格一致。 */
-const EMPTY_SUBJECT_TEXT: string = '（无）';
+const EMPTY_SUBJECT_TEXT: string = t('wg_no_subject');
 
 /** 小组件里的一节课。 */
 export class WidgetLesson {
@@ -230,11 +231,11 @@ export class WidgetBuilder {
   private static fillEmpty(model: WidgetModel, profile: Profile, settings: EngineSettings,
     today: DateTimeValue): void {
     model.isEmpty = true;
-    model.dayLabel = '今天';
+    model.dayLabel = t('wg_today');
     model.dateText = dateTextOf(today);
     // 区分两种「空」：一张课表都没有，是「还没配」；课表有但一周内没有一节课
     // 可上，是「放假了」。两者的下一步动作完全不同，提示不能混。
-    model.emptyHint = WidgetBuilder.hasAnyPlan(profile, settings, today) ? '这一周没有课' : '还没有课表';
+    model.emptyHint = WidgetBuilder.hasAnyPlan(profile, settings, today) ? t('wg_no_class_this_week') : t('wg_no_schedule_yet');
     model.nextRefreshMinutes = WIDGET_REFRESH_MAX_MINUTES;
   }
 
@@ -265,7 +266,7 @@ export class WidgetBuilder {
       // 理论上到不了这里（调用方已过滤空列表），但空数组进 UI 会渲染成一片
       // 没有任何解释的空白，比显示一句「没有课」更难排查。
       model.isEmpty = true;
-      model.emptyHint = '没有课';
+      model.emptyHint = t('wg_no_class');
       return;
     }
 
@@ -280,11 +281,11 @@ export class WidgetBuilder {
 
     if (model.currentIndex >= 0) {
       model.headline = model.lessons[model.currentIndex].subjectName;
-      model.headlineHint = '正在上课';
+      model.headlineHint = t('wg_in_class');
     } else {
       const first: WidgetLesson = model.lessons[0];
       model.headline = first.subjectName;
-      model.headlineHint = offset === 0 ? `${first.startText} 上课` : first.startText;
+      model.headlineHint = offset === 0 ? tf('wg_class_at', first.startText) : first.startText;
     }
 
     model.nextRefreshMinutes = WidgetBuilder.refreshMinutes(offset, model, day.nowSeconds);
@@ -381,7 +382,7 @@ export class WidgetBuilder {
 
       const lesson: WidgetLesson = new WidgetLesson();
       lesson.classSlot = slot;
-      lesson.slotText = `第 ${slot + 1} 节`;
+      lesson.slotText = tf('wg_slot_n', `${slot + 1}`);
       lesson.startText = formatClock(item.startTime.toSeconds());
       lesson.endText = formatClock(endSeconds);
       lesson.rangeText = `${lesson.startText}-${lesson.endText}`;
@@ -426,10 +427,10 @@ class DayLessons {
 
 function tagOf(source: ResolvedSource): string {
   if (source === ResolvedSource.TempClassPlan) {
-    return '临时';
+    return t('wg_tag_temp');
   }
   if (source === ResolvedSource.OrderedSchedule) {
-    return '预定';
+    return t('wg_tag_ordered');
   }
   return '';
 }
@@ -450,16 +451,16 @@ function capacityOf(dimension: string): number {
 
 function dayLabelFor(offset: number, date: DateTimeValue): string {
   if (offset === 0) {
-    return '今天';
+    return t('wg_today');
   }
   if (offset === 1) {
-    return '明天';
+    return t('wg_tomorrow');
   }
   const weekDay: string = weekDayName(date.dayOfWeek());
   if (offset <= 6) {
-    return weekDay.length > 0 ? weekDay : `${offset} 天后`;
+    return weekDay.length > 0 ? weekDay : tf('wg_days_later', `${offset}`);
   }
-  return `${offset} 天后`;
+  return tf('wg_days_later', `${offset}`);
 }
 
 function clampRefresh(minutes: number): number {
@@ -482,7 +483,7 @@ function minutesBetween(nowSeconds: number, targetSeconds: number): number {
 
 function dateTextOf(date: DateTimeValue): string {
   const weekDay: string = weekDayName(date.dayOfWeek());
-  return `${date.month}月${date.day}日 ${weekDay}`.trim();
+  return tf('wg_date_weekday', `${date.month}`, `${date.day}`, weekDay).trim();
 }
 
 /** 'HH:mm' 折回秒。仅用于刚由 formatClock 生成的文本。 */
@@ -557,7 +558,7 @@ export class WidgetCodec {
   static decode(text: string): WidgetModel {
     const loading: WidgetModel = new WidgetModel();
     loading.isEmpty = true;
-    loading.emptyHint = '正在载入…';
+    loading.emptyHint = t('wg_loading');
     if (text.length === 0) {
       return loading;
     }

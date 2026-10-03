@@ -52,6 +52,7 @@ import {
   TimeLayout,
   TimeLayoutItem
 } from 'common_shared';
+import { t, tf } from '../i18n/I18n';
 import { formatClock } from '../view/TextFormat';
 
 /** 提醒形态。 */
@@ -598,30 +599,30 @@ export class ReminderPlanner {
    * 模板套上去假装还剩多少 —— 用户照着「3 分钟后」等，等到 0 还没上课会以为应用坏了。
    */
   private static fillText(item: ReminderPlanItem): void {
-    const subjectPart: string = item.subjectName.length > 0 ? item.subjectName : '上课';
+    const subjectPart: string = item.subjectName.length > 0 ? item.subjectName : t('rp_class');
     if (item.subjectName.length === 0) {
-      item.title = '该上课了';
-      item.content = `${formatClock(item.classStartSeconds)} 有课，记得看一下课表`;
+      item.title = t('rp_title_time_up');
+      item.content = tf('rp_content_check_schedule', formatClock(item.classStartSeconds));
     } else if (item.advanceSeconds <= 0) {
-      item.title = `${subjectPart} 上课`;
+      item.title = tf('rp_title_subject_starts', subjectPart);
       item.content = ReminderPlanner.withTeacher(subjectPart, item.teacherName,
-        '现在上课');
+        t('rp_now_starts'));
     } else {
       const minutes: number = Math.round(item.advanceSeconds / 60);
-      item.title = `${minutes} 分钟后 ${subjectPart} 上课`;
+      item.title = tf('rp_title_in_minutes', `${minutes}`, subjectPart);
       item.content = ReminderPlanner.withTeacher(subjectPart, item.teacherName,
-        `${formatClock(item.classStartSeconds)} 上课`);
+        tf('rp_content_starts_at', formatClock(item.classStartSeconds)));
     }
-    item.expiredContent = item.subjectName.length > 0 ? `${subjectPart} 正在上课` : '正在上课';
-    item.snoozeContent = '已推迟，课表不变';
+    item.expiredContent = item.subjectName.length > 0 ? tf('rp_expired_in_class', subjectPart) : t('rp_in_class');
+    item.snoozeContent = t('rp_snoozed');
   }
 
   private static withTeacher(subject: string, teacher: string, tail: string): string {
     const teacherText: string = teacher.trim();
     if (teacherText.length === 0) {
-      return `${tail}：${subject}`;
+      return tf('rp_line_no_teacher', tail, subject);
     }
-    return `${tail}：${subject}，${teacherText}老师`;
+    return tf('rp_line_teacher', tail, subject, teacherText);
   }
 
   /**

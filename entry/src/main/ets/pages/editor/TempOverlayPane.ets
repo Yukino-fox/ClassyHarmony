@@ -24,7 +24,7 @@
  */
 
 import { DateTimeValue, TempClassPlanGroupType } from 'common_shared';
-import { ClassPlanGroupRow, ClassPlanRow, OrderedScheduleRow, ProfileRow, t } from 'common_core';
+import { ClassPlanGroupRow, ClassPlanRow, OrderedScheduleRow, ProfileRow, t, tf } from 'common_core';
 import { ScheduleEditorViewModel } from '../../viewmodel/ScheduleEditorViewModel';
 import { UiFeedback } from '../../common/UiFeedback';
 import {
@@ -78,7 +78,7 @@ export struct TempOverlayPane {
 
   private tempPlanSummary(vm: ScheduleEditorViewModel, row: ProfileRow): void {
     if (row.tempPlanExists) {
-      this.say(`临时生效中：${row.tempPlanName}（自 ${row.tempPlanFromText}）`);
+      this.say(tf('temp_active_notice', row.tempPlanName, row.tempPlanFromText));
     } else {
       this.say(t('temp_none_current'));
     }
@@ -120,7 +120,7 @@ export struct TempOverlayPane {
   @Builder
   private overlaySection(vm: ScheduleEditorViewModel) {
     Column() {
-      Text('叠加课表')
+      Text(t('temp_overlay_title'))
         .fontSize(14)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('app.color.ch_text_primary'))
@@ -147,7 +147,7 @@ export struct TempOverlayPane {
                 .fontSize(13)
                 .fontColor($r('app.color.ch_text_primary'))
               Text(plan.overlaySourceName.length > 0
-                ? `叠加自 ${plan.overlaySourceName}`
+                ? tf('temp_overlay_from', plan.overlaySourceName)
                 : t('temp_source_stale'))
                 .fontSize(11)
                 .fontColor(plan.overlaySourceName.length > 0
@@ -157,14 +157,14 @@ export struct TempOverlayPane {
             .alignItems(HorizontalAlign.Start)
             .layoutWeight(1)
 
-            Text('取消叠加')
+            Text(t('temp_cancel_overlay'))
               .fontSize(12)
               .fontColor($r('app.color.ch_accent'))
               .onClick(() => {
                 UiFeedback.confirm(
                   this.getUIContext(),
                   t('temp_cancel_overlay'),
-                  `「${plan.name}」会从叠加关系里摘掉。课表本身保留，可以当成普通课表启用。`,
+                  tf('temp_cancel_overlay_msg', plan.name),
                   t('temp_cancel_overlay'),
                   () => { vm.removeClassPlan(plan.guid); }
                 );
@@ -184,14 +184,14 @@ export struct TempOverlayPane {
   @Builder
   private tempPlanSection(vm: ScheduleEditorViewModel) {
     Column() {
-      Text('临时课表')
+      Text(t('temp_plan_title'))
         .fontSize(14)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('app.color.ch_text_primary'))
         .width('100%')
 
       if (vm.profile.tempPlanExists) {
-        Text(`当前：${vm.profile.tempPlanName}（自 ${vm.profile.tempPlanFromText} 起）`)
+        Text(tf('temp_current_plan', vm.profile.tempPlanName, vm.profile.tempPlanFromText))
           .fontSize(12)
           .fontColor($r('app.color.ch_accent'))
           .width('100%')
@@ -237,7 +237,7 @@ export struct TempOverlayPane {
   private startTempPlan(vm: ScheduleEditorViewModel, plan: ClassPlanRow): void {
     const host = this.getUIContext();
     this.getUIContext().showAlertDialog({
-      title: `临时用「${plan.name}」`,
+      title: tf('temp_use_plan_title', plan.name),
       message: t('temp_pick_expiry'),
       buttons: [
         { value: t('temp_cancel'), action: () => {} },
@@ -269,15 +269,15 @@ export struct TempOverlayPane {
   @Builder
   private tempGroupSection(vm: ScheduleEditorViewModel) {
     Column() {
-      Text('临时课表群')
+      Text(t('temp_group_title'))
         .fontSize(14)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('app.color.ch_text_primary'))
         .width('100%')
 
       if (vm.profile.isTempGroupEnabled) {
-        Text(`当前：${vm.profile.tempGroupName}（到 ${vm.profile.tempGroupExpireText}，` +
-          `${vm.profile.tempGroupTypeText}）`)
+        Text(tf('temp_current_group', vm.profile.tempGroupName, vm.profile.tempGroupExpireText,
+          vm.profile.tempGroupTypeText))
           .fontSize(12)
           .fontColor($r('app.color.ch_accent'))
           .width('100%')
@@ -302,7 +302,7 @@ export struct TempOverlayPane {
             .fontColor($r('app.color.ch_text_primary'))
             .maxLines(1)
             .layoutWeight(1)
-          Text(`${group.planCount} 张`)
+          Text(tf('temp_group_plan_count', `${group.planCount}`))
             .fontSize(11)
             .fontColor($r('app.color.ch_text_hint'))
             .margin({ right: 10 })
@@ -332,16 +332,16 @@ export struct TempOverlayPane {
    */
   private startTempGroup(groupId: string, groupName: string): void {
     this.getUIContext().showAlertDialog({
-      title: `临时用「${groupName}」`,
+      title: tf('temp_use_group_title', groupName),
       message: t('temp_group_pick_msg'),
       buttons: [
         { value: t('temp_cancel'), action: () => {} },
         {
-          value: `${TEMP_TYPE_CHOICES[0]} · 到期`,
+          value: tf('temp_expiry_suffix', TEMP_TYPE_CHOICES[0]),
           action: () => { this.commitTempGroup(groupId, 0, 2); }
         },
         {
-          value: `${TEMP_TYPE_CHOICES[1]} · 到期`,
+          value: tf('temp_expiry_suffix', TEMP_TYPE_CHOICES[1]),
           action: () => { this.commitTempGroup(groupId, 1, 2); }
         }
       ]
@@ -422,20 +422,20 @@ export struct TempOverlayPane {
       .alignItems(HorizontalAlign.Start)
       .layoutWeight(1)
 
-      Text('改')
+      Text(t('temp_book_change'))
         .fontSize(12)
         .fontColor($r('app.color.ch_accent'))
         .margin({ right: 12 })
         .onClick(() => { this.beginPick(row.dateKey, row.planId); })
 
-      Text('删')
+      Text(t('temp_book_delete'))
         .fontSize(12)
         .fontColor($r('app.color.ch_accent'))
         .onClick(() => {
           UiFeedback.confirm(
             this.getUIContext(),
             t('temp_cancel_booked'),
-            `${row.dateText} 会恢复正常选课。档案里的这条预定将被删除。`,
+            tf('temp_book_remove_msg', row.dateText),
             t('temp_cancel_booked'),
             () => { vm.setOrderedSchedule(dateOfKey(row.dateKey), undefined); }
           );
@@ -449,15 +449,15 @@ export struct TempOverlayPane {
   /** 一条预定的状态说明。 */
   private orderedStatus(row: OrderedScheduleRow): string {
     if (!row.planExists) {
-      return `${row.planName} —— 课表被删了，这条预定不会生效`;
+      return tf('temp_status_plan_missing', row.planName);
     }
     if (row.isStale) {
-      return `${row.planName} —— 已过期`;
+      return tf('temp_status_expired', row.planName);
     }
     if (row.isActive) {
-      return `${row.planName} —— 当天生效`;
+      return tf('temp_status_active', row.planName);
     }
-    return `${row.planName} —— 不会生效`;
+    return tf('temp_status_inactive', row.planName);
   }
 
   /** 展开中的选择器。 */
@@ -507,12 +507,12 @@ export struct TempOverlayPane {
     const day: DateTimeValue = dateOfKey(this.pickingDate);
     const offset: number = day.epochDay() - DateTimeValue.now().dateOnly().epochDay();
     if (offset === 0) {
-      return `${day.toDateString()} 周${weekDayLabel(day.dayOfWeek())}（今天）`;
+      return tf('temp_picking_today', day.toDateString(), weekDayLabel(day.dayOfWeek()));
     }
     if (offset === 1) {
-      return `${day.toDateString()} 周${weekDayLabel(day.dayOfWeek())}（明天）`;
+      return tf('temp_picking_tomorrow', day.toDateString(), weekDayLabel(day.dayOfWeek()));
     }
-    return `${day.toDateString()} 周${weekDayLabel(day.dayOfWeek())}`;
+    return tf('temp_picking_plain', day.toDateString(), weekDayLabel(day.dayOfWeek()));
   }
 
   private beginPick(dateKey: string, planId: string): void {

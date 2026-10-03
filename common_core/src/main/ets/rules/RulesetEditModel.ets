@@ -20,6 +20,7 @@
  * 重新调 build() 换掉整个数组。这与 P4/P5/P6 的行数据做法一致。
  */
 
+import { t } from '../i18n/I18n';
 import { Rule, RuleGroup, Ruleset, RulesetLogicalMode } from 'common_shared';
 import { RuleCatalog, RuleSettingsKind, RuleSupport } from './RuleCatalog';
 import { RuleContext, RuleEngine, RuleVerdict, RulesetVerdict, STATE_NONE } from './RuleEngine';
@@ -113,9 +114,9 @@ export class RulesetEditor {
     }
     const none: RuleChoiceRow = new RuleChoiceRow();
     none.id = '';
-    none.displayName = '（还没挑规则）';
+    none.displayName = t('re_no_rule_chosen');
     none.support = RuleSupport.Unknown;
-    none.settingsHint = '选一条规则来开始';
+    none.settingsHint = t('re_pick_rule_hint');
     const out: RuleChoiceRow[] = [none];
     for (const info of RuleCatalog.all()) {
       const row: RuleChoiceRow = new RuleChoiceRow();
@@ -176,9 +177,9 @@ export class RulesetEditor {
         ruleRow.isUnchosen = rule.id.length === 0;
         const info = RuleCatalog.find(rule.id);
         if (info === undefined) {
-          ruleRow.displayName = rule.id.length === 0 ? '（还没挑规则）' : rule.id;
+          ruleRow.displayName = rule.id.length === 0 ? t('re_no_rule_chosen') : rule.id;
           ruleRow.support = RuleSupport.Unknown;
-          ruleRow.settingsHint = '当前平台不认识这条规则，它会判为不成立，设置原样保留。';
+          ruleRow.settingsHint = t('re_unknown_rule_hint');
         } else {
           ruleRow.displayName = info.name;
           ruleRow.support = info.support;
@@ -205,29 +206,29 @@ export class RulesetEditor {
   /** 这类规则要配什么设置。界面上写在规则名下面当副标题。 */
   private static settingsHintOf(kind: RuleSettingsKind, support: RuleSupport): string {
     if (support === RuleSupport.Unsupported) {
-      return '当前平台没有对应数据，这条规则恒为不成立。设置会原样保留。';
+      return t('re_hint_unsupported');
     }
     if (kind === RuleSettingsKind.StringMatching) {
-      return '要匹配的文本，可选按正则解释。';
+      return t('re_hint_string');
     }
     if (kind === RuleSettingsKind.TimeState) {
-      return '选择要匹配的时间状态。';
+      return t('re_hint_time_state');
     }
     if (kind === RuleSettingsKind.CurrentSubject) {
-      return '选择一门科目。';
+      return t('re_hint_subject');
     }
     if (kind === RuleSettingsKind.CurrentWeather) {
-      return '选择天气类型，可选模糊匹配。';
+      return t('re_hint_weather');
     }
     if (kind === RuleSettingsKind.RainTime) {
-      return '距离降水开始或结束还有多少分钟。';
+      return t('re_hint_rain_time');
     }
     if (kind === RuleSettingsKind.SunRiseSet) {
-      return '日出前还是日落后多少分钟。';
+      return t('re_hint_sun_rise_set');
     }
     if (kind === RuleSettingsKind.WindowStatus) {
-      return '前台窗口的状态。';
+      return t('re_hint_window_status');
     }
-    return '这条规则没有设置。';
+    return t('re_hint_no_settings');
   }
 }

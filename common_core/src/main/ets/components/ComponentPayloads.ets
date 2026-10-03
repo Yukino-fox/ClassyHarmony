@@ -94,7 +94,7 @@ export class ClockPayload extends ComponentPayload {
 
 /** 倒计时组件。只建模面板用得到的字段。 */
 export class CountDownPayload extends ComponentPayload {
-  countDownName: string = '倒计时';
+  countDownName: string = t('component_countdown');
   overTime: DateTimeValue = DateTimeValue.now().dateOnly();
   daysLeft: number = 0;
   fontColor: ColorValue = ColorValue.red();
@@ -107,7 +107,7 @@ export class CountDownPayload extends ComponentPayload {
   progressBarMode: number = 0;
   showProgress: boolean = false;
   isProgressInverted: boolean = false;
-  customStringFormat: string = '%D天';
+  customStringFormat: string = t('countdown_days_format');
   // --- 以下是「倒计时从哪一段时间算起」的四组设置 ---
   //
   // 之前没建模，代价是倒计时只能用 start/end 两个日期（P7c 加面板渲染时才
@@ -130,7 +130,7 @@ export class CountDownPayload extends ComponentPayload {
 
   static decode(node: JsonObject): CountDownPayload {
     const out: CountDownPayload = new CountDownPayload();
-    out.countDownName = ModelCodec.string(node, 'CountDownName', '倒计时');
+    out.countDownName = ModelCodec.string(node, 'CountDownName', t('component_countdown'));
     out.overTime = ModelCodec.readDateTime(node, 'OverTime');
     out.daysLeft = ModelCodec.int(node, 'DaysLeft', 0);
     out.fontColor = readColor(node, 'FontColor', ColorValue.red());
@@ -143,7 +143,7 @@ export class CountDownPayload extends ComponentPayload {
     out.progressBarMode = ModelCodec.int(node, 'ProgressBarMode', 0);
     out.showProgress = ModelCodec.bool(node, 'ShowProgress', false);
     out.isProgressInverted = ModelCodec.bool(node, 'IsProgressInverted', false);
-    out.customStringFormat = ModelCodec.string(node, 'CustomStringFormat', '%D天');
+    out.customStringFormat = ModelCodec.string(node, 'CustomStringFormat', t('countdown_days_format'));
     out.countdownSource = ModelCodec.int(node, 'CountdownSource', 0);
     out.cycleStartTime = ModelCodec.readDateTime(node, 'CycleStartTime');
     out.cycleBeforeDuration = readTimeSpan(node, 'CycleBeforeDuration', TimeSpanValue.zero());

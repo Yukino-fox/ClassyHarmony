@@ -32,6 +32,7 @@ import { EngineSettings } from '../engine/EngineSettings';
 import { LessonsSnapshot } from '../engine/LessonsSnapshot';
 import { ScheduleCell, ScheduleColumn, ScheduleGrid, ScheduleRow } from './ScheduleGrid';
 import { formatClock } from './TextFormat';
+import { t, tf } from '../i18n/I18n';
 
 /** 网格行序：周一起。元素是 dayOfWeek 取值（0=周日 … 6=周六）。 */
 const ROW_ORDER: number[] = [1, 2, 3, 4, 5, 6, 0];
@@ -113,7 +114,7 @@ function buildColumns(plan: ClassPlan, layout: TimeLayout): ScheduleColumn[] {
     column.isHideDefault = item.isHideDefault;
     if (column.isClass) {
       // 节序号与 classSlot 对齐；越界降级后 classSlot 为 -1，此时不编节次。
-      column.label = classSlot >= 0 ? `第 ${classSlot + 1} 节` : '';
+      column.label = classSlot >= 0 ? tf('wg_slot_n', `${classSlot + 1}`) : '';
     } else if (column.isBreak) {
       column.label = item.breakNameText();
     }

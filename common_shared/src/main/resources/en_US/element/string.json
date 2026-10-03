@@ -2,27 +2,27 @@
   "string": [
     {
       "name": "common_shared_desc",
-      "value": "ClassyHarmony 共享数据层"
+      "value": "ClassyHarmony shared data layer"
     },
     {
       "name": "sh_default_action_set",
-      "value": "新行动组"
+      "value": "New Action Set"
     },
     {
       "name": "sh_default_plan",
-      "value": "新课表"
+      "value": "New Schedule"
     },
     {
       "name": "sh_default_group",
-      "value": "新课表群"
+      "value": "New Schedule Group"
     },
     {
       "name": "sh_default_layout",
-      "value": "新时间表"
+      "value": "New Time Layout"
     },
     {
       "name": "sh_break_name",
-      "value": "课间休息"
+      "value": "Break"
     }
   ]
 }

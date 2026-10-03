@@ -18,7 +18,7 @@
  * 不是键。所以每一行的 guid 都来自遍历回调的 key 参数，不来自对象字段。
  */
 
-import { t } from '../i18n/I18n';
+import { t, tf } from '../i18n/I18n';
 import {
   ClassInfo,
   ClassPlan,
@@ -286,7 +286,7 @@ export class EditorRows {
     out.isTempGroupEnabled = profile.isTempClassPlanGroupEnabled;
     out.tempGroupExpireText = profile.tempClassPlanGroupExpireTime.toDateString();
     out.tempGroupTypeText = profile.tempClassPlanGroupType === TempClassPlanGroupType.Override
-      ? '覆盖' : '继承';
+      ? t('editor_type_override') : t('editor_type_inherit');
 
     const selected: ClassPlanGroup | undefined =
       profile.classPlanGroups.tryGet(out.selectedGroupId);
@@ -431,7 +431,7 @@ export class EditorRows {
     row.breakName = item.breakName;
     row.isClass = item.timeType === 0;
     row.classSlot = slot;
-    row.classSlotText = slot >= 0 ? `第 ${slot + 1} 节` : '';
+    row.classSlotText = slot >= 0 ? tf('wg_slot_n', `${slot + 1}`) : '';
     row.isHideDefault = item.isHideDefault;
     if (!item.defaultClassId.isEmpty()) {
       const subject: Subject | undefined = profile.tryGetSubject(item.defaultClassId);
@@ -498,7 +498,7 @@ export class EditorRows {
         edit.classSlot = slots[i];
         edit.isClass = slots[i] >= 0;
         edit.isSeparator = item.timeType === 2;
-        edit.label = slots[i] >= 0 ? `第 ${slots[i] + 1} 节` : item.breakNameText();
+        edit.label = slots[i] >= 0 ? tf('wg_slot_n', `${slots[i] + 1}`) : item.breakNameText();
         // 分割线不占时段，显示成一段空白会让界面多出一条看不懂的栏
         edit.timeRange = edit.isSeparator ? ''
           : `${formatClock(item.startTime.toSeconds())}-${formatClock(item.endTime.toSeconds())}`;
@@ -518,9 +518,9 @@ export class EditorRows {
     if (group !== undefined) {
       row.groupName = group.name;
     } else if (plan.associatedGroup.equals(ClassPlanGroup.defaultGroupGuid())) {
-      row.groupName = '默认课表群';
+      row.groupName = t('editor_default_group');
     } else if (plan.associatedGroup.equals(ClassPlanGroup.globalGroupGuid())) {
-      row.groupName = '全局课表群';
+      row.groupName = t('editor_global_group');
     } else {
       row.groupName = t('editor_stale');
     }
@@ -541,7 +541,7 @@ export class EditorRows {
     slot: number): ClassSlotRow {
     const row: ClassSlotRow = new ClassSlotRow();
     row.slot = slot;
-    row.slotText = `第 ${slot + 1} 节`;
+    row.slotText = tf('wg_slot_n', `${slot + 1}`);
     row.isEnabled = info.isEnabled;
     row.isChangedClass = info.isChangedClass;
     if (!info.subjectId.isEmpty()) {

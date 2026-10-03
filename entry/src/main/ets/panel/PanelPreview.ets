@@ -16,7 +16,7 @@
  * 间距，这里铺一层浅底与一圈描边；换成深色只是配色，不影响行为。
  */
 
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import { PanelLine, PanelModel, PanelNode } from 'common_core';
 import { HIDDEN_DIM_OPACITY, panelHiddenMark } from './HiddenMark';
 import { PanelNodeView } from './PanelNodeView';
@@ -74,7 +74,7 @@ export struct PanelPreview {
       if (this.model.hiddenLineCount > 0) {
         // 隐藏的行不进模型，但要让用户知道「有一行被你关掉了」，否则他对着一个
         // 比预期少一行的预览会以为改动没生效。
-        Text(`另有 ${this.model.hiddenLineCount} 行已隐藏，在上面的行列表里可以打开`)
+        Text(tf('pl_hidden_rows', `${this.model.hiddenLineCount}`))
           .fontSize(12)
           .fontColor($r('app.color.ch_text_hint'))
           .margin({ top: LINE_GAP })
@@ -82,7 +82,7 @@ export struct PanelPreview {
       if (this.model.ruleHiddenLineCount > 0) {
         // 规则藏的行与用户自己关掉的行不是一回事：前者改规则就能恢复，位置也
         // 还在预览里（编辑模式）。混成一句话会让用户跑去行列表里找开关。
-        Text(`另有 ${this.model.ruleHiddenLineCount} 行被规则藏起来了（斜纹标记）`)
+        Text(tf('pl_rule_hidden_rows', `${this.model.ruleHiddenLineCount}`))
           .fontSize(12)
           .fontColor($r('app.color.ch_text_hint'))
           .margin({ top: LINE_GAP })

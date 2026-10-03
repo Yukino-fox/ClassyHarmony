@@ -63,8 +63,8 @@ struct PanelPage {
     UiFeedback.confirmDiscardOrSave(
       this.getUIContext(),
       t('ed_unsaved'),
-      '返回之前要怎么处理信息面板的改动？',
-      '丢掉改动并返回',
+      t('pl_leave_ask'),
+      t('ed_discard_back'),
       () => { this.leave(); },
       () => {
         if (vm.save()) {
@@ -82,7 +82,7 @@ struct PanelPage {
   build() {
     Column() {
       if (this.vm === undefined) {
-        Text('正在准备…')
+        Text(t('ed_preparing'))
           .fontSize(13)
           .fontColor($r('app.color.ch_text_hint'))
       } else {

@@ -1599,6 +1599,1670 @@
     {
       "name": "settings_compensate_daily",
       "value": "每天 +{0} 秒"
+    },
+    {
+      "name": "pane_color_swatch",
+      "value": "色块"
+    },
+    {
+      "name": "pane_pick",
+      "value": "选择"
+    },
+    {
+      "name": "pane_show_seconds",
+      "value": "显示秒"
+    },
+    {
+      "name": "pane_flash_colon",
+      "value": "冒号闪烁"
+    },
+    {
+      "name": "pane_text_label",
+      "value": "文字"
+    },
+    {
+      "name": "pane_font_size",
+      "value": "字号"
+    },
+    {
+      "name": "pane_follow_panel_fg",
+      "value": "关掉则跟随面板前景色"
+    },
+    {
+      "name": "pane_color_label",
+      "value": "颜色"
+    },
+    {
+      "name": "pane_name_label",
+      "value": "名称"
+    },
+    {
+      "name": "pane_target_date",
+      "value": "目标日期"
+    },
+    {
+      "name": "pane_start_date",
+      "value": "起始日期"
+    },
+    {
+      "name": "pane_connector_label",
+      "value": "连接词"
+    },
+    {
+      "name": "pane_compact_mode",
+      "value": "紧凑模式"
+    },
+    {
+      "name": "pane_show_progress",
+      "value": "显示进度条"
+    },
+    {
+      "name": "pane_progress_reverse",
+      "value": "进度条反向"
+    },
+    {
+      "name": "pane_format_label",
+      "value": "格式"
+    },
+    {
+      "name": "pane_countdown_format_example",
+      "value": "%D天"
+    },
+    {
+      "name": "pane_countdown_days_note",
+      "value": "天数为 {0}（由起止日期算出，不用手填）"
+    },
+    {
+      "name": "pane_show_main_weather",
+      "value": "显示主要天气信息"
+    },
+    {
+      "name": "pane_extra_at_moment",
+      "value": "时刻显示额外信息"
+    },
+    {
+      "name": "pane_countdown_seconds",
+      "value": "倒计时秒数"
+    },
+    {
+      "name": "pane_current_lesson_only",
+      "value": "只显示当前这节课"
+    },
+    {
+      "name": "pane_placeholder_when_empty",
+      "value": "空课表时显示占位文字"
+    },
+    {
+      "name": "pane_finished_text",
+      "value": "上完的文案"
+    },
+    {
+      "name": "pane_show_tomorrow",
+      "value": "同时显示明天的课"
+    },
+    {
+      "name": "pane_line_spacing",
+      "value": "行距倍数"
+    },
+    {
+      "name": "pane_line_spacing_hint",
+      "value": "1 是正常行距"
+    },
+    {
+      "name": "pane_speed",
+      "value": "速度"
+    },
+    {
+      "name": "pane_allow_pause",
+      "value": "允许暂停"
+    },
+    {
+      "name": "pane_pause_duration",
+      "value": "暂停时长"
+    },
+    {
+      "name": "pane_dwell_seconds",
+      "value": "停留秒数"
+    },
+    {
+      "name": "pane_animated_switch",
+      "value": "带动画切换"
+    },
+    {
+      "name": "pane_unknown_component_hint",
+      "value": "组件 id {0} 没有被识别，设置原样保留。"
+    },
+    {
+      "name": "pane_line_row",
+      "value": "第 {0} 行"
+    },
+    {
+      "name": "pane_component_title",
+      "value": "组件"
+    },
+    {
+      "name": "ruleset_state_none",
+      "value": "无课程"
+    },
+    {
+      "name": "ruleset_state_on_class",
+      "value": "上课中"
+    },
+    {
+      "name": "ruleset_state_prepare",
+      "value": "准备上课（不会命中）"
+    },
+    {
+      "name": "ruleset_state_breaking",
+      "value": "课间休息"
+    },
+    {
+      "name": "ruleset_state_unknown",
+      "value": "未知状态（{0}）"
+    },
+    {
+      "name": "ruleset_not_chosen",
+      "value": "还没挑规则"
+    },
+    {
+      "name": "ruleset_unknown_rule",
+      "value": "当前平台不认识这条规则，判为不成立"
+    },
+    {
+      "name": "ruleset_handler_threw",
+      "value": "判定时出错，按不成立处理"
+    },
+    {
+      "name": "ruleset_true",
+      "value": "成立"
+    },
+    {
+      "name": "ruleset_false",
+      "value": "不成立"
+    },
+    {
+      "name": "ruleset_no_ruleset",
+      "value": "还没配规则"
+    },
+    {
+      "name": "ruleset_summary_time_state",
+      "value": "时间状态：{0}"
+    },
+    {
+      "name": "ruleset_summary_subject",
+      "value": "科目：{0}"
+    },
+    {
+      "name": "ruleset_summary_subject_none",
+      "value": "科目：没选"
+    },
+    {
+      "name": "ruleset_summary_empty",
+      "value": "（空）"
+    },
+    {
+      "name": "ruleset_summary_text",
+      "value": "文本：{0}"
+    },
+    {
+      "name": "ruleset_summary_regex",
+      "value": "（按正则）"
+    },
+    {
+      "name": "ruleset_summary_sun",
+      "value": "{0} {1} 分钟"
+    },
+    {
+      "name": "ruleset_after_sunset",
+      "value": "日落后"
+    },
+    {
+      "name": "ruleset_before_sunrise",
+      "value": "日出前"
+    },
+    {
+      "name": "ruleset_summary_weather",
+      "value": "天气类型 {0}"
+    },
+    {
+      "name": "ruleset_fuzzy",
+      "value": "（模糊）"
+    },
+    {
+      "name": "ruleset_will_hide",
+      "value": "现在会把它藏起来"
+    },
+    {
+      "name": "ruleset_wont_hide",
+      "value": "现在不会藏"
+    },
+    {
+      "name": "ruleset_reevaluate",
+      "value": "重新判定"
+    },
+    {
+      "name": "ruleset_result_hint_count",
+      "value": "结论是打开这个页面的那一刻算的，共 {0} 组参与判定，课表变了要重新判定。"
+    },
+    {
+      "name": "ruleset_how_groups",
+      "value": "各组怎么算"
+    },
+    {
+      "name": "ruleset_invert_all",
+      "value": "整体取反"
+    },
+    {
+      "name": "ruleset_group_n",
+      "value": "第 {0} 组"
+    },
+    {
+      "name": "ruleset_delete_group",
+      "value": "删组"
+    },
+    {
+      "name": "ruleset_how_rules",
+      "value": "组内怎么算"
+    },
+    {
+      "name": "ruleset_all_hold",
+      "value": "全部成立"
+    },
+    {
+      "name": "ruleset_delete",
+      "value": "删"
+    },
+    {
+      "name": "ruleset_replace_with",
+      "value": "换成…"
+    },
+    {
+      "name": "ruleset_choice_unavailable",
+      "value": "{0}（当前平台不可用）"
+    },
+    {
+      "name": "ruleset_field_time_state",
+      "value": "时间状态"
+    },
+    {
+      "name": "ruleset_pick",
+      "value": "选择…"
+    },
+    {
+      "name": "ruleset_field_subject",
+      "value": "科目"
+    },
+    {
+      "name": "ruleset_no_subject",
+      "value": "（不选任何科目）"
+    },
+    {
+      "name": "ruleset_none_picked",
+      "value": "没选"
+    },
+    {
+      "name": "ruleset_match_text",
+      "value": "匹配文本"
+    },
+    {
+      "name": "ruleset_match_text_hint",
+      "value": "要匹配的字符串"
+    },
+    {
+      "name": "ruleset_regex_toggle",
+      "value": "按正则解释"
+    },
+    {
+      "name": "cp_rot_week",
+      "value": "每周"
+    },
+    {
+      "name": "cp_rot_odd",
+      "value": "单周"
+    },
+    {
+      "name": "cp_rot_even",
+      "value": "双周"
+    },
+    {
+      "name": "cp_rot_3w",
+      "value": "每 3 周"
+    },
+    {
+      "name": "cp_rot_4w",
+      "value": "每 4 周"
+    },
+    {
+      "name": "cp_separator",
+      "value": "分割线"
+    },
+    {
+      "name": "cp_break",
+      "value": "课间"
+    },
+    {
+      "name": "cp_slot_empty",
+      "value": "（空）"
+    },
+    {
+      "name": "cp_clear_class",
+      "value": "（清空这节课）"
+    },
+    {
+      "name": "cp_skip_today",
+      "value": "这节课今天不上"
+    },
+    {
+      "name": "cp_take_today",
+      "value": "这节课今天上"
+    },
+    {
+      "name": "cp_unmark_adjust",
+      "value": "取消调课标记"
+    },
+    {
+      "name": "cp_mark_adjust",
+      "value": "标记为调课"
+    },
+    {
+      "name": "cp_default_name",
+      "value": "新课表"
+    },
+    {
+      "name": "cp_title",
+      "value": "课表"
+    },
+    {
+      "name": "cp_new_schedule",
+      "value": "新建课表"
+    },
+    {
+      "name": "cp_overlay_badge",
+      "value": "叠加"
+    },
+    {
+      "name": "cp_active_today",
+      "value": "今天生效"
+    },
+    {
+      "name": "cp_plan_progress",
+      "value": "{0} {1} · 已排 {2}/{3} 节"
+    },
+    {
+      "name": "cp_collapse",
+      "value": "收起"
+    },
+    {
+      "name": "cp_expand",
+      "value": "展开"
+    },
+    {
+      "name": "cp_name",
+      "value": "名称"
+    },
+    {
+      "name": "cp_name_placeholder",
+      "value": "课表名"
+    },
+    {
+      "name": "cp_time_layout",
+      "value": "时间表"
+    },
+    {
+      "name": "cp_change",
+      "value": "更换"
+    },
+    {
+      "name": "cp_weekday",
+      "value": "周几"
+    },
+    {
+      "name": "cp_rotation",
+      "value": "轮转"
+    },
+    {
+      "name": "cp_assign_lessons",
+      "value": "排课"
+    },
+    {
+      "name": "cp_build_overlay",
+      "value": "按这张建叠加表"
+    },
+    {
+      "name": "cp_delete_plan",
+      "value": "删除课表"
+    },
+    {
+      "name": "cp_overlay_suffix",
+      "value": "·叠加"
+    },
+    {
+      "name": "common_cancel",
+      "value": "取消"
+    },
+    {
+      "name": "common_save",
+      "value": "保存"
+    },
+    {
+      "name": "common_ok",
+      "value": "确定"
+    },
+    {
+      "name": "common_delete",
+      "value": "删除"
+    },
+    {
+      "name": "eh_title",
+      "value": "编辑课表"
+    },
+    {
+      "name": "eh_loading",
+      "value": "正在读取课表…"
+    },
+    {
+      "name": "eh_profile_name",
+      "value": "档案名"
+    },
+    {
+      "name": "eh_unnamed_profile",
+      "value": "（未命名档案）"
+    },
+    {
+      "name": "eh_count_subjects",
+      "value": "{0} 科目"
+    },
+    {
+      "name": "eh_count_layouts",
+      "value": "{0} 时间表"
+    },
+    {
+      "name": "eh_count_plans",
+      "value": "{0} 课表"
+    },
+    {
+      "name": "eh_count_groups",
+      "value": "{0} 课表群"
+    },
+    {
+      "name": "eh_entry_subjects",
+      "value": "科目"
+    },
+    {
+      "name": "eh_entry_subjects_hint",
+      "value": "课程名称、简称、教师"
+    },
+    {
+      "name": "eh_entry_layouts",
+      "value": "时间表"
+    },
+    {
+      "name": "eh_entry_layouts_hint",
+      "value": "每天几节课、每节多久"
+    },
+    {
+      "name": "eh_entry_plans",
+      "value": "课表"
+    },
+    {
+      "name": "eh_entry_plans_hint",
+      "value": "周几上什么课"
+    },
+    {
+      "name": "eh_entry_groups",
+      "value": "课表群"
+    },
+    {
+      "name": "eh_entry_groups_hint",
+      "value": "按单双周 / 学期分组切换"
+    },
+    {
+      "name": "eh_entry_reminder",
+      "value": "课前提醒"
+    },
+    {
+      "name": "eh_entry_reminder_hint",
+      "value": "开关、提前多少分钟、合并还是逐条"
+    },
+    {
+      "name": "eh_profile_file",
+      "value": "档案文件"
+    },
+    {
+      "name": "eh_import_file",
+      "value": "导入课表文件"
+    },
+    {
+      "name": "eh_import_confirm",
+      "value": "这会整份替换当前草稿，替换后需要保存才会写进档案。"
+    },
+    {
+      "name": "eh_export_file",
+      "value": "导出课表文件"
+    },
+    {
+      "name": "eh_pick_file",
+      "value": "选择文件"
+    },
+    {
+      "name": "ew_delete",
+      "value": "删除"
+    },
+    {
+      "name": "ew_unnamed_subject",
+      "value": "（未命名科目）"
+    },
+    {
+      "name": "ew_outdoor",
+      "value": "室外"
+    },
+    {
+      "name": "ew_used_places",
+      "value": "{0} 处"
+    },
+    {
+      "name": "ew_collapse",
+      "value": "收起"
+    },
+    {
+      "name": "ew_expand",
+      "value": "展开"
+    },
+    {
+      "name": "ew_subject_in_use",
+      "value": "「{0}」正被 {1} 节课引用。"
+    },
+    {
+      "name": "ew_subject_unused",
+      "value": "「{0}」没有被任何课次引用。"
+    },
+    {
+      "name": "ew_default_prefix",
+      "value": "默认 {0}"
+    },
+    {
+      "name": "ew_slot_empty",
+      "value": "（空）"
+    },
+    {
+      "name": "ew_default",
+      "value": "默认"
+    },
+    {
+      "name": "ew_global",
+      "value": "全局"
+    },
+    {
+      "name": "ew_plan_count",
+      "value": "{0} 张课表"
+    },
+    {
+      "name": "ew_current",
+      "value": "当前"
+    },
+    {
+      "name": "ew_set_current",
+      "value": "设为当前"
+    },
+    {
+      "name": "ew_disband",
+      "value": "解散"
+    },
+    {
+      "name": "ew_group_has_plans",
+      "value": "「{0}」里有 {1} 张课表，删除课表群会一并删除它们。"
+    },
+    {
+      "name": "ew_group_empty",
+      "value": "「{0}」是空的。"
+    },
+    {
+      "name": "ew_class_row_count",
+      "value": "{0} 节 · {1} 行"
+    },
+    {
+      "name": "rm_on_time",
+      "value": "准点"
+    },
+    {
+      "name": "rm_advance_min",
+      "value": "{0} 分"
+    },
+    {
+      "name": "rm_sync_failed",
+      "value": "同步失败，请稍后再试"
+    },
+    {
+      "name": "rm_syncing",
+      "value": "正在同步…"
+    },
+    {
+      "name": "rm_sync_partial",
+      "value": "{0}（{1} 条没排上）"
+    },
+    {
+      "name": "rm_dropped_count",
+      "value": "{0} 条提醒没排上"
+    },
+    {
+      "name": "rm_shape_specific",
+      "value": "逐条"
+    },
+    {
+      "name": "rm_shape_merged",
+      "value": "按时段合并"
+    },
+    {
+      "name": "rm_mode_auto",
+      "value": "自动"
+    },
+    {
+      "name": "rm_planned",
+      "value": "已排 {0} 条{1}提醒"
+    },
+    {
+      "name": "rm_quota_more",
+      "value": "，额度不够，另有 {0} 条没排上"
+    },
+    {
+      "name": "rm_title",
+      "value": "课前提醒"
+    },
+    {
+      "name": "rm_enable",
+      "value": "开启课前提醒"
+    },
+    {
+      "name": "rm_advance_outdoor",
+      "value": "室外课提前"
+    },
+    {
+      "name": "rm_advance_outdoor_hint",
+      "value": "要去操场的课，得留出走过去的时间"
+    },
+    {
+      "name": "rm_shape",
+      "value": "提醒形态"
+    },
+    {
+      "name": "rm_shape_desc",
+      "value": "逐条提醒会写明是哪门课；按时段合并的只写「该上课了」，但条数少得多。条数超过系统上限时自动切到合并。"
+    },
+    {
+      "name": "rm_resync_now",
+      "value": "立即重新排提醒"
+    },
+    {
+      "name": "temp_overlay_title",
+      "value": "叠加课表"
+    },
+    {
+      "name": "temp_overlay_from",
+      "value": "叠加自 {0}"
+    },
+    {
+      "name": "temp_cancel_overlay_msg",
+      "value": "「{0}」会从叠加关系里摘掉。课表本身保留，可以当成普通课表启用。"
+    },
+    {
+      "name": "temp_plan_title",
+      "value": "临时课表"
+    },
+    {
+      "name": "temp_current_plan",
+      "value": "当前：{0}（自 {1} 起）"
+    },
+    {
+      "name": "temp_use_plan_title",
+      "value": "临时用「{0}」"
+    },
+    {
+      "name": "temp_group_title",
+      "value": "临时课表群"
+    },
+    {
+      "name": "temp_current_group",
+      "value": "当前：{0}（到 {1}，{2}）"
+    },
+    {
+      "name": "temp_group_plan_count",
+      "value": "{0} 张"
+    },
+    {
+      "name": "temp_use_group_title",
+      "value": "临时用「{0}」"
+    },
+    {
+      "name": "temp_expiry_suffix",
+      "value": "{0} · 到期"
+    },
+    {
+      "name": "temp_active_notice",
+      "value": "临时生效中：{0}（自 {1}）"
+    },
+    {
+      "name": "temp_book_change",
+      "value": "改"
+    },
+    {
+      "name": "temp_book_delete",
+      "value": "删"
+    },
+    {
+      "name": "temp_book_remove_msg",
+      "value": "{0} 会恢复正常选课。档案里的这条预定将被删除。"
+    },
+    {
+      "name": "temp_status_plan_missing",
+      "value": "{0} —— 课表被删了，这条预定不会生效"
+    },
+    {
+      "name": "temp_status_expired",
+      "value": "{0} —— 已过期"
+    },
+    {
+      "name": "temp_status_active",
+      "value": "{0} —— 当天生效"
+    },
+    {
+      "name": "temp_status_inactive",
+      "value": "{0} —— 不会生效"
+    },
+    {
+      "name": "temp_picking_today",
+      "value": "{0} 周{1}（今天）"
+    },
+    {
+      "name": "temp_picking_tomorrow",
+      "value": "{0} 周{1}（明天）"
+    },
+    {
+      "name": "temp_picking_plain",
+      "value": "{0} 周{1}"
+    },
+    {
+      "name": "tl_title",
+      "value": "时间表"
+    },
+    {
+      "name": "tl_new_layout",
+      "value": "新建时间表"
+    },
+    {
+      "name": "tl_default_name",
+      "value": "新时间表"
+    },
+    {
+      "name": "tl_name",
+      "value": "名称"
+    },
+    {
+      "name": "tl_name_placeholder",
+      "value": "时间表名"
+    },
+    {
+      "name": "tl_used_by",
+      "value": "被这些课表使用：{0}"
+    },
+    {
+      "name": "tl_resync_by_period",
+      "value": "按时段重排"
+    },
+    {
+      "name": "tl_delete_layout",
+      "value": "删除时间表"
+    },
+    {
+      "name": "tl_delete_in_use",
+      "value": "有 {0} 张课表绑在这张时间表上，删除后它们会被解绑、不再参与选课。"
+    },
+    {
+      "name": "tl_edit_time",
+      "value": "改时刻"
+    },
+    {
+      "name": "tl_delete_point_class",
+      "value": "第 {0} 节课。删除会一并删掉所有用这张时间表的课表里"
+    },
+    {
+      "name": "tl_delete_point",
+      "value": "删除这个时段。"
+    },
+    {
+      "name": "tl_unset",
+      "value": "未设"
+    },
+    {
+      "name": "tl_applied_to",
+      "value": "已刷到 {0} 张表"
+    },
+    {
+      "name": "tl_start",
+      "value": "开始"
+    },
+    {
+      "name": "tl_duration",
+      "value": "时长"
+    },
+    {
+      "name": "tl_duration_placeholder",
+      "value": "45 分钟"
+    },
+    {
+      "name": "tl_bad_start",
+      "value": "开始时刻格式不对，例：08:00"
+    },
+    {
+      "name": "tl_bad_duration",
+      "value": "时长格式不对，例：45 分钟"
+    },
+    {
+      "name": "tl_time_clash",
+      "value": "与 {0} 的时间重叠"
+    },
+    {
+      "name": "common_pick",
+      "value": "选择…"
+    },
+    {
+      "name": "cl_copy_suffix",
+      "value": " 副本"
+    },
+    {
+      "name": "cl_switch_scheme",
+      "value": "切换方案"
+    },
+    {
+      "name": "cl_switch_warn",
+      "value": "切到「{0}」会丢掉当前方案里未保存的改动。"
+    },
+    {
+      "name": "cl_switch_confirm",
+      "value": "丢掉并切换"
+    },
+    {
+      "name": "cl_duplicate_title",
+      "value": "复制当前方案"
+    },
+    {
+      "name": "cl_duplicate",
+      "value": "复制"
+    },
+    {
+      "name": "cl_delete_scheme",
+      "value": "删除「{0}」"
+    },
+    {
+      "name": "cl_delete_scheme_warn",
+      "value": "这个方案的文件会被删掉，删掉就找不回来了。"
+    },
+    {
+      "name": "cl_clock_running",
+      "value": "时钟：走"
+    },
+    {
+      "name": "cl_clock_paused",
+      "value": "时钟：停"
+    },
+    {
+      "name": "cl_scheme",
+      "value": "方案"
+    },
+    {
+      "name": "cl_collapse",
+      "value": "收起"
+    },
+    {
+      "name": "cl_switch",
+      "value": "切换"
+    },
+    {
+      "name": "cl_current",
+      "value": "当前"
+    },
+    {
+      "name": "cl_info_panel",
+      "value": "信息面板"
+    },
+    {
+      "name": "cl_reload",
+      "value": "重新读取"
+    },
+    {
+      "name": "cl_reload_title",
+      "value": "重新读取布局"
+    },
+    {
+      "name": "cl_save",
+      "value": "保存"
+    },
+    {
+      "name": "clvm_date",
+      "value": "日期"
+    },
+    {
+      "name": "clvm_clock",
+      "value": "时钟"
+    },
+    {
+      "name": "clvm_text",
+      "value": "文本"
+    },
+    {
+      "name": "clvm_countdown",
+      "value": "倒计时"
+    },
+    {
+      "name": "clvm_schedule",
+      "value": "课程表"
+    },
+    {
+      "name": "clvm_weather",
+      "value": "天气简报"
+    },
+    {
+      "name": "clvm_separator",
+      "value": "分割线"
+    },
+    {
+      "name": "clvm_group",
+      "value": "分组容器"
+    },
+    {
+      "name": "clvm_stack",
+      "value": "堆叠容器"
+    },
+    {
+      "name": "clvm_rolling",
+      "value": "滚动容器"
+    },
+    {
+      "name": "clvm_slide",
+      "value": "轮播容器"
+    },
+    {
+      "name": "clvm_save_failed",
+      "value": "保存失败：写入信息面板目录时出错"
+    },
+    {
+      "name": "clvm_switched",
+      "value": "已切换到「{0}」"
+    },
+    {
+      "name": "clvm_duplicated",
+      "value": "已复制到「{0}」，保存后生效"
+    },
+    {
+      "name": "clvm_delete_failed",
+      "value": "删除失败：文件删不掉"
+    },
+    {
+      "name": "clvm_deleted",
+      "value": "已删除「{0}」"
+    },
+    {
+      "name": "clvm_add_not_container",
+      "value": "加不进去：目标不是容器"
+    },
+    {
+      "name": "clvm_added",
+      "value": "已添加{0}"
+    },
+    {
+      "name": "clvm_replaced",
+      "value": "已换成{0}"
+    },
+    {
+      "name": "clvm_line_rules_on",
+      "value": "第 {0} 行已打开按规则隐藏"
+    },
+    {
+      "name": "clvm_line_rules_off",
+      "value": "第 {0} 行已取消"
+    },
+    {
+      "name": "ct_settings",
+      "value": "设置"
+    },
+    {
+      "name": "ct_unknown_no_settings",
+      "value": "未识别组件，无法设置"
+    },
+    {
+      "name": "ct_add_child",
+      "value": "添加子组件"
+    },
+    {
+      "name": "ct_replace",
+      "value": "替换"
+    },
+    {
+      "name": "ct_delete",
+      "value": "删除"
+    },
+    {
+      "name": "ct_container_tag",
+      "value": "容器"
+    },
+    {
+      "name": "ct_rule_hidden_tag",
+      "value": "正被规则藏着"
+    },
+    {
+      "name": "ct_collapse",
+      "value": "收起"
+    },
+    {
+      "name": "ct_actions",
+      "value": "操作"
+    },
+    {
+      "name": "ct_add_into",
+      "value": "往「{0}」里添加"
+    },
+    {
+      "name": "ct_replace_with",
+      "value": "把「{0}」换成"
+    },
+    {
+      "name": "ct_line_empty",
+      "value": "空行"
+    },
+    {
+      "name": "ct_line_children",
+      "value": "{0} 个组件"
+    },
+    {
+      "name": "ct_line_children_unknown",
+      "value": "{0} 个组件，其中 {1} 个未识别"
+    },
+    {
+      "name": "ct_visible",
+      "value": "显示"
+    },
+    {
+      "name": "ct_add_component",
+      "value": "添加组件"
+    },
+    {
+      "name": "ct_collapse_rules",
+      "value": "收起规则"
+    },
+    {
+      "name": "ct_rules_hiding",
+      "value": "规则（正藏着）"
+    },
+    {
+      "name": "ct_line_rules_title",
+      "value": "第 {0} 行的隐藏规则"
+    },
+    {
+      "name": "ct_add_to_line",
+      "value": "往第 {0} 行里添加"
+    },
+    {
+      "name": "exec_unknown_action",
+      "value": "未知行动 id：{0}"
+    },
+    {
+      "name": "exec_plugin_noop",
+      "value": "这条扩展行动什么都没做（清单里没写清楚要做什么）。"
+    },
+    {
+      "name": "exec_plugin_setting_no_key",
+      "value": "扩展的改设置行动没写设置键。"
+    },
+    {
+      "name": "exec_plugin_bad_value",
+      "value": "无法把「{0}」解释成设置项 {1} 的值。"
+    },
+    {
+      "name": "exec_sleep_parse_failed",
+      "value": "Sleep 设置解析失败"
+    },
+    {
+      "name": "exec_sleep_bad_duration",
+      "value": "睡眠时长必须 > 0"
+    },
+    {
+      "name": "exec_settings_parse_failed",
+      "value": "ModifyAppSettings 设置解析失败"
+    },
+    {
+      "name": "exec_unknown_setting_mode",
+      "value": "未知的设置修改模式：{0}"
+    },
+    {
+      "name": "exec_notification_parse_failed",
+      "value": "Notification 设置解析失败"
+    },
+    {
+      "name": "exec_weather_notification_parse_failed",
+      "value": "WeatherNotification 设置解析失败"
+    },
+    {
+      "name": "exec_unknown_weather_kind",
+      "value": "未知的天气提醒种类：{0}"
+    },
+    {
+      "name": "wf_day_today",
+      "value": "今天"
+    },
+    {
+      "name": "wf_day_tomorrow",
+      "value": "明天"
+    },
+    {
+      "name": "wf_day_day_after",
+      "value": "后天"
+    },
+    {
+      "name": "wf_weather_range",
+      "value": "{0}转{1}"
+    },
+    {
+      "name": "ix_open_editor_failed",
+      "value": "进不去编辑页"
+    },
+    {
+      "name": "ix_open_panel_failed",
+      "value": "进不去信息面板"
+    },
+    {
+      "name": "ix_open_settings_failed",
+      "value": "进不去设置页"
+    },
+    {
+      "name": "ix_tab_schedule",
+      "value": "课表"
+    },
+    {
+      "name": "ix_tab_panel",
+      "value": "面板"
+    },
+    {
+      "name": "ix_tab_settings",
+      "value": "设置"
+    },
+    {
+      "name": "ix_tab_edit",
+      "value": "编辑"
+    },
+    {
+      "name": "ix_import_hint",
+      "value": "导入课表文件后会显示在这里"
+    },
+    {
+      "name": "ix_this_week",
+      "value": "本周课表"
+    },
+    {
+      "name": "ix_preparing",
+      "value": "正在准备…"
+    },
+    {
+      "name": "ix_loading",
+      "value": "正在读取课表…"
+    },
+    {
+      "name": "wf_loading",
+      "value": "加载中..."
+    },
+    {
+      "name": "wf_invalid_workflow",
+      "value": "无效的工作流"
+    },
+    {
+      "name": "wf_name_placeholder",
+      "value": "工作流名称"
+    },
+    {
+      "name": "wf_triggers",
+      "value": "触发器"
+    },
+    {
+      "name": "wf_conditions",
+      "value": "条件"
+    },
+    {
+      "name": "wf_actions",
+      "value": "行动"
+    },
+    {
+      "name": "wf_delete",
+      "value": "删除"
+    },
+    {
+      "name": "wf_revertible",
+      "value": "可恢复"
+    },
+    {
+      "name": "wf_no_settings",
+      "value": "无设置"
+    },
+    {
+      "name": "sub_default_name",
+      "value": "新课程"
+    },
+    {
+      "name": "sub_title",
+      "value": "科目"
+    },
+    {
+      "name": "sub_add",
+      "value": "添加科目"
+    },
+    {
+      "name": "sub_name",
+      "value": "名称"
+    },
+    {
+      "name": "sub_name_hint",
+      "value": "科目名"
+    },
+    {
+      "name": "sub_initial",
+      "value": "简称"
+    },
+    {
+      "name": "sub_teacher",
+      "value": "教师"
+    },
+    {
+      "name": "sub_optional",
+      "value": "选填"
+    },
+    {
+      "name": "sub_outdoor",
+      "value": "室外课"
+    },
+    {
+      "name": "sub_outdoor_hint",
+      "value": "在课表上会标出来"
+    },
+    {
+      "name": "sub_used_by",
+      "value": "被 {0} 张课表、共 {1} 节课引用。"
+    },
+    {
+      "name": "cgp_default_name",
+      "value": "新课表群"
+    },
+    {
+      "name": "cgp_title",
+      "value": "课表群"
+    },
+    {
+      "name": "cgp_disband_title",
+      "value": "解散课表群"
+    },
+    {
+      "name": "cgp_disband_msg",
+      "value": "群会被删掉，里面 {0} 张课表留着，落到默认群。"
+    },
+    {
+      "name": "cgp_disband",
+      "value": "解散"
+    },
+    {
+      "name": "cgp_group_name",
+      "value": "群名"
+    },
+    {
+      "name": "cgp_rename",
+      "value": "改名"
+    },
+    {
+      "name": "cgp_new_group",
+      "value": "新建课表群"
+    },
+    {
+      "name": "ed_unknown_page",
+      "value": "未知页面：{0}"
+    },
+    {
+      "name": "ed_leave_ask",
+      "value": "返回之前要怎么处理这些改动？"
+    },
+    {
+      "name": "ed_discard_back",
+      "value": "丢掉改动并返回"
+    },
+    {
+      "name": "ed_preparing",
+      "value": "正在准备…"
+    },
+    {
+      "name": "ed_reload",
+      "value": "重新读取"
+    },
+    {
+      "name": "ed_reload_title",
+      "value": "重新读取档案"
+    },
+    {
+      "name": "au_loading",
+      "value": "加载中..."
+    },
+    {
+      "name": "au_title",
+      "value": "自动化"
+    },
+    {
+      "name": "au_scheme_prefix",
+      "value": "方案："
+    },
+    {
+      "name": "au_trigger_count",
+      "value": "{0} 个触发器"
+    },
+    {
+      "name": "au_action_count",
+      "value": "{0} 个行动"
+    },
+    {
+      "name": "au_edit",
+      "value": "编辑"
+    },
+    {
+      "name": "au_new_workflow",
+      "value": "新建工作流"
+    },
+    {
+      "name": "ppi_imported_meta",
+      "value": "已导入「{0}」的元信息。"
+    },
+    {
+      "name": "ppi_id_renamed",
+      "value": "（原 id {0} 改成了 {1}）"
+    },
+    {
+      "name": "ppi_unreadable",
+      "value": "有 {0} 个字段本端读不出来。"
+    },
+    {
+      "name": "ppi_open_filter",
+      "value": "扩展包或清单|.cipx;.json"
+    },
+    {
+      "name": "bt_not_started",
+      "value": "未启动"
+    },
+    {
+      "name": "bt_running_in",
+      "value": "运行中（{0}）"
+    },
+    {
+      "name": "bt_request_failed",
+      "value": "申请失败：{0}"
+    },
+    {
+      "name": "bt_mode_multi",
+      "value": "多设备互联"
+    },
+    {
+      "name": "bt_mode_task",
+      "value": "任务保持"
+    },
+    {
+      "name": "ps_manifest_missing",
+      "value": "清单文件读不到：{0}"
+    },
+    {
+      "name": "ps_manifest_unreadable",
+      "value": "清单文件无法读取：{0}"
+    },
+    {
+      "name": "ps_manifest_corrupt",
+      "value": "清单文件损坏，已回退到上一次可读的那份（{0}）"
+    },
+    {
+      "name": "ps_manifest_both_fail",
+      "value": "清单文件与备份都无法读取：{0}"
+    },
+    {
+      "name": "pf_save_suffix_choice",
+      "value": "文件|{0}"
+    },
+    {
+      "name": "ddo_bad_session_id",
+      "value": "会话 ID 无效（只允许字母、数字、下划线，且不超过 128 字符）"
+    },
+    {
+      "name": "ddo_join_failed",
+      "value": "加入会话失败：{0}"
+    },
+    {
+      "name": "ddo_sync_unavailable",
+      "value": "同步不可用：{0}"
+    },
+    {
+      "name": "ddo_off",
+      "value": "未开启"
+    },
+    {
+      "name": "ddo_session_line",
+      "value": "会话 {0}"
+    },
+    {
+      "name": "ddo_peers_online",
+      "value": "{0} 台对端在线"
+    },
+    {
+      "name": "ddo_no_peers",
+      "value": "暂无对端"
+    },
+    {
+      "name": "ddo_last_from",
+      "value": "最近来自「{0}」"
+    },
+    {
+      "name": "ddo_unknown_device",
+      "value": "未知设备"
+    },
+    {
+      "name": "ddo_default_model",
+      "value": "HarmonyOS 设备"
+    },
+    {
+      "name": "pq_no_profile",
+      "value": "读不到课表档案"
+    },
+    {
+      "name": "pq_build_failed",
+      "value": "生成状态失败"
+    },
+    {
+      "name": "pl_leave_ask",
+      "value": "返回之前要怎么处理信息面板的改动？"
+    },
+    {
+      "name": "pl_hidden_rows",
+      "value": "另有 {0} 行已隐藏，在上面的行列表里可以打开"
+    },
+    {
+      "name": "pl_rule_hidden_rows",
+      "value": "另有 {0} 行被规则藏起来了（斜纹标记）"
+    },
+    {
+      "name": "plrow_installed",
+      "value": "装上了 {0} 条条目"
+    },
+    {
+      "name": "plrow_declared_components",
+      "value": "组件 {0}"
+    },
+    {
+      "name": "plrow_declared_triggers",
+      "value": "触发器 {0}"
+    },
+    {
+      "name": "plrow_declared_actions",
+      "value": "行动 {0}"
+    },
+    {
+      "name": "plrow_declared_providers",
+      "value": "通知 {0}"
+    },
+    {
+      "name": "plrow_declared_themes",
+      "value": "主题 {0}"
+    },
+    {
+      "name": "plrow_declared_none",
+      "value": "什么都没声明"
+    },
+    {
+      "name": "rm_channel_desc",
+      "value": "上课前的提醒"
+    },
+    {
+      "name": "rs_profile_unreadable",
+      "value": "课表读不出来，本次未改动提醒"
+    },
+    {
+      "name": "rs_notify_revoked",
+      "value": "通知权限在同步过程中被关闭"
+    },
+    {
+      "name": "sp_unavailable_no_fallback",
+      "value": "不可用：{0} 在本设备上尚未实现，且没有可回退的引擎"
+    },
+    {
+      "name": "sp_unavailable",
+      "value": "不可用：{0} 在本设备上不可用"
+    },
+    {
+      "name": "sp_current",
+      "value": "当前：{0}"
+    },
+    {
+      "name": "sp_current_fallback",
+      "value": "当前：{0}（所选的 {1} 在本设备上不可用，已回退）"
+    },
+    {
+      "name": "sp_tts_timeout",
+      "value": "朗读超时"
+    },
+    {
+      "name": "ts_not_synced",
+      "value": "时间尚未同步。"
+    },
+    {
+      "name": "ts_syncing",
+      "value": "正在同步时间……"
+    },
+    {
+      "name": "ts_sync_failed",
+      "value": "同步时间失败：{0}"
+    },
+    {
+      "name": "ts_behind_fixed",
+      "value": "本机时间慢 {0}，已补偿。"
+    },
+    {
+      "name": "ts_ahead_fixed",
+      "value": "本机时间快 {0}，已补偿。"
+    },
+    {
+      "name": "ts_rejected",
+      "value": "未采用本次结果：{0}"
+    },
+    {
+      "name": "ts_status_last_sync",
+      "value": "{0}（上次同步：{1}）"
+    },
+    {
+      "name": "ts_minutes",
+      "value": "{0} 分钟"
+    },
+    {
+      "name": "ts_seconds",
+      "value": "{0} 秒"
+    },
+    {
+      "name": "ntp_empty_server",
+      "value": "服务器地址为空"
+    },
+    {
+      "name": "ntp_bad_response",
+      "value": "响应不合法：{0}"
+    },
+    {
+      "name": "au_workflow_n",
+      "value": "工作流 {0}"
+    },
+    {
+      "name": "ctv_no_classes_hint",
+      "value": "添加课表后这里会显示今天的课程"
+    },
+    {
+      "name": "ctv_until_break",
+      "value": "距下课"
+    },
+    {
+      "name": "ctv_break",
+      "value": "课间"
+    },
+    {
+      "name": "ctv_not_started_yet",
+      "value": "还没开始上课"
+    },
+    {
+      "name": "ctv_countdown_fmt",
+      "value": "{0} {1} 分 {2} 秒"
+    },
+    {
+      "name": "ctv_no_subject",
+      "value": "（无）"
+    },
+    {
+      "name": "common_profile_load_failed",
+      "value": "档案读取失败：{0}"
+    },
+    {
+      "name": "common_save_failed",
+      "value": "保存失败：{0}"
+    },
+    {
+      "name": "common_export_failed",
+      "value": "导出失败：{0}"
+    },
+    {
+      "name": "common_import_failed",
+      "value": "导入失败：{0}"
+    },
+    {
+      "name": "ws_last_refresh_failed",
+      "value": "上次刷新失败：{0}"
+    },
+    {
+      "name": "ws_updated_at",
+      "value": "更新于 {0}"
+    },
+    {
+      "name": "ws_updated_at_degraded",
+      "value": "更新于 {0}（定位精度降到 {1} 位）"
+    },
+    {
+      "name": "ws_city_failed",
+      "value": "无法获取城市信息"
+    },
+    {
+      "name": "ws_fetch_failed",
+      "value": "无法获取天气信息"
+    },
+    {
+      "name": "wg_changed_badge",
+      "value": "改"
+    },
+    {
+      "name": "wg_profile_unreadable",
+      "value": "课表读不出来"
+    },
+    {
+      "name": "wg_date_fmt",
+      "value": "{0}月{1}日"
     }
   ]
 }

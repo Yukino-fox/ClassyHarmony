@@ -39,7 +39,7 @@
  * 保持一致，等 P10 统一处理。form_config.json 里的 enableBlurBackground 同理关掉了。
  */
 
-import { WidgetCodec, WidgetDimension, WidgetLesson, WidgetModel } from 'common_core';
+import { WidgetCodec, WidgetDimension, WidgetLesson, WidgetModel, t } from 'common_core';
 
 /**
  * 卡片自己的 LocalStorage。
@@ -177,7 +177,7 @@ struct TodayScheduleCard {
         .layoutWeight(1)
       if (lesson.isChangedClass) {
         // 换课/调课。只有在叠加课表下才会出现，主课表上这个标记恒为 false。
-        Text('改')
+        Text(t('wg_changed_badge'))
           .fontSize(10)
           .fontColor($r('app.color.ch_next'))
           .margin({ left: 4 })

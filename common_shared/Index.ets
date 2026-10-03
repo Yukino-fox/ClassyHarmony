@@ -8,6 +8,9 @@
  * 一旦在此链路引入被禁模块，卡片进程会异常退出。
  */
 
+/* ---- 多语言文案 ---- */
+export { clearCache, t, tf } from './src/main/ets/i18n/I18n';
+
 /* ---- 枚举 ---- */
 export { TimeState } from './src/main/ets/enums/TimeState';
 export { TempClassPlanGroupType } from './src/main/ets/enums/TempClassPlanGroupType';

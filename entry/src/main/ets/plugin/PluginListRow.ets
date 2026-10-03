@@ -13,7 +13,7 @@
  * 与 RulesetEditModel 的 RuleEditRow 同一个取舍。
  */
 
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import { ExtensionManifest, PluginIssue, PluginRecord } from 'common_core';
 import { PluginLoadIssue } from './PluginService';
 
@@ -94,7 +94,7 @@ export class PluginListRow {
     if (this.entryCount === 0) {
       return t('plrow_no_entries');
     }
-    return `装上了 ${this.entryCount} 条条目`;
+    return tf('plrow_installed', `${this.entryCount}`);
   }
 
   /** 问题明细（装载期 + 校验/冲突），给展开区用。 */
@@ -114,20 +114,20 @@ export class PluginListRow {
   declaredText(): string {
     const parts: string[] = [];
     if (this.declaredComponents > 0) {
-      parts.push(`组件 ${this.declaredComponents}`);
+      parts.push(tf('plrow_declared_components', `${this.declaredComponents}`));
     }
     if (this.declaredTriggers > 0) {
-      parts.push(`触发器 ${this.declaredTriggers}`);
+      parts.push(tf('plrow_declared_triggers', `${this.declaredTriggers}`));
     }
     if (this.declaredActions > 0) {
-      parts.push(`行动 ${this.declaredActions}`);
+      parts.push(tf('plrow_declared_actions', `${this.declaredActions}`));
     }
     if (this.declaredProviders > 0) {
-      parts.push(`通知 ${this.declaredProviders}`);
+      parts.push(tf('plrow_declared_providers', `${this.declaredProviders}`));
     }
     if (this.declaredThemes > 0) {
-      parts.push(`主题 ${this.declaredThemes}`);
+      parts.push(tf('plrow_declared_themes', `${this.declaredThemes}`));
     }
-    return parts.length === 0 ? '什么都没声明' : parts.join('、');
+    return parts.length === 0 ? t('plrow_declared_none') : parts.join('、');
   }
 }

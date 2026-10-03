@@ -34,7 +34,7 @@
  * 用户看到文案能判断该不该等，看到空白只会以为面板坏了。
  */
 
-import { t } from '../i18n/I18n';
+import { t, tf } from '../i18n/I18n';
 import {
   ClassPlan,
   ColorValue,
@@ -97,13 +97,13 @@ import { WeatherSnapshot } from '../weather/WeatherRules';
 const MAX_DEPTH: number = 12;
 
 /** 空课表时课程表组件显示的占位文字，与小组件一致。 */
-const EMPTY_SUBJECT_TEXT: string = '（无）';
+const EMPTY_SUBJECT_TEXT: string = t('wg_no_subject');
 
 /** 引擎给出的兜底文案。 */
 const NO_CLASS_TODAY: string = t('panel_no_class_today');
 const ALL_CLASS_ENDED: string = t('panel_all_class_ended');
 /** 倒计时组件在非紧凑模式下、名称前面那一段固定文字。抄桌面版模板里的 TextBlockTo。 */
-const COUNTDOWN_PREFIX: string = '距离';
+const COUNTDOWN_PREFIX: string = t('wg_countdown_prefix');
 
 const NO_PROFILE: string = t('panel_no_profile');
 
@@ -480,7 +480,7 @@ export class PanelBuilder {
     const descriptor: ComponentDescriptor | undefined = ComponentCatalog.find(component.id);
     if (descriptor === undefined) {
       node.isUnknown = true;
-      node.hintText = `组件 id ${component.id} 没有被识别，设置原样保留在文件里。`;
+      node.hintText = tf('panel_unknown_component', component.id);
       return node;
     }
 
@@ -658,7 +658,7 @@ export class PanelBuilder {
     const payload: WeatherPayload = ComponentCatalog.decode(component) as WeatherPayload;
     const snapshot: WeatherSnapshot | undefined = context.weather;
     if (snapshot === undefined || !snapshot.info.hasData()) {
-      node.hintText = '天气数据还没取到';
+      node.hintText = t('panel_weather_missing');
       return;
     }
     node.weather = buildWeatherBrief(payload, snapshot.info);
@@ -946,7 +946,7 @@ export class PanelBuilder {
 
       const lesson: PanelLesson = new PanelLesson();
       lesson.classSlot = slot;
-      lesson.slotText = `第 ${slot + 1} 节`;
+      lesson.slotText = tf('wg_slot_n', `${slot + 1}`);
       lesson.rangeText =
         `${PanelBuilder.clockOf(startSeconds)}-${PanelBuilder.clockOf(endSeconds)}`;
       lesson.isChangedClass = info.isChangedClass;
@@ -975,7 +975,7 @@ export class PanelBuilder {
       if (payload.isCountdownEnabled && !isCurrent && !isFinished) {
         const left: number = startSeconds - nowSeconds;
         if (left >= 0 && left <= payload.countdownSeconds) {
-          lesson.countdownText = `${left} 秒后上课`;
+          lesson.countdownText = tf('panel_seconds_to_class', `${left}`);
         }
       }
       if (isCurrent) {

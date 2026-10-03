@@ -25,6 +25,7 @@ import { JsonValue } from '../json/JsonValue';
 import { KeyedMap } from '../collections/KeyedMap';
 import { ModelCodec } from './ModelCodec';
 import { ActionSet } from './Automation/ActionSet';
+import { t } from '../i18n/I18n';
 
 /** TimeType：上课。课程时段，ClassInfo 与之按下标对应。 */
 export const TIME_TYPE_CLASS: number = 0;
@@ -98,7 +99,7 @@ export class TimeLayoutItem {
 
   /** 休息名称的回退显示（对应只读属性 BreakNameText）。 */
   breakNameText(): string {
-    return this.breakName.length === 0 ? '课间休息' : this.breakName;
+    return this.breakName.length === 0 ? t('sh_break_name') : this.breakName;
   }
 
   toJson(): JsonObject {

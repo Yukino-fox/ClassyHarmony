@@ -34,7 +34,7 @@
  */
 
 import { ColorValue, ComponentSettings, DateTimeValue } from 'common_shared';
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import {
   ClockPayload,
   COMPONENT_CLOCK,
@@ -123,7 +123,7 @@ struct ColorField {
         onCommit: (text: string) => { this.commitText(text); }
       })
       Row() {
-        Text('色块')
+        Text(t('pane_color_swatch'))
           .fontSize(11)
           .fontColor($r('app.color.ch_text_hint'))
           .width(34)
@@ -188,7 +188,7 @@ struct DateField {
         .fontSize(13)
         .fontColor($r('app.color.ch_accent'))
         .layoutWeight(1)
-      Text('选择')
+      Text(t('pane_pick'))
         .fontSize(12)
         .fontColor($r('app.color.ch_text_hint'))
     }
@@ -214,7 +214,7 @@ struct ClockSettings {
   build() {
     Column() {
       EditorToggleRow({
-        label: '显示秒',
+        label: t('pane_show_seconds'),
         isOn: this.value.showSeconds,
         onToggle: (next: boolean) => {
           this.value.showSeconds = next;
@@ -231,7 +231,7 @@ struct ClockSettings {
         }
       })
       EditorToggleRow({
-        label: '冒号闪烁',
+        label: t('pane_flash_colon'),
         hint: t('pane_seconds_hint'),
         isOn: this.value.flashTimeSeparator,
         onToggle: (next: boolean) => {
@@ -252,7 +252,7 @@ struct TextSettings {
   build() {
     Column() {
       EditorTextField({
-        label: '文字',
+        label: t('pane_text_label'),
         value: this.value.textContent,
         placeholder: t('pane_text_placeholder'),
         onCommit: (text: string) => {
@@ -261,7 +261,7 @@ struct TextSettings {
         }
       })
       EditorTextField({
-        label: '字号',
+        label: t('pane_font_size'),
         value: String(this.value.fontSize),
         type: 1,
         onCommit: (text: string) => {
@@ -274,7 +274,7 @@ struct TextSettings {
       })
       EditorToggleRow({
         label: t('pane_custom_color'),
-        hint: '关掉则跟随面板前景色',
+        hint: t('pane_follow_panel_fg'),
         isOn: this.value.useCustomFontColor,
         onToggle: (next: boolean) => {
           this.value.useCustomFontColor = next;
@@ -283,7 +283,7 @@ struct TextSettings {
       })
       if (this.value.useCustomFontColor) {
         ColorField({
-          label: '颜色',
+          label: t('pane_color_label'),
           value: this.value.fontColor,
           onChange: (next: ColorValue) => {
             this.value.fontColor = next;
@@ -304,7 +304,7 @@ struct CountDownSettings {
   build() {
     Column() {
       EditorTextField({
-        label: '名称',
+        label: t('pane_name_label'),
         value: this.value.countDownName,
         onCommit: (text: string) => {
           this.value.countDownName = text;
@@ -312,7 +312,7 @@ struct CountDownSettings {
         }
       })
       DateField({
-        label: '目标日期',
+        label: t('pane_target_date'),
         value: this.value.overTime,
         onChange: (next: DateTimeValue) => {
           this.value.overTime = next.dateOnly();
@@ -320,7 +320,7 @@ struct CountDownSettings {
         }
       })
       DateField({
-        label: '起始日期',
+        label: t('pane_start_date'),
         value: this.value.startTime,
         onChange: (next: DateTimeValue) => {
           this.value.startTime = next.dateOnly();
@@ -328,7 +328,7 @@ struct CountDownSettings {
         }
       })
       EditorTextField({
-        label: '连接词',
+        label: t('pane_connector_label'),
         value: this.value.countDownConnector,
         placeholder: t('countdown_connector'),
         onCommit: (text: string) => {
@@ -345,7 +345,7 @@ struct CountDownSettings {
         }
       })
       EditorToggleRow({
-        label: '紧凑模式',
+        label: t('pane_compact_mode'),
         isOn: this.value.isCompactModeEnabled,
         onToggle: (next: boolean) => {
           this.value.isCompactModeEnabled = next;
@@ -353,7 +353,7 @@ struct CountDownSettings {
         }
       })
       EditorToggleRow({
-        label: '显示进度条',
+        label: t('pane_show_progress'),
         isOn: this.value.showProgress,
         onToggle: (next: boolean) => {
           this.value.showProgress = next;
@@ -362,7 +362,7 @@ struct CountDownSettings {
       })
       if (this.value.showProgress) {
         EditorToggleRow({
-          label: '进度条反向',
+          label: t('pane_progress_reverse'),
           hint: t('pane_countdown_past'),
           isOn: this.value.isProgressInverted,
           onToggle: (next: boolean) => {
@@ -372,16 +372,16 @@ struct CountDownSettings {
         })
       }
       EditorTextField({
-        label: '格式',
+        label: t('pane_format_label'),
         value: this.value.customStringFormat,
-        placeholder: '%D天',
+        placeholder: t('pane_countdown_format_example'),
         onCommit: (text: string) => {
           this.value.customStringFormat = text;
           this.onChanged();
         }
       })
       EditorTextField({
-        label: '字号',
+        label: t('pane_font_size'),
         value: String(this.value.fontSize),
         type: 1,
         onCommit: (text: string) => {
@@ -393,14 +393,14 @@ struct CountDownSettings {
         }
       })
       ColorField({
-        label: '颜色',
+        label: t('pane_color_label'),
         value: this.value.fontColor,
         onChange: (next: ColorValue) => {
           this.value.fontColor = next;
           this.onChanged();
         }
       })
-      Text(`天数为 ${this.value.daysLeft}（由起止日期算出，不用手填）`)
+      Text(tf('pane_countdown_days_note', `${this.value.daysLeft}`))
         .fontSize(11)
         .fontColor($r('app.color.ch_text_hint'))
         .width('100%')
@@ -443,7 +443,7 @@ struct WeatherSettings {
         }
       })
       EditorToggleRow({
-        label: '显示主要天气信息',
+        label: t('pane_show_main_weather'),
         isOn: this.value.showMainWeatherInfo,
         onToggle: (next: boolean) => {
           this.value.showMainWeatherInfo = next;
@@ -468,7 +468,7 @@ struct ScheduleSettings {
   build() {
     Column() {
       EditorToggleRow({
-        label: '时刻显示额外信息',
+        label: t('pane_extra_at_moment'),
         hint: t('pane_schedule_notes'),
         isOn: this.value.showExtraInfoOnTimePoint,
         onToggle: (next: boolean) => {
@@ -478,7 +478,7 @@ struct ScheduleSettings {
       })
       if (this.value.showExtraInfoOnTimePoint) {
         EditorTextField({
-          label: '倒计时秒数',
+          label: t('pane_countdown_seconds'),
           value: String(this.value.countdownSeconds),
           type: 1,
           onCommit: (text: string) => {
@@ -491,7 +491,7 @@ struct ScheduleSettings {
         })
       }
       EditorToggleRow({
-        label: '只显示当前这节课',
+        label: t('pane_current_lesson_only'),
         isOn: this.value.showCurrentLessonOnlyOnClass,
         onToggle: (next: boolean) => {
           this.value.showCurrentLessonOnlyOnClass = next;
@@ -516,7 +516,7 @@ struct ScheduleSettings {
         }
       })
       EditorToggleRow({
-        label: '空课表时显示占位文字',
+        label: t('pane_placeholder_when_empty'),
         isOn: this.value.showPlaceholderOnEmptyClassPlan,
         onToggle: (next: boolean) => {
           this.value.showPlaceholderOnEmptyClassPlan = next;
@@ -533,7 +533,7 @@ struct ScheduleSettings {
           }
         })
         EditorTextField({
-          label: '上完的文案',
+          label: t('pane_finished_text'),
           value: this.value.placeholderTextAllClassEnded,
           onCommit: (text: string) => {
             this.value.placeholderTextAllClassEnded = text;
@@ -542,7 +542,7 @@ struct ScheduleSettings {
         })
       }
       EditorToggleRow({
-        label: '同时显示明天的课',
+        label: t('pane_show_tomorrow'),
         isOn: this.value.showTomorrowSchedules,
         onToggle: (next: boolean) => {
           this.value.showTomorrowSchedules = next;
@@ -558,8 +558,8 @@ struct ScheduleSettings {
         }
       })
       EditorTextField({
-        label: '行距倍数',
-        placeholder: '1 是正常行距',
+        label: t('pane_line_spacing'),
+        placeholder: t('pane_line_spacing_hint'),
         value: String(this.value.scheduleSpacing),
         onCommit: (text: string) => {
           const spacing: number = Number.parseFloat(text);
@@ -582,7 +582,7 @@ struct RollingSettings {
   build() {
     Column() {
       EditorTextField({
-        label: '速度',
+        label: t('pane_speed'),
         value: String(this.value.speedPixelPerSecond),
         onCommit: (text: string) => {
           const speed: number = Number.parseFloat(text);
@@ -593,7 +593,7 @@ struct RollingSettings {
         }
       })
       EditorToggleRow({
-        label: '允许暂停',
+        label: t('pane_allow_pause'),
         isOn: this.value.isPauseEnabled,
         onToggle: (next: boolean) => {
           this.value.isPauseEnabled = next;
@@ -602,7 +602,7 @@ struct RollingSettings {
       })
       if (this.value.isPauseEnabled) {
         EditorTextField({
-          label: '暂停时长',
+          label: t('pane_pause_duration'),
           value: String(this.value.pauseSeconds),
           onCommit: (text: string) => {
             const seconds: number = Number.parseFloat(text);
@@ -631,7 +631,7 @@ struct SlideSettings {
   build() {
     Column() {
       EditorTextField({
-        label: '停留秒数',
+        label: t('pane_dwell_seconds'),
         value: String(this.value.slideSeconds),
         onCommit: (text: string) => {
           const seconds: number = Number.parseFloat(text);
@@ -642,7 +642,7 @@ struct SlideSettings {
         }
       })
       EditorToggleRow({
-        label: '带动画切换',
+        label: t('pane_animated_switch'),
         isOn: this.value.isAnimationEnabled,
         onToggle: (next: boolean) => {
           this.value.isAnimationEnabled = next;
@@ -745,7 +745,7 @@ export struct ComponentSettingsPane {
       NoSettings({ hint: t('pane_separator_no_settings') })
     } else {
       NoSettings({
-        hint: `组件 id ${this.componentGuid} 没有被识别，设置原样保留。`
+        hint: tf('pane_unknown_component_hint', this.componentGuid)
       })
     }
   }
@@ -767,7 +767,7 @@ export struct ComponentSettingsPane {
             .fontColor($r('app.color.ch_text_primary'))
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
-          Text('第 ' + (this.location.lineIndex + 1) + ' 行')
+          Text(tf('pane_line_row', `${this.location.lineIndex + 1}`))
             .fontSize(11)
             .fontColor($r('app.color.ch_text_hint'))
         }
@@ -781,7 +781,7 @@ export struct ComponentSettingsPane {
 
       Scroll() {
         Column() {
-          EditorCard({ title: '组件' })
+          EditorCard({ title: t('pane_component_title') })
           EditorTextField({
             label: t('pane_custom_name'),
             value: this.nameCache,

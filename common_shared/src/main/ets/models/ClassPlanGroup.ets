@@ -8,9 +8,10 @@
 import { Guid } from '../json/Guid';
 import { JsonBoolean, JsonObject, JsonString } from '../json/JsonNode';
 import { ModelCodec } from './ModelCodec';
+import { t } from '../i18n/I18n';
 
 export class ClassPlanGroup {
-  name: string = '新课表群';
+  name: string = t('sh_default_group');
   isGlobal: boolean = false;
   isActive: boolean = false;
 
@@ -44,7 +45,7 @@ export class ClassPlanGroup {
 
   static fromJson(node: JsonObject): ClassPlanGroup {
     const out: ClassPlanGroup = new ClassPlanGroup();
-    out.name = ModelCodec.string(node, 'Name', '新课表群');
+    out.name = ModelCodec.string(node, 'Name', t('sh_default_group'));
     out.isGlobal = ModelCodec.bool(node, 'IsGlobal', false);
     out.isActive = ModelCodec.bool(node, 'IsActive', false);
     return out;

@@ -191,7 +191,7 @@ async function runOnce(context: common.UIAbilityContext, repository: ProfileRepo
     // 但「档案临时读不出来」（比如刚同步下来还没落盘）与「档案真的空了」
     // 在这里分不出来，前者不该导致用户丢掉今天的提醒。
     result.status = SYNC_FAILED;
-    result.message = '课表读不出来，本次未改动提醒';
+    result.message = t('rs_profile_unreadable');
     return result;
   }
 
@@ -454,7 +454,7 @@ async function publishOne(context: common.UIAbilityContext, item: ReminderPlanIt
     const code: number = codeOf(err);
     if (code === ERR_NOTIFICATION_OFF) {
       result.status = SYNC_NOTIFICATIONS_OFF;
-      result.message = '通知权限在同步过程中被关闭';
+      result.message = t('rs_notify_revoked');
     } else if (code === ERR_TOO_MANY) {
       // 走到这里说明真实额度比 QUOTA 小（有可能系统里有本应用之外的提醒，
       // 或者设备给了更小的额度）。如实报出来，让界面上出现「额度不够」这句

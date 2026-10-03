@@ -55,7 +55,7 @@ import {
   TimeState,
   TimeStateRuleSettings
 } from 'common_shared';
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import {
   ComponentLocation,
   RuleChoiceRow,
@@ -104,10 +104,10 @@ function timeStateChoice(value: TimeState, label: string): TimeStateChoice {
  * 删了这个值就变成「不认识的枚举」，只能原样透传。
  */
 const TIME_STATE_CHOICES: TimeStateChoice[] = [
-  timeStateChoice(TimeState.None, '无课程'),
-  timeStateChoice(TimeState.OnClass, '上课中'),
-  timeStateChoice(TimeState.PrepareOnClass, '准备上课（不会命中）'),
-  timeStateChoice(TimeState.Breaking, '课间休息'),
+  timeStateChoice(TimeState.None, t('ruleset_state_none')),
+  timeStateChoice(TimeState.OnClass, t('ruleset_state_on_class')),
+  timeStateChoice(TimeState.PrepareOnClass, t('ruleset_state_prepare')),
+  timeStateChoice(TimeState.Breaking, t('ruleset_state_breaking')),
   timeStateChoice(TimeState.AfterSchool, t('ruleset_after_school'))
 ];
 
@@ -118,7 +118,7 @@ function timeStateLabel(state: number): string {
       return choice.label;
     }
   }
-  return `未知状态（${state}）`;
+  return tf('ruleset_state_unknown', `${state}`);
 }
 
 /**
@@ -129,28 +129,28 @@ function timeStateLabel(state: number): string {
  */
 function reasonText(reason: string): string {
   if (reason === RuleReason.NotChosen) {
-    return '还没挑规则';
+    return t('ruleset_not_chosen');
   }
   if (reason === RuleReason.UnknownRule) {
-    return '当前平台不认识这条规则，判为不成立';
+    return t('ruleset_unknown_rule');
   }
   if (reason === RuleReason.NotImplemented) {
     return t('ruleset_no_data');
   }
   if (reason === RuleReason.HandlerThrew) {
-    return '判定时出错，按不成立处理';
+    return t('ruleset_handler_threw');
   }
   if (reason === RuleReason.Matched) {
-    return '成立';
+    return t('ruleset_true');
   }
   if (reason === RuleReason.NotMatched) {
-    return '不成立';
+    return t('ruleset_false');
   }
   if (reason === RuleReason.GroupEmpty) {
     return t('ruleset_group_empty');
   }
   if (reason === RuleReason.NoRuleset) {
-    return '还没配规则';
+    return t('ruleset_no_ruleset');
   }
   if (reason === RuleReason.GroupDisabled) {
     return t('ruleset_group_disabled');
@@ -176,17 +176,17 @@ function settingsSummary(row: RuleEditRow): string {
   const settings: Object = row.settings;
   if (settings instanceof TimeStateRuleSettings) {
     const pick: TimeStateRuleSettings = settings;
-    return `时间状态：${timeStateLabel(pick.state)}`;
+    return tf('ruleset_summary_time_state', timeStateLabel(pick.state));
   }
   if (settings instanceof CurrentSubjectRuleSettings) {
     const pick: CurrentSubjectRuleSettings = settings;
     const text: string = pick.subjectId.toString();
-    return text.length > 0 ? `科目：${text}` : '科目：没选';
+    return text.length > 0 ? tf('ruleset_summary_subject', text) : t('ruleset_summary_subject_none');
   }
   if (settings instanceof StringMatchingSettings) {
     const pick: StringMatchingSettings = settings;
-    const text: string = pick.text.length > 0 ? pick.text : '（空）';
-    return `文本：${text}${pick.useRegex ? '（按正则）' : ''}`;
+    const text: string = pick.text.length > 0 ? pick.text : t('ruleset_summary_empty');
+    return tf('ruleset_summary_text', text) + (pick.useRegex ? t('ruleset_summary_regex') : '');
   }
   if (settings instanceof RainTimeRuleSettings) {
     const pick: RainTimeRuleSettings = settings;
@@ -194,11 +194,11 @@ function settingsSummary(row: RuleEditRow): string {
   }
   if (settings instanceof SunRiseSetRuleSettings) {
     const pick: SunRiseSetRuleSettings = settings;
-    return `${pick.isSunset ? '日落后' : '日出前'} ${pick.timeMinutes} 分钟`;
+    return tf('ruleset_summary_sun', pick.isSunset ? t('ruleset_after_sunset') : t('ruleset_before_sunrise'), `${pick.timeMinutes}`);
   }
   if (settings instanceof CurrentWeatherRuleSettings) {
     const pick: CurrentWeatherRuleSettings = settings;
-    return `天气类型 ${pick.weatherId}${pick.isFuzzyMatch ? '（模糊）' : ''}`;
+    return tf('ruleset_summary_weather', `${pick.weatherId}`) + (pick.isFuzzyMatch ? t('ruleset_fuzzy') : '');
   }
   return '';
 }
@@ -260,7 +260,7 @@ export struct RulesetEditorView {
     Row() {
       this.stateDot(this.model.state)
       Column() {
-        Text(this.model.satisfied ? '现在会把它藏起来' : '现在不会藏')
+        Text(this.model.satisfied ? t('ruleset_will_hide') : t('ruleset_wont_hide'))
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
           .fontColor(this.model.satisfied
@@ -272,7 +272,7 @@ export struct RulesetEditorView {
       .alignItems(HorizontalAlign.Start)
       .layoutWeight(1)
 
-      EditorChip({ text: '重新判定', onTap: () => { this.reload(); } })
+      EditorChip({ text: t('ruleset_reevaluate'), onTap: () => { this.reload(); } })
     }
     .width('100%')
     .alignItems(VerticalAlign.Center)
@@ -291,7 +291,7 @@ export struct RulesetEditorView {
     if (this.model.isEmpty) {
       return t('ruleset_result_hint');
     }
-    return `结论是打开这个页面的那一刻算的，共 ${enabled} 组参与判定，课表变了要重新判定。`;
+    return tf('ruleset_result_hint_count', `${enabled}`);
   }
 
   private enabledGroupCount(): number {
@@ -308,7 +308,7 @@ export struct RulesetEditorView {
   @Builder
   private rulesetOptions() {
     Row() {
-      Text('各组怎么算')
+      Text(t('ruleset_how_groups'))
         .fontSize(13)
         .fontColor($r('app.color.ch_text_secondary'))
         .width(76)
@@ -334,7 +334,7 @@ export struct RulesetEditorView {
     .padding({ top: 4, bottom: 4 })
 
     EditorToggleRow({
-      label: '整体取反',
+      label: t('ruleset_invert_all'),
       hint: t('ruleset_reversed_hint'),
       isOn: this.model.isReversed,
       onToggle: (next: boolean) => {
@@ -350,7 +350,7 @@ export struct RulesetEditorView {
     Column() {
       Row() {
         this.stateDot(group.state)
-        Text(`第 ${group.groupIndex + 1} 组`)
+        Text(tf('ruleset_group_n', `${group.groupIndex + 1}`))
           .fontSize(13)
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.ch_text_primary'))
@@ -370,7 +370,7 @@ export struct RulesetEditorView {
           }
         })
         EditorChip({
-          text: '删组',
+          text: t('ruleset_delete_group'),
           tone: 1,
           onTap: () => {
             this.vm.removeRuleGroup(this.location, this.isLine, group.groupIndex);
@@ -383,7 +383,7 @@ export struct RulesetEditorView {
       .padding({ top: 4, bottom: 2 })
 
       Row() {
-        Text('组内怎么算')
+        Text(t('ruleset_how_rules'))
           .fontSize(13)
           .fontColor($r('app.color.ch_text_secondary'))
           .width(76)
@@ -397,7 +397,7 @@ export struct RulesetEditorView {
           }
         })
         EditorChip({
-          text: '全部成立',
+          text: t('ruleset_all_hold'),
           tone: group.mode === RulesetLogicalMode.And ? 1 : 0,
           onTap: () => {
             this.vm.setRuleGroupMode(this.location, this.isLine, group.groupIndex,
@@ -472,7 +472,7 @@ export struct RulesetEditorView {
           }
         })
         EditorChip({
-          text: '删',
+          text: t('ruleset_delete'),
           tone: 1,
           onTap: () => {
             this.vm.removeRule(this.location, this.isLine, rule.groupIndex, rule.ruleIndex);
@@ -484,7 +484,7 @@ export struct RulesetEditorView {
       .alignItems(VerticalAlign.Center)
       .padding({ top: 4, bottom: 2 })
 
-      Text('换成…')
+      Text(t('ruleset_replace_with'))
         .fontSize(12)
         .fontColor($r('app.color.ch_accent'))
         .padding({ top: 2, bottom: 2 })
@@ -523,7 +523,7 @@ export struct RulesetEditorView {
     if (choice.id.length === 0 || choice.support === RuleSupport.Implemented) {
       return choice.displayName;
     }
-    return `${choice.displayName}（当前平台不可用）`;
+    return tf('ruleset_choice_unavailable', choice.displayName);
   }
 
   /**
@@ -569,7 +569,7 @@ export struct RulesetEditorView {
   @Builder
   private timeStateFields(rule: RuleEditRow) {
     Row() {
-      Text('时间状态')
+      Text(t('ruleset_field_time_state'))
         .fontSize(13)
         .fontColor($r('app.color.ch_text_secondary'))
         .width(76)
@@ -577,7 +577,7 @@ export struct RulesetEditorView {
         .fontSize(13)
         .fontColor($r('app.color.ch_text_primary'))
         .layoutWeight(1)
-      Text('选择…')
+      Text(t('ruleset_pick'))
         .fontSize(12)
         .fontColor($r('app.color.ch_accent'))
     }
@@ -606,7 +606,7 @@ export struct RulesetEditorView {
   @Builder
   private subjectFields(rule: RuleEditRow) {
     Row() {
-      Text('科目')
+      Text(t('ruleset_field_subject'))
         .fontSize(13)
         .fontColor($r('app.color.ch_text_secondary'))
         .width(76)
@@ -615,7 +615,7 @@ export struct RulesetEditorView {
         .fontColor(this.subjectOf(rule).subjectId.isEmpty()
           ? $r('app.color.ch_text_hint') : $r('app.color.ch_text_primary'))
         .layoutWeight(1)
-      Text('选择…')
+      Text(t('ruleset_pick'))
         .fontSize(12)
         .fontColor($r('app.color.ch_accent'))
     }
@@ -628,7 +628,7 @@ export struct RulesetEditorView {
   @Builder
   private subjectMenu(rule: RuleEditRow) {
     Menu() {
-      MenuItem({ content: '（不选任何科目）' }).onChange(() => {
+      MenuItem({ content: t('ruleset_no_subject') }).onChange(() => {
         const settings: CurrentSubjectRuleSettings = this.subjectOf(rule);
         settings.subjectId = Guid.empty();
         this.vm.writeRuleSettings(this.location, this.isLine, rule.groupIndex, rule.ruleIndex,
@@ -657,7 +657,7 @@ export struct RulesetEditorView {
    */
   private subjectLabel(picked: Guid): string {
     if (picked.isEmpty()) {
-      return '没选';
+      return t('ruleset_none_picked');
     }
     const wanted: string = picked.toString();
     for (const choice of this.vm.subjectChoices()) {
@@ -672,9 +672,9 @@ export struct RulesetEditorView {
   @Builder
   private stringFields(rule: RuleEditRow) {
     EditorTextField({
-      label: '匹配文本',
+      label: t('ruleset_match_text'),
       value: this.stringOf(rule).text,
-      placeholder: '要匹配的字符串',
+      placeholder: t('ruleset_match_text_hint'),
       onCommit: (text: string) => {
         this.stringOf(rule).text = text;
         this.vm.writeRuleSettings(this.location, this.isLine, rule.groupIndex, rule.ruleIndex,
@@ -683,7 +683,7 @@ export struct RulesetEditorView {
       }
     })
     EditorToggleRow({
-      label: '按正则解释',
+      label: t('ruleset_regex_toggle'),
       hint: t('ruleset_expression_hint'),
       isOn: this.stringOf(rule).useRegex,
       onToggle: (next: boolean) => {

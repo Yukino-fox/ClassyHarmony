@@ -25,6 +25,7 @@
  * 是最后的兜底，而不是第一反应 —— 一个不发声的提醒和一个没有提醒，对用户来
  * 说是同一件事，不该由一个跨端同步过来的字符串来决定。
  */
+import { t } from '../i18n/I18n';
 
 /** 系统 TTS。桌面版对应 `classisland.speech.system`（Windows 的 System.Speech）。 */
 export const SPEECH_PROVIDER_SYSTEM: string = 'classisland.speech.system';
@@ -87,7 +88,7 @@ export interface SpeechProviderInfo {
 export const SPEECH_PROVIDERS: SpeechProviderInfo[] = [
   {
     id: SPEECH_PROVIDER_SYSTEM,
-    displayName: '系统 TTS',
+    displayName: t('speech_provider_system'),
     implemented: true,
     cacheFolder: 'SystemTTS',
     cacheExtension: ''

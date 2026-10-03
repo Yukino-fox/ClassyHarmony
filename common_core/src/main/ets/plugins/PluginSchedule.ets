@@ -32,6 +32,7 @@
  */
 
 import { JsonNode, JsonNumber, JsonObject, JsonString, JsonValue } from 'common_shared';
+import { t, tf } from '../i18n/I18n';
 import { PluginScheduleKind, TriggerExtension } from './PluginManifest';
 
 /** 判定原因。与 AutomationEngine.AutomationReason 的字面量逐字一致。 */
@@ -72,16 +73,16 @@ export function scheduleSettingsProblem(schedule: PluginSchedule): string {
     return '';
   }
   if (schedule.kind === PluginScheduleKind.Cron) {
-    return schedule.cronExpression.trim().length === 0 ? 'scheduleKind 是 cron，但没写 cronExpression。' : '';
+    return schedule.cronExpression.trim().length === 0 ? t('plugin_schedule_cron_missing') : '';
   }
   if (schedule.kind === PluginScheduleKind.DailyAt) {
     if (schedule.atSeconds < 0 || schedule.atSeconds >= SECONDS_PER_DAY) {
-      return `dailyAt 的 atSeconds 是 ${schedule.atSeconds}，要落在 0~${SECONDS_PER_DAY - 1}。`;
+      return tf('plugin_dailyat_range', `${schedule.atSeconds}`, `${SECONDS_PER_DAY - 1}`);
     }
     return '';
   }
   if (schedule.everyMinutes < 1 || schedule.everyMinutes > MAX_EVERY_MINUTES) {
-    return `everyMinutes 是 ${schedule.everyMinutes}，要落在 1~${MAX_EVERY_MINUTES}。`;
+    return tf('plugin_every_range', `${schedule.everyMinutes}`, `${MAX_EVERY_MINUTES}`);
   }
   return '';
 }
@@ -96,11 +97,11 @@ export function evaluatePluginSchedule(schedule: PluginSchedule,
   nowSecondOfDay: number): PluginScheduleVerdict {
   const out: PluginScheduleVerdict = new PluginScheduleVerdict();
   if (schedule.kind === PluginScheduleKind.None) {
-    out.detail = '这个触发器没有日程，永远不会触发。';
+    out.detail = t('plugin_trigger_no_schedule_short');
     return out;
   }
   if (schedule.kind === PluginScheduleKind.Cron) {
-    out.detail = 'cron 类别请走 judgePluginTrigger。';
+    out.detail = t('plugin_cron_judge_elsewhere');
     return out;
   }
   const problem: string = scheduleSettingsProblem(schedule);
@@ -169,15 +170,15 @@ export function scheduleOfExtension(entry: TriggerExtension): PluginSchedule {
  */
 export function scheduleText(schedule: PluginSchedule): string {
   if (schedule.kind === PluginScheduleKind.Cron) {
-    return schedule.cronExpression.trim().length === 0 ? '未设置 cron' : schedule.cronExpression;
+    return schedule.cronExpression.trim().length === 0 ? t('plugin_cron_not_set') : schedule.cronExpression;
   }
   if (schedule.kind === PluginScheduleKind.DailyAt) {
-    return `每天 ${formatSecondOfDay(schedule.atSeconds)}`;
+    return tf('plugin_schedule_daily_at', formatSecondOfDay(schedule.atSeconds));
   }
   if (schedule.kind === PluginScheduleKind.EveryMinutes) {
-    return `每 ${schedule.everyMinutes} 分钟`;
+    return tf('plugin_schedule_every_minutes', `${schedule.everyMinutes}`);
   }
-  return '不触发';
+  return t('plugin_never_fires');
 }
 
 /**

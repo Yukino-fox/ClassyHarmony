@@ -27,16 +27,7 @@
 import { Want } from '@kit.AbilityKit';
 import { common } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import {
-  LessonsEngine,
-  PublicProfileBrief,
-  PublicStateCodec,
-  PublicStateSource,
-  PublicWantActions,
-  PublicWantKeys,
-  buildPublicLessonState,
-  buildPublicProfileBrief
-} from 'common_core';
+import { LessonsEngine, PublicProfileBrief, PublicStateCodec, PublicStateSource, PublicWantActions, PublicWantKeys, buildPublicLessonState, buildPublicProfileBrief, t } from 'common_core';
 import { LessonsSnapshot } from 'common_core';
 import { DateTimeValue, Profile } from 'common_shared';
 import { ProfileRepository } from '../data/ProfileRepository';
@@ -83,7 +74,7 @@ export function buildPublicQueryResult(context: common.UIAbilityContext,
   }
 
   if (profile === undefined) {
-    return failureResult('读不到课表档案');
+    return failureResult(t('pq_no_profile'));
   }
 
   const source: PublicStateSource = new PublicStateSource();
@@ -103,7 +94,7 @@ export function buildPublicQueryResult(context: common.UIAbilityContext,
     }
   } catch (error) {
     hilog.warn(DOMAIN, TAG, 'build query result failed: %{public}s', `${error}`);
-    return failureResult('生成状态失败');
+    return failureResult(t('pq_build_failed'));
   }
 
   return successResult(json);

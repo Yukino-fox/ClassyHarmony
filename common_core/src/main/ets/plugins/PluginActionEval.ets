@@ -25,7 +25,7 @@
  * 校验是为了给作者回话，执行前这道是为了「即使校验被绕过也不越权」。
  */
 
-import { t } from '../i18n/I18n';
+import { t, tf } from '../i18n/I18n';
 import { JsonNode, JsonNumber, JsonObject, JsonString, JsonValue } from 'common_shared';
 import { ActionExtension, PluginActionKind } from './PluginManifest';
 
@@ -95,7 +95,7 @@ export function planPluginAction(settings: JsonNode | undefined,
     // 宁可什么也不做也不要越权改设置 —— 声明式扩展的整个安全模型就是「只能改
     // 明确开放的键」。
     out.kind = PluginActionKind.None;
-    out.reason = `设置键「${out.setting.key}」不在允许改的名单里，行动已被跳过。`;
+    out.reason = tf('plugin_action_key_denied', out.setting.key);
   }
   return out;
 }

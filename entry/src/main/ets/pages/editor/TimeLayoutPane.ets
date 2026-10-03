@@ -21,7 +21,7 @@
  * 删的确认文案必须写明「对应课次会一并删除」。
  */
 
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import {
   SubjectRow,
   TimeLayoutRow,
@@ -135,7 +135,7 @@ export struct TimeLayoutPane {
   build() {
     NavDestination() {
       Column() {
-        EditorHeader({ title: '时间表', stack: this.stack })
+        EditorHeader({ title: t('tl_title'), stack: this.stack })
 
         Scroll() {
           Column() {
@@ -163,7 +163,7 @@ export struct TimeLayoutPane {
               Divider().color($r('app.color.ch_outline'))
             }, (row: TimeLayoutRow) => row.guid)
 
-            EditorChip({ text: '新建时间表', onTap: () => { this.newLayout(); } })
+            EditorChip({ text: t('tl_new_layout'), onTap: () => { this.newLayout(); } })
               .margin({ top: 16 })
           }
           .width('100%')
@@ -179,7 +179,7 @@ export struct TimeLayoutPane {
   }
 
   private newLayout(): void {
-    this.expanded = this.vm.addTimeLayout('新时间表');
+    this.expanded = this.vm.addTimeLayout(t('tl_default_name'));
     this.editingRow = '';
   }
 
@@ -187,14 +187,14 @@ export struct TimeLayoutPane {
   private detail(vm: ScheduleEditorViewModel, row: TimeLayoutRow) {
     Column() {
       EditorTextField({
-        label: '名称',
+        label: t('tl_name'),
         value: row.name,
-        placeholder: '时间表名',
+        placeholder: t('tl_name_placeholder'),
         onCommit: (text: string) => { vm.renameTimeLayout(row.guid, text); }
       })
 
       Text(row.boundPlanNames.length > 0
-        ? `被这些课表使用：${row.boundPlanNames}`
+        ? tf('tl_used_by', row.boundPlanNames)
         : t('tl_no_schedule_uses'))
         .fontSize(11)
         .fontColor($r('app.color.ch_text_hint'))
@@ -203,14 +203,14 @@ export struct TimeLayoutPane {
 
       Row() {
         EditorChip({
-          text: '按时段重排',
+          text: t('tl_resync_by_period'),
           onTap: () => { vm.sortTimeLayout(row.guid); }
         })
           .margin({ right: 8 })
         EditorDeleteButton({
-          text: '删除时间表',
+          text: t('tl_delete_layout'),
           message: row.usedByPlans > 0
-            ? `有 ${row.usedByPlans} 张课表绑在这张时间表上，删除后它们会被解绑、不再参与选课。`
+            ? tf('tl_delete_in_use', `${row.usedByPlans}`)
             : t('tl_unused_safe'),
           onConfirm: () => { vm.removeTimeLayout(row.guid); }
         })
@@ -267,7 +267,7 @@ export struct TimeLayoutPane {
           })
             .margin({ right: 8 })
           EditorChip({
-            text: '改时刻',
+            text: t('tl_edit_time'),
             onTap: () => {
               this.editingRow = this.editingRow === this.rowKey(layout.guid, point.rowIndex)
                 ? '' : this.rowKey(layout.guid, point.rowIndex);
@@ -275,11 +275,11 @@ export struct TimeLayoutPane {
           })
           Blank()
           EditorDeleteButton({
-            text: '删除',
+            text: t('common_delete'),
             message: point.isClass
-              ? `第 ${point.classSlot + 1} 节课。删除会一并删掉所有用这张时间表的课表里` +
+              ? tf('tl_delete_point_class', `${point.classSlot + 1}`) +
                 t('tl_corresponding_class')
-              : '删除这个时段。',
+              : t('tl_delete_point'),
             onConfirm: () => { vm.removeTimePoint(layout.guid, point.rowIndex); }
           })
         }
@@ -318,7 +318,7 @@ export struct TimeLayoutPane {
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
       } else {
-        Text('未设')
+        Text(t('tl_unset'))
           .fontSize(12)
           .fontColor($r('app.color.ch_text_hint'))
           .layoutWeight(1)
@@ -327,13 +327,13 @@ export struct TimeLayoutPane {
       // 整行 bindMenu：点哪都一样打开科目菜单。菜单第一项就是「清除预置」，
       // 单独再给一个清除按钮的话，同一个动作有两个入口，而两者清掉的是不同
       // 东西（按钮清 DefaultClassId，菜单项清 DefaultClassId + IsHideDefault）
-      Text('选择…')
+      Text(t('common_pick'))
         .fontSize(12)
         .fontColor($r('app.color.ch_accent'))
         .margin({ right: 12 })
 
       if (point.defaultAppliedCount > 0) {
-        Text(`已刷到 ${point.defaultAppliedCount} 张表`)
+        Text(tf('tl_applied_to', `${point.defaultAppliedCount}`))
           .fontSize(11)
           .fontColor($r('app.color.ch_text_hint'))
       }
@@ -368,15 +368,15 @@ export struct TimeLayoutPane {
   private pointEditor(vm: ScheduleEditorViewModel, layout: TimeLayoutRow, point: TimePointRow) {
     Row() {
       EditorTextField({
-        label: '开始',
+        label: t('tl_start'),
         value: point.startText,
         placeholder: '08:00',
         onCommit: (text: string) => { this.commitClock(vm, layout, point, text, point.durationText); }
       })
       EditorTextField({
-        label: '时长',
+        label: t('tl_duration'),
         value: point.durationText,
-        placeholder: '45 分钟',
+        placeholder: t('tl_duration_placeholder'),
         onCommit: (text: string) => { this.commitClock(vm, layout, point, point.startText, text); }
       })
     }
@@ -387,18 +387,18 @@ export struct TimeLayoutPane {
     clockText: string, durationText: string): void {
     const start: number | undefined = parseClockText(clockText);
     if (start === undefined) {
-      UiFeedback.toast(this.getUIContext(), '开始时刻格式不对，例：08:00');
+      UiFeedback.toast(this.getUIContext(), t('tl_bad_start'));
       return;
     }
     const minutes: number | undefined = parseDurationText(durationText);
     if (minutes === undefined) {
-      UiFeedback.toast(this.getUIContext(), '时长格式不对，例：45 分钟');
+      UiFeedback.toast(this.getUIContext(), t('tl_bad_duration'));
       return;
     }
     const clash: number = this.conflictOf(layout, point, start, minutes);
     if (clash >= 0) {
       UiFeedback.toast(this.getUIContext(),
-        `与 ${layout.rows[clash].classSlotText} 的时间重叠`);
+        tf('tl_time_clash', layout.rows[clash].classSlotText));
       return;
     }
     vm.updateTimePoint(layout.guid, point.rowIndex, point.timeType, start, minutes,

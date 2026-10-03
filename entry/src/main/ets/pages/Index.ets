@@ -120,7 +120,7 @@ struct Index {
   private openEditor(): void {
     const uiContext: UIContext = this.getUIContext();
     uiContext.getRouter().pushUrl({ url: 'pages/Editor' }).catch(() => {
-      UiFeedback.toast(uiContext, '进不去编辑页');
+      UiFeedback.toast(uiContext, t('ix_open_editor_failed'));
     });
   }
 
@@ -134,7 +134,7 @@ struct Index {
   private openPanel(): void {
     const uiContext: UIContext = this.getUIContext();
     uiContext.getRouter().pushUrl({ url: 'pages/Panel' }).catch(() => {
-      UiFeedback.toast(uiContext, '进不去信息面板');
+      UiFeedback.toast(uiContext, t('ix_open_panel_failed'));
     });
   }
 
@@ -147,7 +147,7 @@ struct Index {
   private openSettings(): void {
     const uiContext: UIContext = this.getUIContext();
     uiContext.getRouter().pushUrl({ url: 'pages/Settings' }).catch(() => {
-      UiFeedback.toast(uiContext, '进不去设置页');
+      UiFeedback.toast(uiContext, t('ix_open_settings_failed'));
     });
   }
 
@@ -160,13 +160,13 @@ struct Index {
   @Builder
   private topBar() {
     Row() {
-      Text('课表')
+      Text(t('ix_tab_schedule'))
         .fontSize(17)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('app.color.ch_text_primary'))
         .layoutWeight(1)
       if (!this.isSingleColumn()) {
-        Text('面板')
+        Text(t('ix_tab_panel'))
           .fontSize(14)
           .fontColor($r('app.color.ch_accent'))
           .padding({ right: 16, top: 4, bottom: 4 })
@@ -174,14 +174,14 @@ struct Index {
             this.openPanel();
           })
       }
-      Text('设置')
+      Text(t('ix_tab_settings'))
         .fontSize(14)
         .fontColor($r('app.color.ch_accent'))
         .padding({ right: 16, top: 4, bottom: 4 })
         .onClick(() => {
           this.openSettings();
         })
-      Text('编辑')
+      Text(t('ix_tab_edit'))
         .fontSize(14)
         .fontColor($r('app.color.ch_accent'))
         .padding({ left: 16, top: 4, bottom: 4 })
@@ -226,7 +226,7 @@ struct Index {
         .fontSize(18)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('app.color.ch_text_primary'))
-      Text('导入课表文件后会显示在这里')
+      Text(t('ix_import_hint'))
         .fontSize(13)
         .fontColor($r('app.color.ch_text_hint'))
         .margin({ top: 6 })
@@ -276,7 +276,7 @@ struct Index {
   private weekGridPane(vm: ClassTableViewModel) {
     Column() {
       Row() {
-        Text('本周课表')
+        Text(t('ix_this_week'))
           .fontSize(15)
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.ch_text_primary'))
@@ -313,11 +313,11 @@ struct Index {
 
       if (this.vm === undefined) {
         // aboutToAppear 早于首次 build，所以这个分支只在极端异常路径上出现。
-        this.loadingView('正在准备…', false)
+        this.loadingView(t('ix_preparing'), false)
       } else if (!this.vm.isReady) {
         // 档案读不出来时没有网格可言，横幅与网格都无从谈起。
         this.loadingView(
-          this.vm.errorText.length > 0 ? this.vm.errorText : '正在读取课表…',
+          this.vm.errorText.length > 0 ? this.vm.errorText : t('ix_loading'),
           this.vm.errorText.length > 0)
       } else if (this.vm.grid.isEmpty()) {
         this.noProfileView()

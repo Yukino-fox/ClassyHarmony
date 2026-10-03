@@ -515,6 +515,746 @@
     {
       "name": "common_core_desc",
       "value": "ClassyHarmony core engine layer"
+    },
+    {
+      "name": "list_sep",
+      "value": ", "
+    },
+    {
+      "name": "plugin_issue_warn_only",
+      "value": "{0} warnings"
+    },
+    {
+      "name": "plugin_issue_error_only",
+      "value": "{0} errors, cannot install"
+    },
+    {
+      "name": "plugin_issue_error_warn",
+      "value": "{0} errors and {1} warnings, cannot install"
+    },
+    {
+      "name": "plugin_manifest_too_big",
+      "value": "The manifest is {0} bytes long, over the {1} byte limit."
+    },
+    {
+      "name": "plugin_manifest_id_missing",
+      "value": "The manifest has no id."
+    },
+    {
+      "name": "plugin_manifest_id_invalid",
+      "value": "id \"{0}\" is invalid. Use only lowercase letters, digits, dots and hyphens, 1~64 characters long, starting with a letter or digit."
+    },
+    {
+      "name": "plugin_manifest_name_missing",
+      "value": "The manifest has no name."
+    },
+    {
+      "name": "plugin_manifest_version_missing",
+      "value": "The manifest has no version."
+    },
+    {
+      "name": "plugin_manifest_version_invalid",
+      "value": "version \"{0}\" is not a recognized version number. Write it as 1.0 or 1.0.0."
+    },
+    {
+      "name": "plugin_entry_id_missing",
+      "value": "The entry has no id."
+    },
+    {
+      "name": "plugin_entry_id_too_long",
+      "value": "The entry id is {0} characters long, over the {1} character limit."
+    },
+    {
+      "name": "plugin_kind_too_many",
+      "value": "This kind has {0} entries, over the limit of {1}."
+    },
+    {
+      "name": "plugin_entry_name_missing",
+      "value": "The entry has no name."
+    },
+    {
+      "name": "plugin_component_id_not_guid",
+      "value": "Component id \"{0}\" must be a GUID (32 hex digits + 4 hyphens)."
+    },
+    {
+      "name": "plugin_component_id_dup",
+      "value": "Component id \"{0}\" appears twice in this manifest."
+    },
+    {
+      "name": "plugin_component_id_builtin",
+      "value": "Component id \"{0}\" belongs to a built-in component; pick another."
+    },
+    {
+      "name": "plugin_payload_kind_unknown",
+      "value": "payloadKind \"{0}\" is not recognized. Only these can be borrowed: {1}."
+    },
+    {
+      "name": "plugin_trigger_id_dup",
+      "value": "Trigger id \"{0}\" appears twice in this manifest."
+    },
+    {
+      "name": "plugin_trigger_id_builtin",
+      "value": "Trigger id \"{0}\" belongs to a built-in trigger; pick another."
+    },
+    {
+      "name": "plugin_schedule_cron_missing",
+      "value": "scheduleKind is cron but cronExpression is empty."
+    },
+    {
+      "name": "plugin_cron_unparsed",
+      "value": "Cannot parse cron expression \"{0}\": {1}"
+    },
+    {
+      "name": "plugin_dailyat_range",
+      "value": "dailyAt atSeconds is {0}; it must be within 0~{1}."
+    },
+    {
+      "name": "plugin_every_range",
+      "value": "everyMinutes is {0}; it must be within 1~{1}."
+    },
+    {
+      "name": "plugin_action_id_dup",
+      "value": "Action id \"{0}\" appears twice in this manifest."
+    },
+    {
+      "name": "plugin_action_id_builtin",
+      "value": "Action id \"{0}\" belongs to a built-in action; pick another."
+    },
+    {
+      "name": "plugin_notify_need_title_content",
+      "value": "A notify action needs both title and content."
+    },
+    {
+      "name": "plugin_setting_key_missing",
+      "value": "A settings action has no settingKey."
+    },
+    {
+      "name": "plugin_setting_key_not_writable",
+      "value": "Settings key \"{0}\" is not on the writable list."
+    },
+    {
+      "name": "plugin_provider_id_dup",
+      "value": "Provider id \"{0}\" appears twice in this manifest."
+    },
+    {
+      "name": "plugin_provider_trigger_unknown",
+      "value": "triggerId \"{0}\" is not a registered trigger."
+    },
+    {
+      "name": "plugin_theme_id_dup",
+      "value": "Theme id \"{0}\" appears twice in this manifest."
+    },
+    {
+      "name": "plugin_theme_mode_unknown",
+      "value": "mode \"{0}\" is not recognized. Available: {1}."
+    },
+    {
+      "name": "plugin_theme_color_invalid",
+      "value": "Bad color format: {0}. Use #RRGGBB or #AARRGGBB."
+    },
+    {
+      "name": "plugin_trigger_no_schedule_short",
+      "value": "This trigger has no schedule and will never fire."
+    },
+    {
+      "name": "plugin_cron_judge_elsewhere",
+      "value": "cron kind is handled by judgePluginTrigger."
+    },
+    {
+      "name": "plugin_cron_not_set",
+      "value": "No cron set"
+    },
+    {
+      "name": "plugin_schedule_daily_at",
+      "value": "Every day at {0}"
+    },
+    {
+      "name": "plugin_schedule_every_minutes",
+      "value": "Every {0} minutes"
+    },
+    {
+      "name": "plugin_never_fires",
+      "value": "Never fires"
+    },
+    {
+      "name": "fmt_minutes",
+      "value": "{0} min"
+    },
+    {
+      "name": "fmt_hours",
+      "value": "{0} h"
+    },
+    {
+      "name": "fmt_hours_min",
+      "value": "{0} h {1} min"
+    },
+    {
+      "name": "fmt_rot_weekly",
+      "value": "Weekly"
+    },
+    {
+      "name": "fmt_rot_odd",
+      "value": "Odd weeks"
+    },
+    {
+      "name": "fmt_rot_even",
+      "value": "Even weeks"
+    },
+    {
+      "name": "fmt_rot_week_n",
+      "value": "Week {0}/{1}"
+    },
+    {
+      "name": "fmt_type_class",
+      "value": "Class"
+    },
+    {
+      "name": "fmt_type_break",
+      "value": "Break"
+    },
+    {
+      "name": "fmt_type_separator",
+      "value": "Separator"
+    },
+    {
+      "name": "fmt_type_action",
+      "value": "Action"
+    },
+    {
+      "name": "fmt_type_unknown",
+      "value": "Unknown"
+    },
+    {
+      "name": "fmt_wd_0",
+      "value": "Sunday"
+    },
+    {
+      "name": "fmt_wd_1",
+      "value": "Monday"
+    },
+    {
+      "name": "fmt_wd_2",
+      "value": "Tuesday"
+    },
+    {
+      "name": "fmt_wd_3",
+      "value": "Wednesday"
+    },
+    {
+      "name": "fmt_wd_4",
+      "value": "Thursday"
+    },
+    {
+      "name": "fmt_wd_5",
+      "value": "Friday"
+    },
+    {
+      "name": "fmt_wd_6",
+      "value": "Saturday"
+    },
+    {
+      "name": "fmt_wd_short_0",
+      "value": "Su"
+    },
+    {
+      "name": "fmt_wd_short_1",
+      "value": "Mo"
+    },
+    {
+      "name": "fmt_wd_short_2",
+      "value": "Tu"
+    },
+    {
+      "name": "fmt_wd_short_3",
+      "value": "We"
+    },
+    {
+      "name": "fmt_wd_short_4",
+      "value": "Th"
+    },
+    {
+      "name": "fmt_wd_short_5",
+      "value": "Fr"
+    },
+    {
+      "name": "fmt_wd_short_6",
+      "value": "Sa"
+    },
+    {
+      "name": "wg_no_subject",
+      "value": "(none)"
+    },
+    {
+      "name": "wg_today",
+      "value": "Today"
+    },
+    {
+      "name": "wg_no_class_this_week",
+      "value": "No classes this week"
+    },
+    {
+      "name": "wg_no_schedule_yet",
+      "value": "No schedules yet"
+    },
+    {
+      "name": "wg_no_class",
+      "value": "No class"
+    },
+    {
+      "name": "wg_in_class",
+      "value": "Class in progress"
+    },
+    {
+      "name": "wg_class_at",
+      "value": "Class at {0}"
+    },
+    {
+      "name": "wg_slot_n",
+      "value": "Period {0}"
+    },
+    {
+      "name": "wg_tag_temp",
+      "value": "Temp"
+    },
+    {
+      "name": "wg_tag_ordered",
+      "value": "Booked"
+    },
+    {
+      "name": "wg_tomorrow",
+      "value": "Tomorrow"
+    },
+    {
+      "name": "wg_days_later",
+      "value": "in {0} days"
+    },
+    {
+      "name": "wg_date_weekday",
+      "value": "{2}, {0}/{1}"
+    },
+    {
+      "name": "wg_loading",
+      "value": "Loading…"
+    },
+    {
+      "name": "rule_window_class_name",
+      "value": "Foreground window class name"
+    },
+    {
+      "name": "rule_window_text",
+      "value": "Foreground window title"
+    },
+    {
+      "name": "rule_window_status",
+      "value": "Foreground window status is"
+    },
+    {
+      "name": "rule_window_process",
+      "value": "Foreground window process"
+    },
+    {
+      "name": "rule_current_subject",
+      "value": "Current subject is"
+    },
+    {
+      "name": "rule_next_subject",
+      "value": "Next subject is"
+    },
+    {
+      "name": "rule_previous_subject",
+      "value": "Previous subject is"
+    },
+    {
+      "name": "rule_time_state",
+      "value": "Current time state is"
+    },
+    {
+      "name": "rule_weather_now",
+      "value": "Current weather is"
+    },
+    {
+      "name": "rule_weather_tomorrow",
+      "value": "Tomorrow's weather is"
+    },
+    {
+      "name": "rule_weather_alert",
+      "value": "A weather alert exists"
+    },
+    {
+      "name": "rule_rain_time",
+      "value": "Minutes until rain starts/ends"
+    },
+    {
+      "name": "rule_sun_rise_set",
+      "value": "Sunrise or sunset"
+    },
+    {
+      "name": "re_no_rule_chosen",
+      "value": "(no rule chosen)"
+    },
+    {
+      "name": "re_pick_rule_hint",
+      "value": "Pick a rule to start"
+    },
+    {
+      "name": "re_unknown_rule_hint",
+      "value": "This platform does not know this rule; it evaluates to false and its settings are kept as-is."
+    },
+    {
+      "name": "re_hint_unsupported",
+      "value": "This platform has no data for this rule, so it always evaluates to false. Settings are kept as-is."
+    },
+    {
+      "name": "re_hint_string",
+      "value": "The text to match; optionally interpreted as a regex."
+    },
+    {
+      "name": "re_hint_time_state",
+      "value": "Pick the time state to match."
+    },
+    {
+      "name": "re_hint_subject",
+      "value": "Pick a subject."
+    },
+    {
+      "name": "re_hint_weather",
+      "value": "Pick a weather type; fuzzy matching is optional."
+    },
+    {
+      "name": "re_hint_rain_time",
+      "value": "How many minutes until rain starts or ends."
+    },
+    {
+      "name": "re_hint_sun_rise_set",
+      "value": "Minutes before sunrise or after sunset."
+    },
+    {
+      "name": "re_hint_window_status",
+      "value": "The foreground window status."
+    },
+    {
+      "name": "re_hint_no_settings",
+      "value": "This rule has no settings."
+    },
+    {
+      "name": "rp_class",
+      "value": "Class"
+    },
+    {
+      "name": "rp_title_time_up",
+      "value": "Time for class"
+    },
+    {
+      "name": "rp_content_check_schedule",
+      "value": "{0} there is a class; check your schedule"
+    },
+    {
+      "name": "rp_title_subject_starts",
+      "value": "{0} class"
+    },
+    {
+      "name": "rp_now_starts",
+      "value": "Starting now"
+    },
+    {
+      "name": "rp_title_in_minutes",
+      "value": "{1} class in {0} min"
+    },
+    {
+      "name": "rp_content_starts_at",
+      "value": "Class at {0}"
+    },
+    {
+      "name": "rp_expired_in_class",
+      "value": "{0} is in progress"
+    },
+    {
+      "name": "rp_in_class",
+      "value": "Class in progress"
+    },
+    {
+      "name": "rp_snoozed",
+      "value": "Snoozed; the schedule is unchanged"
+    },
+    {
+      "name": "rp_line_no_teacher",
+      "value": "{0}: {1}"
+    },
+    {
+      "name": "rp_line_teacher",
+      "value": "{0}: {1} with teacher {2}"
+    },
+    {
+      "name": "action_run_unsupported",
+      "value": "HarmonyOS apps cannot launch arbitrary processes or run a command line — there is no counterpart for this action here."
+    },
+    {
+      "name": "action_restart_unsupported",
+      "value": "Restarting needs startAbility + terminateSelf, but the system gives no callback when the process is killed and a fresh process cannot recover the old state. The desktop build relies on Environment.Exit + Process.Start, which HarmonyOS does not have."
+    },
+    {
+      "name": "automation_cond_gone",
+      "value": "Condition no longer holds"
+    },
+    {
+      "name": "automation_revert",
+      "value": "{0} requested revert"
+    },
+    {
+      "name": "automation_fired",
+      "value": "{0} fired"
+    },
+    {
+      "name": "trigger_not_chosen",
+      "value": "(no trigger chosen yet)"
+    },
+    {
+      "name": "cron_invalid",
+      "value": "Cannot parse cron expression: {0}"
+    },
+    {
+      "name": "cron_field_count",
+      "value": "Expected 5 or 6 fields (minute hour day month weekday, or second minute hour day month weekday), got {0}"
+    },
+    {
+      "name": "cron_field_bad",
+      "value": "Field {0} (\"{1}\") cannot be parsed"
+    },
+    {
+      "name": "wf_default_action_set",
+      "value": "New Action Set"
+    },
+    {
+      "name": "keepalive_reason_sync",
+      "value": "Cross-device sync needs the connection kept alive"
+    },
+    {
+      "name": "keepalive_reason_automation",
+      "value": "Automation must keep running in the background"
+    },
+    {
+      "name": "keepalive_err_param",
+      "value": "Invalid request parameters"
+    },
+    {
+      "name": "keepalive_err_service",
+      "value": "System service call failed"
+    },
+    {
+      "name": "keepalive_err_validation",
+      "value": "Long-running task check failed (unsupported on this device or for this type)"
+    },
+    {
+      "name": "keepalive_err_notification",
+      "value": "Notification check failed"
+    },
+    {
+      "name": "keepalive_err_persist",
+      "value": "Persisting to disk failed"
+    },
+    {
+      "name": "keepalive_err_unknown",
+      "value": "Unknown error ({0})"
+    },
+    {
+      "name": "component_unknown",
+      "value": "Unrecognized component"
+    },
+    {
+      "name": "countdown_days_format",
+      "value": "%Dd"
+    },
+    {
+      "name": "aqi_excellent",
+      "value": "Excellent"
+    },
+    {
+      "name": "aqi_good",
+      "value": "Good"
+    },
+    {
+      "name": "aqi_light",
+      "value": "Lightly polluted"
+    },
+    {
+      "name": "aqi_moderate",
+      "value": "Moderately polluted"
+    },
+    {
+      "name": "aqi_heavy",
+      "value": "Heavily polluted"
+    },
+    {
+      "name": "aqi_severe",
+      "value": "Severely polluted"
+    },
+    {
+      "name": "editor_type_override",
+      "value": "Override"
+    },
+    {
+      "name": "editor_type_inherit",
+      "value": "Inherit"
+    },
+    {
+      "name": "editor_default_group",
+      "value": "Default group"
+    },
+    {
+      "name": "editor_global_group",
+      "value": "Global group"
+    },
+    {
+      "name": "sched_default_layout",
+      "value": "New Time Layout"
+    },
+    {
+      "name": "sched_default_plan",
+      "value": "New Schedule"
+    },
+    {
+      "name": "sched_default_group",
+      "value": "New Schedule Group"
+    },
+    {
+      "name": "sched_copy_name",
+      "value": "Copy of {0}"
+    },
+    {
+      "name": "wg_countdown_prefix",
+      "value": "Until"
+    },
+    {
+      "name": "panel_unknown_component",
+      "value": "Component id {0} was not recognized; its settings are kept in the file as-is."
+    },
+    {
+      "name": "panel_weather_missing",
+      "value": "Weather data has not arrived yet"
+    },
+    {
+      "name": "panel_seconds_to_class",
+      "value": "Class starts in {0}s"
+    },
+    {
+      "name": "ext_summary_active",
+      "value": "{0} extensions active"
+    },
+    {
+      "name": "ext_summary_broken",
+      "value": "{0} extensions active, {1} failed to load"
+    },
+    {
+      "name": "speech_provider_system",
+      "value": "System TTS"
+    },
+    {
+      "name": "clock_status_realign",
+      "value": "System time changed; re-syncing now"
+    },
+    {
+      "name": "clock_status_disabled",
+      "value": "Precise time is off; using system time"
+    },
+    {
+      "name": "clock_status_unsynced",
+      "value": "Not synced yet"
+    },
+    {
+      "name": "clock_status_slow",
+      "value": "Synced; this device was {0}s behind"
+    },
+    {
+      "name": "clock_status_fast",
+      "value": "Synced; this device was {0}s ahead"
+    },
+    {
+      "name": "clock_frozen_reason",
+      "value": "System time was modified"
+    },
+    {
+      "name": "weather_humidity",
+      "value": "Humidity {0}"
+    },
+    {
+      "name": "weather_pressure",
+      "value": "Pressure {0}"
+    },
+    {
+      "name": "weather_feels_like",
+      "value": "Feels like {0}"
+    },
+    {
+      "name": "plugin_action_key_denied",
+      "value": "Setting key \"{0}\" is not on the allowed list; the action was skipped."
+    },
+    {
+      "name": "plugin_api_version_bad",
+      "value": "apiVersion \"{0}\" is not a recognizable version number. Write it as 1.0 or 1.0.0."
+    },
+    {
+      "name": "plugin_api_major_mismatch",
+      "value": "The extension targets API {0}.x while this app is {1}.x. Fields may mean different things across major versions, so it is not loaded."
+    },
+    {
+      "name": "plugin_api_below_floor",
+      "value": "The extension targets API {0}; this app requires at least {1}."
+    },
+    {
+      "name": "plugin_entries_skipped",
+      "value": "{0} entries were skipped because of conflicts or invalid data."
+    },
+    {
+      "name": "plugin_payload_kind_bad",
+      "value": "Unknown payloadKind \"{0}\"; this component entry was skipped."
+    },
+    {
+      "name": "plugin_component_id_taken",
+      "value": "Component id \"{0}\" is already taken (built-in or another extension); this entry was skipped."
+    },
+    {
+      "name": "plugin_trigger_id_taken",
+      "value": "Trigger id \"{0}\" is already taken; this entry was skipped."
+    },
+    {
+      "name": "plugin_action_id_taken",
+      "value": "Action id \"{0}\" is already taken; this entry was skipped."
+    },
+    {
+      "name": "plugin_provider_no_id",
+      "value": "The notification provider has no id; this entry was skipped."
+    },
+    {
+      "name": "plugin_theme_no_id",
+      "value": "The theme has no id; this entry was skipped."
+    },
+    {
+      "name": "plugin_desktop_import_tag",
+      "value": "Imported from a desktop plugin package"
+    },
+    {
+      "name": "plugin_desktop_import_note",
+      "value": "{0}. Desktop plugins are .NET assemblies and are not loaded here, so this extension provides no usable entries; only its metadata is kept so it can be recognized."
+    },
+    {
+      "name": "plugin_desktop_assembly",
+      "value": " (assembly {0})"
+    },
+    {
+      "name": "plugin_desktop_api_version",
+      "value": " (desktop API version {0})"
+    },
+    {
+      "name": "plugin_desktop_id_renamed",
+      "value": " (original id {0}, lowercased)"
+    },
+    {
+      "name": "plugin_desktop_unreadable",
+      "value": " ({0} fields could not be read here: {1})"
+    },
+    {
+      "name": "plugin_desktop_orig_desc",
+      "value": " Original description: {0}"
     }
   ]
 }

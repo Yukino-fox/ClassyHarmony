@@ -20,7 +20,7 @@
  * 是进程级的、由 entry 在启动时重建，widget 侧可以独立再重建一份，两者不共享）。
  */
 
-import { t } from '../i18n/I18n';
+import { t, tf } from '../i18n/I18n';
 import {
   ActionExtension,
   ComponentExtension,
@@ -325,9 +325,9 @@ export class ExtensionRegistry {
       }
     }
     if (broken === 0) {
-      return `${active} 个扩展在用`;
+      return tf('ext_summary_active', `${active}`);
     }
-    return `${active} 个扩展在用，${broken} 个没装上`;
+    return tf('ext_summary_broken', `${active}`, `${broken}`);
   }
 
   /** 把已登记的扩展重新摊平成五类条目表。 */

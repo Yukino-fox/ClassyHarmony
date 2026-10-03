@@ -308,7 +308,7 @@ function testApiCompatibility(): void {
   // 四种拒绝，理由各不相同（界面按理由给建议）
   const missing: ApiCompatibility = checkPluginApiVersion('');
   checkBool('没写 apiVersion 不认', missing.supported, false);
-  checkEqual('没写的理由给 key', missing.reason, 'plugin_api_version_missing');
+  checkEqual('没写的理由给 key', missing.reason, "清单里没写 apiVersion。声明式扩展必须写明它针对哪一版 API 写的。");
 
   const garbage: ApiCompatibility = checkPluginApiVersion('latest');
   checkBool('乱写的 apiVersion 不认', garbage.supported, false);
@@ -428,7 +428,7 @@ function testManifestCodec(): void {
 function testValidationHead(): void {
   const ok: PluginIssue[] = validateManifest(goodManifest(), defaultPluginSandbox());
   checkBool('好清单没有阻塞问题', hasBlockingIssues(ok), false);
-  checkEqual('好清单确实一个 issue 都没有', summarizeIssues(ok), 'plugin_no_issues');
+  checkEqual('好清单确实一个 issue 都没有', summarizeIssues(ok), "没有发现问题");
 
   // id
   const noId: ExtensionManifest = goodManifest();
@@ -669,7 +669,7 @@ function testHexColor(): void {
 }
 
 function testSummarize(): void {
-  checkEqual('空汇总', summarizeIssues([]), 'plugin_no_issues');
+  checkEqual('空汇总', summarizeIssues([]), "没有发现问题");
   const warnOnly: PluginIssue[] = [
     PluginIssue.create(PluginIssueCode.NothingDeclared, '', 'x', PluginIssueSeverity.Warning)
   ];
@@ -939,7 +939,7 @@ function templateContext(): PluginTemplateContext {
   const out: PluginTemplateContext = new PluginTemplateContext();
   out.now = dt('2026-09-26T07:08:09');
   out.profileName = '我的档案';
-  out.stateText = 'time_state_break';
+  out.stateText = "课间休息";
   return out;
 }
 
@@ -949,8 +949,8 @@ function testTemplate(): void {
   checkEqual('小时补零', renderPluginTemplate('{hour}', ctx), '07');
   checkEqual('分钟补零', renderPluginTemplate('{minute}', ctx), '08');
   checkEqual('日期', renderPluginTemplate('{date}', ctx), '2026-09-26');
-  checkEqual('星期（.NET 口径：周日=0）', renderPluginTemplate('{weekday}', ctx), 'time_weekday_saturday');
-  checkEqual('状态', renderPluginTemplate('{state}', ctx), 'time_state_break');
+  checkEqual('星期（.NET 口径：周日=0）', renderPluginTemplate('{weekday}', ctx), "星期六");
+  checkEqual('状态', renderPluginTemplate('{state}', ctx), "课间休息");
   checkEqual('档案名', renderPluginTemplate('{profile}', ctx), '我的档案');
 
   // 组合与字面量
@@ -1002,14 +1002,14 @@ function testTemplate(): void {
   snap.state = TimeState.Breaking;
   withSnapshot.snapshot = snap;
   checkEqual('stateText 留空时按快照取',
-    renderPluginTemplate('{state}', withSnapshot), 'time_state_break');
+    renderPluginTemplate('{state}', withSnapshot), "课间休息");
   const onClass: PluginTemplateContext = templateContext();
   onClass.stateText = '';
   const onClassSnap: LessonsSnapshot = new LessonsSnapshot();
   onClassSnap.state = TimeState.OnClass;
   onClass.snapshot = onClassSnap;
   checkEqual('快照是上课中时取上课中',
-    renderPluginTemplate('{state}', onClass), 'time_state_on_class');
+    renderPluginTemplate('{state}', onClass), "上课中");
   const override: PluginTemplateContext = templateContext();
   override.snapshot = onClassSnap;
   override.stateText = '距离下课还有一会儿';
@@ -1020,13 +1020,13 @@ function testTemplate(): void {
 
   // 时间状态中文名：五个状态 + 越界
   checkNum('五个时间状态的名字', TIME_STATE_LABELS.length, 5);
-  checkEqual('上课中', timeStateLabel(TimeState.OnClass), 'time_state_on_class');
-  checkEqual('课间休息', timeStateLabel(TimeState.Breaking), 'time_state_break');
-  checkEqual('已放学', timeStateLabel(TimeState.AfterSchool), 'time_state_after_school');
-  checkEqual('无课程', timeStateLabel(TimeState.None), 'time_state_none');
-  checkEqual('准备上课', timeStateLabel(TimeState.PrepareOnClass), 'time_state_prepare');
-  checkEqual('越界值给未知而不是空串', timeStateLabel(9), 'time_state_unknown');
-  checkEqual('负值给未知而不是空串', timeStateLabel(-1), 'time_state_unknown');
+  checkEqual('上课中', timeStateLabel(TimeState.OnClass), "上课中");
+  checkEqual('课间休息', timeStateLabel(TimeState.Breaking), "课间休息");
+  checkEqual('已放学', timeStateLabel(TimeState.AfterSchool), "已放学");
+  checkEqual('无课程', timeStateLabel(TimeState.None), "无课程");
+  checkEqual('准备上课', timeStateLabel(TimeState.PrepareOnClass), "准备上课");
+  checkEqual('越界值给未知而不是空串', timeStateLabel(9), "未知状态");
+  checkEqual('负值给未知而不是空串', timeStateLabel(-1), "未知状态");
   for (let i = 0; i < TIME_STATE_LABELS.length; i++) {
     check('每个状态都有名字', timeStateLabel(i).length > 0, timeStateLabel(i));
   }
@@ -1385,7 +1385,7 @@ function testRegistryOrder(): void {
   checkEqual('剩下的是 b', ExtensionRegistry.plugins()[0].pluginId, 'demo.b');
   checkEqual('摘要', ExtensionRegistry.summaryText(), '1 个扩展在用');
   resetRegistry();
-  checkEqual('全清后摘要', ExtensionRegistry.summaryText(), 'plugin_none_installed');
+  checkEqual('全清后摘要', ExtensionRegistry.summaryText(), "没有安装扩展");
 }
 
 /**

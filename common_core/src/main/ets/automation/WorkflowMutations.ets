@@ -39,9 +39,10 @@ import {
 } from 'common_shared';
 import { ActionCatalog, ActionSettingsKind } from './ActionCatalog';
 import { TriggerCatalog, TriggerSettingsKind } from './TriggerCatalog';
+import { t } from '../i18n/I18n';
 
 /** 行动组名的默认文案，与桌面版 ActionSet._name 的初值一致。 */
-export const DEFAULT_ACTION_SET_NAME: string = '新行动组';
+export const DEFAULT_ACTION_SET_NAME: string = t('wf_default_action_set');
 
 export class WorkflowMutations {
   /* ---- 读 ---- */

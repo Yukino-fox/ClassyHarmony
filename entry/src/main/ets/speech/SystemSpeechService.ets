@@ -205,7 +205,7 @@ export class SystemSpeechService {
         // 下一项又调 speak()，两段声音会叠在一起。
         hilog.warn(DOMAIN, TAG, 'speak watchdog fired %{public}s', requestId);
         this.stopEngine();
-        this.finish(requestId, { ok: false, detail: '朗读超时' });
+        this.finish(requestId, { ok: false, detail: t('sp_tts_timeout') });
       }, this.watchdogFor(trimmed));
 
       try {

@@ -40,7 +40,7 @@
 
 import { fileIo as fs } from '@kit.CoreFileKit';
 import { JsonBoolean, JsonObject, JsonReader, JsonValue, JsonWriter } from 'common_shared';
-import { ExtensionManifest, ExtensionManifestCodec, isValidPluginId } from 'common_core';
+import { ExtensionManifest, ExtensionManifestCodec, isValidPluginId, t, tf } from 'common_core';
 
 /** plugins 目录名。与桌面版 AppConfigPath/Plugins 的角色对应，但布局是本端自己的。 */
 const DIR_NAME: string = 'plugins';
@@ -160,7 +160,7 @@ export class PluginStore {
     const out: ManifestReadResult = new ManifestReadResult();
     const path: string = this.manifestPathOf(pluginId);
     if (!this.readable(path)) {
-      out.note = `清单文件读不到：${path}`;
+      out.note = tf('ps_manifest_missing', path);
       return out;
     }
     try {
@@ -170,19 +170,19 @@ export class PluginStore {
     } catch (primaryError) {
       const backup: string = `${path}${BACKUP_SUFFIX}`;
       if (!this.readable(backup)) {
-        out.note = `清单文件无法读取：${path}`;
+        out.note = tf('ps_manifest_unreadable', path);
         return out;
       }
       try {
         out.manifest = this.readManifestFile(backup);
-        out.note = `清单文件损坏，已回退到上一次可读的那份（${pluginId}）`;
+        out.note = tf('ps_manifest_corrupt', pluginId);
         // 备份能用就把它写回主文件，免得下次启动又撞上同一份坏数据
         if (out.manifest !== undefined) {
           this.writeAtomic(path, ExtensionManifestCodec.writeText(out.manifest, 2));
         }
         return out;
       } catch (backupError) {
-        out.note = `清单文件与备份都无法读取：${path}`;
+        out.note = tf('ps_manifest_both_fail', path);
         return out;
       }
     }

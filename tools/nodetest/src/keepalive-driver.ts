@@ -50,13 +50,13 @@ function testPlan(): void {
 
   const offDistributed: KeepAlivePlan = planKeepAlive(false, true, true);
   checkBool('关 + 有功能：仍不申请', offDistributed.request, false);
-  checkEqual('关 + 有功能：理由是已关闭', offDistributed.reason, 'keepalive_disabled');
+  checkEqual('关 + 有功能：理由是已关闭', offDistributed.reason, "已关闭后台保活");
 
   // 开着但没有值得后台跑的功能：不申请，理由要能解释「为什么什么也没发生」。
   const nothing: KeepAlivePlan = planKeepAlive(true, false, false);
   checkBool('开 + 无功能：不申请', nothing.request, false);
   checkEqual('开 + 无功能：类型为空', nothing.mode, '');
-  checkEqual('开 + 无功能：理由', nothing.reason, 'keepalive_nothing_needed');
+  checkEqual('开 + 无功能：理由', nothing.reason, "当前没有需要后台运行的功能");
 
   // 只有自动化：任务保持（2in1 可用，手机大概率被拒）。
   const automation: KeepAlivePlan = planKeepAlive(true, false, true);
@@ -84,8 +84,8 @@ function testPlan(): void {
 
 function testErrorText(): void {
   // 有确定含义的码：翻成人话，且不提错误号（用户不需要看）。
-  checkEqual('201 是权限', keepAliveErrorText(201), 'keepalive_no_permission');
-  checkEqual('202 是系统应用', keepAliveErrorText(202), 'keepalive_not_system_app');
+  checkEqual('201 是权限', keepAliveErrorText(201), "没有后台运行权限");
+  checkEqual('202 是系统应用', keepAliveErrorText(202), "非系统应用不能申请该类型");
   checkEqual('401 是参数', keepAliveErrorText(401), '申请参数不合法');
   checkEqual('9800004 是服务失败', keepAliveErrorText(9800004), '系统服务操作失败');
   // 9800005 是手机上申请「任务保持」最可能遇到的那个。

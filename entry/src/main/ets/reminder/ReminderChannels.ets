@@ -38,9 +38,10 @@
 import { notificationManager } from '@kit.NotificationKit';
 import { reminderAgentManager } from '@kit.BackgroundTasksKit';
 import { common } from '@kit.AbilityKit';
+import { t } from 'common_core';
 
 /** 渠道说明。显示在系统设置的通知管理里。 */
-const CHANNEL_DESC: string = '上课前的提醒';
+const CHANNEL_DESC: string = t('rm_channel_desc');
 
 /**
  * 注册提醒渠道。幂等，可以每次同步前都调。

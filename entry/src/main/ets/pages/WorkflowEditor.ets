@@ -30,17 +30,17 @@ export struct WorkflowEditor {
   build() {
     Column() {
       if (this.loading) {
-        Text('加载中...')
+        Text(t('wf_loading'))
           .fontSize(16)
           .margin({ top: 24 })
       } else if (this.editingIndex < 0 || this.editingIndex >= this.vm!.workflows.length) {
-        Text('无效的工作流')
+        Text(t('wf_invalid_workflow'))
           .fontSize(18)
           .margin({ top: 24 })
       } else {
         // 顶部：工作流名 + 启用开关
         Row() {
-          TextInput({ placeholder: '工作流名称', text: this.wf.actionSet.name ?? '' })
+          TextInput({ placeholder: t('wf_name_placeholder'), text: this.wf.actionSet.name ?? '' })
             .fontSize(18)
             .fontWeight(FontWeight.Bold)
             .margin({ left: 16, top: 12, bottom: 12 })
@@ -61,7 +61,7 @@ export struct WorkflowEditor {
         // 触发器区段
         Column() {
           Row() {
-            Text('触发器')
+            Text(t('wf_triggers'))
               .fontSize(18)
               .fontWeight(FontWeight.Bold)
             Blank()
@@ -89,7 +89,7 @@ export struct WorkflowEditor {
                 .maxLines(1)
                 .layoutWeight(1)
 
-              Text('删除')
+              Text(t('wf_delete'))
                 .fontSize(14)
                 .fontColor($r('app.color.ch_accent'))
                 .margin({ right: 16 })
@@ -108,7 +108,7 @@ export struct WorkflowEditor {
         // 条件区段
         Column() {
           Row() {
-            Text('条件')
+            Text(t('wf_conditions'))
               .fontSize(18)
               .fontWeight(FontWeight.Bold)
             Blank()
@@ -140,7 +140,7 @@ export struct WorkflowEditor {
         // 行动区段
         Column() {
           Row() {
-            Text('行动')
+            Text(t('wf_actions'))
               .fontSize(18)
               .fontWeight(FontWeight.Bold)
             Blank()
@@ -168,7 +168,7 @@ export struct WorkflowEditor {
                 .maxLines(1)
                 .layoutWeight(1)
 
-              Text('删除')
+              Text(t('wf_delete'))
                 .fontSize(14)
                 .fontColor($r('app.color.ch_accent'))
                 .margin({ right: 16 })
@@ -182,7 +182,7 @@ export struct WorkflowEditor {
 
           // 恢复开关
           Row() {
-            Text('可恢复')
+            Text(t('wf_revertible'))
               .fontSize(14)
             Toggle({ type: ToggleType.Switch, isOn: this.wf!.actionSet.isRevertEnabled })
               .onChange((on: boolean) => {
@@ -211,7 +211,7 @@ export struct WorkflowEditor {
   }
 
   private getTriggerSettingsSummary(trigger: TriggerSettings): string {
-    if (!trigger.settings) return '无设置';
+    if (!trigger.settings) return t('wf_no_settings');
     const str = JSON.stringify(trigger.settings);
     return str.length > 30 ? str.substring(0, 30) + '…' : str;
   }
@@ -239,7 +239,7 @@ export struct WorkflowEditor {
   }
 
   private getActionSettingsSummary(action: ActionItem): string {
-    if (!action.settings) return '无设置';
+    if (!action.settings) return t('wf_no_settings');
     const str = JSON.stringify(action.settings);
     return str.length > 30 ? str.substring(0, 30) + '…' : str;
   }

@@ -24,7 +24,7 @@
  * 极难排查。所以这里只接收一个集合。
  */
 
-import { t } from '../i18n/I18n';
+import { t, tf } from '../i18n/I18n';
 import { CronExpression } from '../automation/CronExpression';
 import { ActionCatalog } from '../automation/ActionCatalog';
 import { TriggerCatalog } from '../automation/TriggerCatalog';
@@ -164,12 +164,12 @@ export function summarizeIssues(issues: PluginIssue[]): string {
   const errors: number = blockingIssues(issues).length;
   const warnings: number = issues.length - errors;
   if (errors === 0) {
-    return `${warnings} 条提醒`;
+    return tf('plugin_issue_warn_only', `${warnings}`);
   }
   if (warnings === 0) {
-    return `${errors} 个错误，装不上`;
+    return tf('plugin_issue_error_only', `${errors}`);
   }
-  return `${errors} 个错误、${warnings} 条提醒，装不上`;
+  return tf('plugin_issue_error_warn', `${errors}`, `${warnings}`);
 }
 
 /**
@@ -221,7 +221,7 @@ export function validateManifestTextLength(text: string): PluginIssue[] {
     return [];
   }
   return [PluginIssue.create(PluginIssueCode.ManifestTooLarge, '',
-    `清单有 ${text.length} 字节，超过上限 ${MAX_MANIFEST_TEXT_LENGTH} 字节。`)];
+    tf('plugin_manifest_too_big', `${text.length}`, `${MAX_MANIFEST_TEXT_LENGTH}`))];
 }
 
 // ---------------------------------------------------------------- 头部
@@ -229,19 +229,19 @@ export function validateManifestTextLength(text: string): PluginIssue[] {
 function validateManifestHead(manifest: ExtensionManifest, out: PluginIssue[]): void {
   const id: string = manifest.id.trim();
   if (id.length === 0) {
-    out.push(PluginIssue.create(PluginIssueCode.IdMissing, 'id', '清单里没写 id。'));
+    out.push(PluginIssue.create(PluginIssueCode.IdMissing, 'id', t('plugin_manifest_id_missing')));
   } else if (!isValidPluginId(id)) {
     out.push(PluginIssue.create(PluginIssueCode.IdInvalid, 'id',
-      `id「${id}」不合法。只用小写字母、数字、点和横线，长度 1~64，且以字母或数字开头。`));
+      tf('plugin_manifest_id_invalid', `${id}`)));
   }
   if (manifest.name.trim().length === 0) {
-    out.push(PluginIssue.create(PluginIssueCode.NameMissing, 'name', '清单里没写 name。'));
+    out.push(PluginIssue.create(PluginIssueCode.NameMissing, 'name', t('plugin_manifest_name_missing')));
   }
   if (manifest.version.trim().length === 0) {
-    out.push(PluginIssue.create(PluginIssueCode.VersionMissing, 'version', '清单里没写 version。'));
+    out.push(PluginIssue.create(PluginIssueCode.VersionMissing, 'version', t('plugin_manifest_version_missing')));
   } else if (SemVer.tryParse(manifest.version) === undefined) {
     out.push(PluginIssue.create(PluginIssueCode.VersionInvalid, 'version',
-      `version「${manifest.version}」不是能认的版本号。写成 1.0 或 1.0.0 这样的形式。`));
+      tf('plugin_manifest_version_invalid', `${manifest.version}`)));
   }
   const compat = checkPluginApiVersion(manifest.apiVersion);
   if (!compat.supported) {
@@ -263,12 +263,12 @@ function validateManifestHead(manifest: ExtensionManifest, out: PluginIssue[]): 
 function checkEntryId(id: string, path: string, out: PluginIssue[]): boolean {
   const trimmed: string = id.trim();
   if (trimmed.length === 0) {
-    out.push(PluginIssue.create(PluginIssueCode.EntryIdMissing, path, '条目没写 id。'));
+    out.push(PluginIssue.create(PluginIssueCode.EntryIdMissing, path, t('plugin_entry_id_missing')));
     return false;
   }
   if (trimmed.length > MAX_ENTRY_ID_LENGTH) {
     out.push(PluginIssue.create(PluginIssueCode.EntryIdInvalid, path,
-      `条目 id 有 ${trimmed.length} 个字符，超过上限 ${MAX_ENTRY_ID_LENGTH}。`));
+      tf('plugin_entry_id_too_long', `${trimmed.length}`, `${MAX_ENTRY_ID_LENGTH}`)));
     return false;
   }
   for (let i = 0; i < trimmed.length; i++) {
@@ -288,10 +288,10 @@ function checkEntryCommon(id: string, name: string, path: string, count: number,
   if (count > MAX_ENTRIES_PER_KIND) {
     out.push(PluginIssue.create(PluginIssueCode.TooManyEntries,
       extensionKindFieldOf(path),
-      `这一类有 ${count} 条，超过上限 ${MAX_ENTRIES_PER_KIND} 条。`));
+      tf('plugin_kind_too_many', `${count}`, `${MAX_ENTRIES_PER_KIND}`)));
   }
   if (name.trim().length === 0) {
-    out.push(PluginIssue.create(PluginIssueCode.EntryNameMissing, `${path}.name`, '条目没写 name。'));
+    out.push(PluginIssue.create(PluginIssueCode.EntryNameMissing, `${path}.name`, t('plugin_entry_name_missing')));
   }
 }
 
@@ -315,13 +315,13 @@ function validateComponents(manifest: ExtensionManifest, sandbox: PluginSandbox,
     // 按插件 id 的规则去判会把一堆合法 GUID 判成非法，作者完全摸不着头脑。
     const trimmedId: string = entry.id.trim();
     if (trimmedId.length === 0) {
-      out.push(PluginIssue.create(PluginIssueCode.EntryIdMissing, `${path}.id`, '条目没写 id。'));
+      out.push(PluginIssue.create(PluginIssueCode.EntryIdMissing, `${path}.id`, t('plugin_entry_id_missing')));
       continue;
     }
     const guid: Guid | undefined = Guid.tryParse(trimmedId);
     if (guid === undefined) {
       out.push(PluginIssue.create(PluginIssueCode.EntryIdInvalid, `${path}.id`,
-        `组件 id「${entry.id}」必须是 GUID（32 位十六进制 + 4 个横线）。` +
+        tf('plugin_component_id_not_guid', `${entry.id}`) +
         t('plugin_component_id_collide')));
       continue;
     }
@@ -329,18 +329,18 @@ function validateComponents(manifest: ExtensionManifest, sandbox: PluginSandbox,
     const key: string = guid.toString();
     if (seen.has(key)) {
       out.push(PluginIssue.create(PluginIssueCode.EntryIdDuplicated, `${path}.id`,
-        `组件 id「${key}」在这一份清单里出现了两次。`));
+        tf('plugin_component_id_dup', `${key}`)));
       continue;
     }
     seen.add(key);
     if (ComponentCatalog.isKnown(key)) {
       out.push(PluginIssue.create(PluginIssueCode.EntryIdReserved, `${path}.id`,
-        `组件 id「${key}」是内置组件的 id，换一个。`));
+        tf('plugin_component_id_builtin', `${key}`)));
       continue;
     }
     if (kinds.indexOf(entry.payloadKind) < 0) {
       out.push(PluginIssue.create(PluginIssueCode.ComponentKindUnknown, `${path}.payloadKind`,
-        `payloadKind「${entry.payloadKind}」不认识。能借用的只有：${kinds.join('、')}。`));
+        tf('plugin_payload_kind_unknown', `${entry.payloadKind}`, kinds.join(t('list_sep')))));
     }
   }
 }
@@ -356,13 +356,13 @@ function validateTriggers(manifest: ExtensionManifest, out: PluginIssue[]): void
     }
     if (seen.has(entry.id)) {
       out.push(PluginIssue.create(PluginIssueCode.EntryIdDuplicated, `${path}.id`,
-        `触发器 id「${entry.id}」在这一份清单里出现了两次。`));
+        tf('plugin_trigger_id_dup', `${entry.id}`)));
       continue;
     }
     seen.add(entry.id);
     if (TriggerCatalog.find(entry.id) !== undefined) {
       out.push(PluginIssue.create(PluginIssueCode.EntryIdReserved, `${path}.id`,
-        `触发器 id「${entry.id}」是内置触发器的 id，换一个。`));
+        tf('plugin_trigger_id_builtin', `${entry.id}`)));
       continue;
     }
     if (entry.scheduleKind === PluginScheduleKind.None) {
@@ -384,23 +384,23 @@ function validateTriggers(manifest: ExtensionManifest, out: PluginIssue[]): void
 export function scheduleProblem(entry: TriggerExtension): string {
   if (entry.scheduleKind === PluginScheduleKind.Cron) {
     if (entry.cronExpression.trim().length === 0) {
-      return 'scheduleKind 是 cron，但没写 cronExpression。';
+      return t('plugin_schedule_cron_missing');
     }
     const cron: CronExpression = CronExpression.parse(entry.cronExpression);
     if (!cron.valid) {
-      return `cron 表达式「${entry.cronExpression}」解不出来：${cron.reason}`;
+      return tf('plugin_cron_unparsed', `${entry.cronExpression}`, cron.reason);
     }
     return '';
   }
   if (entry.scheduleKind === PluginScheduleKind.DailyAt) {
     if (entry.atSeconds < 0 || entry.atSeconds > 86399) {
-      return `dailyAt 的 atSeconds 是 ${entry.atSeconds}，要落在 0~86399。`;
+      return tf('plugin_dailyat_range', `${entry.atSeconds}`, '86399');
     }
     return '';
   }
   if (entry.scheduleKind === PluginScheduleKind.EveryMinutes) {
     if (entry.everyMinutes < 1 || entry.everyMinutes > 1440) {
-      return `everyMinutes 是 ${entry.everyMinutes}，要落在 1~1440。`;
+      return tf('plugin_every_range', `${entry.everyMinutes}`, '1440');
     }
     return '';
   }
@@ -419,13 +419,13 @@ function validateActions(manifest: ExtensionManifest, sandbox: PluginSandbox,
     }
     if (seen.has(entry.id)) {
       out.push(PluginIssue.create(PluginIssueCode.EntryIdDuplicated, `${path}.id`,
-        `行动 id「${entry.id}」在这一份清单里出现了两次。`));
+        tf('plugin_action_id_dup', `${entry.id}`)));
       continue;
     }
     seen.add(entry.id);
     if (ActionCatalog.find(entry.id) !== undefined) {
       out.push(PluginIssue.create(PluginIssueCode.EntryIdReserved, `${path}.id`,
-        `行动 id「${entry.id}」是内置行动的 id，换一个。`));
+        tf('plugin_action_id_builtin', `${entry.id}`)));
       continue;
     }
     if (entry.actionKind === PluginActionKind.None) {
@@ -437,19 +437,19 @@ function validateActions(manifest: ExtensionManifest, sandbox: PluginSandbox,
     if (entry.actionKind === PluginActionKind.Notification) {
       if (entry.title.trim().length === 0 || entry.content.trim().length === 0) {
         out.push(PluginIssue.create(PluginIssueCode.ActionNotificationEmpty, path,
-          '发通知的行动要同时写 title 和 content。'));
+          t('plugin_notify_need_title_content')));
       }
       continue;
     }
     // ModifySetting
     if (entry.settingKey.trim().length === 0) {
       out.push(PluginIssue.create(PluginIssueCode.ActionSettingKeyNotWritable, `${path}.settingKey`,
-        '改设置的行动没写 settingKey。'));
+        t('plugin_setting_key_missing')));
       continue;
     }
     if (!sandbox.writableSettingKeys.has(entry.settingKey)) {
       out.push(PluginIssue.create(PluginIssueCode.ActionSettingKeyNotWritable, `${path}.settingKey`,
-        `设置键「${entry.settingKey}」不在允许改的名单里。` +
+        tf('plugin_setting_key_not_writable', `${entry.settingKey}`) +
         t('plugin_action_setting_not_allowed')));
     }
   }
@@ -466,13 +466,13 @@ function validateProviders(manifest: ExtensionManifest, out: PluginIssue[]): voi
     }
     if (seen.has(entry.id)) {
       out.push(PluginIssue.create(PluginIssueCode.EntryIdDuplicated, `${path}.id`,
-        `通知提供者 id「${entry.id}」在这一份清单里出现了两次。`));
+        tf('plugin_provider_id_dup', `${entry.id}`)));
       continue;
     }
     seen.add(entry.id);
     if (entry.triggerId.length > 0 && TriggerCatalog.find(entry.triggerId) === undefined) {
       out.push(PluginIssue.create(PluginIssueCode.ProviderTriggerUnknown, `${path}.triggerId`,
-        `triggerId「${entry.triggerId}」不是已注册的触发器。`,
+        tf('plugin_provider_trigger_unknown', `${entry.triggerId}`),
         PluginIssueSeverity.Warning));
     }
   }
@@ -489,13 +489,13 @@ function validateThemes(manifest: ExtensionManifest, out: PluginIssue[]): void {
     }
     if (seen.has(entry.id)) {
       out.push(PluginIssue.create(PluginIssueCode.EntryIdDuplicated, `${path}.id`,
-        `主题 id「${entry.id}」在这一份清单里出现了两次。`));
+        tf('plugin_theme_id_dup', `${entry.id}`)));
       continue;
     }
     seen.add(entry.id);
     if (PLUGIN_THEME_MODES.indexOf(entry.mode) < 0) {
       out.push(PluginIssue.create(PluginIssueCode.ThemeModeUnknown, `${path}.mode`,
-        `mode「${entry.mode}」不认识。可用：${PLUGIN_THEME_MODES.join('、')}。`));
+        tf('plugin_theme_mode_unknown', `${entry.mode}`, PLUGIN_THEME_MODES.join(t('list_sep')))));
     }
     if (entry.colors.size === 0) {
       out.push(PluginIssue.create(PluginIssueCode.ThemeColorsEmpty, `${path}.colors`,
@@ -510,7 +510,7 @@ function validateThemes(manifest: ExtensionManifest, out: PluginIssue[]): void {
     });
     if (bad.length > 0) {
       out.push(PluginIssue.create(PluginIssueCode.ThemeColorInvalid, `${path}.colors`,
-        `颜色写法不对：${bad.join('、')}。要 #RRGGBB 或 #AARRGGBB。`));
+        tf('plugin_theme_color_invalid', bad.join(t('list_sep')))));
     }
   }
 }

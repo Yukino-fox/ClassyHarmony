@@ -27,7 +27,7 @@
  * confirm/cancel，做不了多行选项列表；弹窗还会遮住用户正在看的那个组件。
  */
 
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import { ComponentLocation } from 'common_core';
 import { EditorChip, EditorEmptyHint, EditorToggleRow } from '../../components/EditorWidgets';
 import { RulesetEditorView } from '../../panel/RulesetEditorView';
@@ -112,13 +112,13 @@ struct ComponentRowView {
     Row() {
       if (this.row.isKnown) {
         EditorChip({
-          text: '设置',
+          text: t('ct_settings'),
           tone: 1,
           onTap: () => { this.onOpenSettings(this.row); }
         })
       } else {
         // 未注册的组件没有设置面板可进。给它一个说明而不是一个点不动的按钮。
-        Text('未识别组件，无法设置')
+        Text(t('ct_unknown_no_settings'))
           .fontSize(11)
           .fontColor($r('app.color.ch_text_hint'))
           .margin({ right: 8, top: 4, bottom: 4 })
@@ -142,18 +142,18 @@ struct ComponentRowView {
       }
       if (this.row.isContainer) {
         EditorChip({
-          text: '添加子组件',
+          text: t('ct_add_child'),
           onTap: () => { this.picking = !this.picking; }
         })
       }
       // 替换只在用户主动要它时把选择器展开：它会把这个位置上的组件连同设置一起
       // 换掉，属于不可逆的那一类，不该和「前移后移」摆在同一排里当日常操作。
       EditorChip({
-        text: '替换',
+        text: t('ct_replace'),
         onTap: () => { this.replacing = !this.replacing; }
       })
       EditorChip({
-        text: '删除',
+        text: t('ct_delete'),
         tone: 1,
         onTap: () => { this.vm.removeComponent(this.row.location); }
       })
@@ -177,7 +177,7 @@ struct ComponentRowView {
           .layoutWeight(1)
 
         if (this.row.isContainer) {
-          this.tag('容器')
+          this.tag(t('ct_container_tag'))
         }
         if (this.row.hideOnRule) {
           this.tag(t('ct_hide_by_rules'))
@@ -186,10 +186,10 @@ struct ComponentRowView {
           // 「开着开关」与「当下正被藏着」是两件事，得分开标：前者是配置，
           // 后者是这一秒的结论。合成一个标签的话，用户在课间打开面板看到组件
           // 消失，会以为规则生效了，而实际上整条规则可能压根没成立。
-          this.hotTag('正被规则藏着')
+          this.hotTag(t('ct_rule_hidden_tag'))
         }
 
-        Text(this.isSelected ? '收起' : '操作')
+        Text(this.isSelected ? t('ct_collapse') : t('ct_actions'))
           .fontSize(12)
           .fontColor($r('app.color.ch_accent'))
           .padding({ left: 8 })
@@ -213,13 +213,13 @@ struct ComponentRowView {
         this.actions()
         if (this.row.isContainer && this.picking) {
           ComponentPicker({
-            title: `往「${this.row.displayName}」里添加`,
+            title: tf('ct_add_into', this.row.displayName),
             onPick: (guid: string) => { this.add(guid); }
           })
         }
         if (this.replacing) {
           ComponentPicker({
-            title: `把「${this.row.displayName}」换成`,
+            title: tf('ct_replace_with', this.row.displayName),
             onPick: (guid: string) => { this.replace(guid); }
           })
         }
@@ -277,19 +277,19 @@ export struct ComponentLineView {
 
   private summaryText(): string {
     if (this.lineRow.childCount === 0) {
-      return '空行';
+      return t('ct_line_empty');
     }
     const unknown: number = this.lineRow.childCount - this.lineRow.knownCount;
     if (unknown > 0) {
-      return `${this.lineRow.childCount} 个组件，其中 ${unknown} 个未识别`;
+      return tf('ct_line_children_unknown', `${this.lineRow.childCount}`, `${unknown}`);
     }
-    return `${this.lineRow.childCount} 个组件`;
+    return tf('ct_line_children', `${this.lineRow.childCount}`);
   }
 
   @Builder
   private header() {
     Row() {
-      Text(`第 ${this.lineRow.lineIndex + 1} 行`)
+      Text(tf('pane_line_row', `${this.lineRow.lineIndex + 1}`))
         .fontSize(15)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('app.color.ch_text_primary'))
@@ -315,7 +315,7 @@ export struct ComponentLineView {
         .onChange(() => {
           this.vm.toggleLineVisible(this.lineRow.lineIndex);
         })
-      Text('显示')
+      Text(t('ct_visible'))
         .fontSize(12)
         .fontColor($r('app.color.ch_text_secondary'))
         .margin({ right: 14 })
@@ -338,7 +338,7 @@ export struct ComponentLineView {
         }
       })
       EditorChip({
-        text: '添加组件',
+        text: t('ct_add_component'),
         tone: 1,
         onTap: () => { this.picking = !this.picking; }
       })
@@ -355,10 +355,10 @@ export struct ComponentLineView {
   /** 工具条上那个按钮的文案。开着就明说，省得再点一次才知道。 */
   private ruleChipText(): string {
     if (this.rulesOpen) {
-      return '收起规则';
+      return t('ct_collapse_rules');
     }
     if (this.lineRow.isRuleHidden) {
-      return '规则（正藏着）';
+      return t('ct_rules_hiding');
     }
     if (this.lineRow.hideOnRule) {
       return t('ct_hide_rules');
@@ -389,7 +389,7 @@ export struct ComponentLineView {
           vm: this.vm,
           location: ComponentLocation.of(this.lineRow.lineIndex, []),
           isLine: true,
-          title: `第 ${this.lineRow.lineIndex + 1} 行的隐藏规则`
+          title: tf('ct_line_rules_title', `${this.lineRow.lineIndex + 1}`)
         })
       }
     }
@@ -411,7 +411,7 @@ export struct ComponentLineView {
 
       if (this.picking) {
         ComponentPicker({
-          title: `往第 ${this.lineRow.lineIndex + 1} 行里添加`,
+          title: tf('ct_add_to_line', `${this.lineRow.lineIndex + 1}`),
           onPick: (guid: string) => {
             this.vm.addComponent(ComponentLocation.of(this.lineRow.lineIndex, []), guid);
             this.picking = false;

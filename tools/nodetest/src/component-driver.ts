@@ -316,7 +316,7 @@ function testCatalog(): void {
   // 用户看不出那里本来有个组件
   const known: ComponentSettings = new ComponentSettings();
   known.id = COMPONENT_CLOCK;
-  checkEqual('已知组件用注册名', ComponentCatalog.displayNameOf(known), 'component_clock');
+  checkEqual('已知组件用注册名', ComponentCatalog.displayNameOf(known), "时钟");
   const cached: ComponentSettings = new ComponentSettings();
   cached.id = 'aaaaaaaa-1111-2222-3333-444444444444';
   cached.nameCache = '旧版名字';
@@ -341,7 +341,7 @@ function testRegisterConflict(): void {
     threw = true;
   }
   checkTrue('重复 GUID 注册抛错', threw);
-  checkEqual('抛错后注册表未被污染', ComponentCatalog.find(COMPONENT_CLOCK)?.name, 'component_clock');
+  checkEqual('抛错后注册表未被污染', ComponentCatalog.find(COMPONENT_CLOCK)?.name, "时钟");
   checkNum('抛错后总数不变', ComponentCatalog.all().length, 11);
 }
 
@@ -377,7 +377,7 @@ function testCreate(): void {
   // Id 一律归一为小写
   checkEqual('大写 GUID 新建后归一',
     ComponentCatalog.create(COMPONENT_TEXT.toUpperCase()).id, COMPONENT_TEXT);
-  checkEqual('新建时钟的 NameCache 是组件名', clock.nameCache, 'component_clock');
+  checkEqual('新建时钟的 NameCache 是组件名', clock.nameCache, "时钟");
 }
 
 // ---------------------------------------------------------------- 5. 设置就地改键
@@ -559,7 +559,7 @@ function testDefaultProfile(): void {
   const once: string = ComponentProfile.stringify(profile);
   checkEqual('默认布局往返稳定', ComponentProfile.stringify(ComponentProfile.parse(once)), once);
   check('默认布局 Date 组件名被填上',
-    ComponentCatalog.displayNameOf(profile.lines[0].children[0]) === 'component_date');
+    ComponentCatalog.displayNameOf(profile.lines[0].children[0]) === '日期');
 }
 
 // ---------------------------------------------------------------- 6. 行的增删移

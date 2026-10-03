@@ -16,7 +16,7 @@
  * 以为没建成功（看不到新名字），或者手动去找哪一行是新的。
  */
 
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import { SubjectRow } from 'common_core';
 import { ScheduleEditorViewModel } from '../../viewmodel/ScheduleEditorViewModel';
 import {
@@ -45,13 +45,13 @@ export struct SubjectPane {
   }
 
   private add(): void {
-    this.expanded = this.vm.addSubject('新课程');
+    this.expanded = this.vm.addSubject(t('sub_default_name'));
   }
 
   build() {
     NavDestination() {
       Column() {
-        EditorHeader({ title: '科目', stack: this.stack })
+        EditorHeader({ title: t('sub_title'), stack: this.stack })
 
         Scroll() {
           Column() {
@@ -79,7 +79,7 @@ export struct SubjectPane {
               Divider().color($r('app.color.ch_outline'))
             }, (row: SubjectRow) => row.guid)
 
-            EditorChip({ text: '添加科目', onTap: () => { this.add(); } })
+            EditorChip({ text: t('sub_add'), onTap: () => { this.add(); } })
               .margin({ top: 16 })
           }
           .width('100%')
@@ -98,32 +98,32 @@ export struct SubjectPane {
   private detail(vm: ScheduleEditorViewModel, row: SubjectRow) {
     Column() {
       EditorTextField({
-        label: '名称',
+        label: t('sub_name'),
         value: row.name,
-        placeholder: '科目名',
+        placeholder: t('sub_name_hint'),
         onCommit: (text: string) => { vm.renameSubject(row.guid, text); }
       })
       EditorTextField({
-        label: '简称',
+        label: t('sub_initial'),
         value: row.initial,
         placeholder: t('sub_name_placeholder'),
         onCommit: (text: string) => { vm.setSubjectInitial(row.guid, text); }
       })
       EditorTextField({
-        label: '教师',
+        label: t('sub_teacher'),
         value: row.teacherName,
-        placeholder: '选填',
+        placeholder: t('sub_optional'),
         onCommit: (text: string) => { vm.setSubjectTeacher(row.guid, text); }
       })
       EditorToggleRow({
-        label: '室外课',
-        hint: '在课表上会标出来',
+        label: t('sub_outdoor'),
+        hint: t('sub_outdoor_hint'),
         isOn: row.isOutDoor,
         onToggle: (isOn: boolean) => { vm.setSubjectOutDoor(row.guid, isOn); }
       })
 
       if (row.usedByClassesTotal > 0) {
-        Text(`被 ${row.usedByPlans} 张课表、共 ${row.usedByClassesTotal} 节课引用。`)
+        Text(tf('sub_used_by', `${row.usedByPlans}`, `${row.usedByClassesTotal}`))
           .fontSize(11)
           .fontColor($r('app.color.ch_text_hint'))
           .width('100%')

@@ -29,7 +29,7 @@
 
 import { common } from '@kit.AbilityKit';
 import { DateTimeValue } from 'common_shared';
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import { ReminderMode } from 'common_core';
 import {
   EditorChip,
@@ -58,7 +58,7 @@ const ADVANCE_CHOICES: number[] = [0, 1, 3, 5, 10];
 
 /** 档位的中文名。0 档与其它档含义不同，单独说。 */
 function advanceLabel(minutes: number): string {
-  return minutes === 0 ? '准点' : `${minutes} 分`;
+  return minutes === 0 ? t('rm_on_time') : tf('rm_advance_min', `${minutes}`);
 }
 
 @ComponentV2
@@ -104,7 +104,7 @@ export struct ReminderPane {
     } catch (err) {
       // 走到这里说明胶水层里有预料之外的异常。仍然要给用户一句人话，
       // 而不是让界面停在「同步中」。
-      this.statusText = '同步失败，请稍后再试';
+      this.statusText = t('rm_sync_failed');
       this.statusIsWarning = true;
       this.rotationHint = '';
     } finally {
@@ -118,7 +118,7 @@ export struct ReminderPane {
       ? t('rm_biweekly_note')
       : '';
     if (result.status === SYNC_BUSY) {
-      this.statusText = '正在同步…';
+      this.statusText = t('rm_syncing');
       this.statusIsWarning = false;
       return;
     }
@@ -128,18 +128,18 @@ export struct ReminderPane {
       return;
     }
     if (result.status === SYNC_FAILED) {
-      this.statusText = result.message.length > 0 ? result.message : '同步失败，请稍后再试';
+      this.statusText = result.message.length > 0 ? result.message : t('rm_sync_failed');
       this.statusIsWarning = true;
       return;
     }
     if (result.message.length > 0 && result.failedCount > 0) {
       // message 优先：额度不够、权限被关这类是根因，而 failedCount 只是症状。
-      this.statusText = `${result.message}（${result.failedCount} 条没排上）`;
+      this.statusText = tf('rm_sync_partial', result.message, `${result.failedCount}`);
       this.statusIsWarning = true;
       return;
     }
     if (result.failedCount > 0) {
-      this.statusText = `${result.failedCount} 条提醒没排上`;
+      this.statusText = tf('rm_dropped_count', `${result.failedCount}`);
       this.statusIsWarning = true;
       return;
     }
@@ -148,9 +148,9 @@ export struct ReminderPane {
       this.statusIsWarning = false;
       return;
     }
-    const shape: string = result.mode === ReminderMode.Specific ? '逐条' : '按时段合并';
-    this.statusText = `已排 ${result.plannedCount} 条${shape}提醒` +
-      (result.droppedCount > 0 ? `，额度不够，另有 ${result.droppedCount} 条没排上` : '');
+    const shape: string = result.mode === ReminderMode.Specific ? t('rm_shape_specific') : t('rm_shape_merged');
+    this.statusText = tf('rm_planned', `${result.plannedCount}`, shape) +
+      (result.droppedCount > 0 ? tf('rm_quota_more', `${result.droppedCount}`) : '');
     this.statusIsWarning = result.droppedCount > 0;
   }
 
@@ -182,12 +182,12 @@ export struct ReminderPane {
 
   private modeLabel(): string {
     if (this.settings.modeOverride === REMINDER_MODE_SPECIFIC) {
-      return '逐条';
+      return t('rm_shape_specific');
     }
     if (this.settings.modeOverride === REMINDER_MODE_COLLAPSED) {
-      return '按时段合并';
+      return t('rm_shape_merged');
     }
-    return '自动';
+    return t('rm_mode_auto');
   }
 
   @Builder
@@ -235,7 +235,7 @@ export struct ReminderPane {
   build() {
     NavDestination() {
       Column() {
-        EditorHeader({ title: '课前提醒', stack: this.stack })
+        EditorHeader({ title: t('rm_title'), stack: this.stack })
 
         if (!this.loaded) {
           Blank()
@@ -243,7 +243,7 @@ export struct ReminderPane {
           Scroll() {
             Column() {
               EditorToggleRow({
-                label: '开启课前提醒',
+                label: t('rm_enable'),
                 hint: t('rm_use_system_hint'),
                 isOn: this.settings.enabled,
                 onToggle: (isOn: boolean) => {
@@ -256,22 +256,21 @@ export struct ReminderPane {
               if (this.settings.enabled) {
                 this.advanceRow(t('rm_advance_indoor'), t('rm_advance_indoor_hint'), true)
                 Divider().color($r('app.color.ch_outline'))
-                this.advanceRow('室外课提前', '要去操场的课，得留出走过去的时间', false)
+                this.advanceRow(t('rm_advance_outdoor'), t('rm_advance_outdoor_hint'), false)
                 Divider().color($r('app.color.ch_outline')).margin({ top: 8, bottom: 8 })
 
                 EditorValueRow({
-                  label: '提醒形态',
+                  label: t('rm_shape'),
                   value: this.modeLabel()
                 })
-                Text('逐条提醒会写明是哪门课；按时段合并的只写「该上课了」，但条数少得多。' +
-                  '条数超过系统上限时自动切到合并。')
+                Text(t('rm_shape_desc'))
                   .fontSize(11)
                   .fontColor($r('app.color.ch_text_hint'))
                   .width('100%')
                   .margin({ top: 2, bottom: 6 })
                 Row() {
                   EditorChip({
-                    text: '自动',
+                    text: t('rm_mode_auto'),
                     tone: this.settings.modeOverride === REMINDER_MODE_AUTO ? 1 : 0,
                     onTap: () => {
                       this.pickMode(REMINDER_MODE_AUTO);
@@ -279,7 +278,7 @@ export struct ReminderPane {
                   })
                   Text(' ').fontSize(4)
                   EditorChip({
-                    text: '逐条',
+                    text: t('rm_shape_specific'),
                     tone: this.settings.modeOverride === REMINDER_MODE_SPECIFIC ? 1 : 0,
                     onTap: () => {
                       this.pickMode(REMINDER_MODE_SPECIFIC);
@@ -287,7 +286,7 @@ export struct ReminderPane {
                   })
                   Text(' ').fontSize(4)
                   EditorChip({
-                    text: '按时段合并',
+                    text: t('rm_shape_merged'),
                     tone: this.settings.modeOverride === REMINDER_MODE_COLLAPSED ? 1 : 0,
                     onTap: () => {
                       this.pickMode(REMINDER_MODE_COLLAPSED);
@@ -319,7 +318,7 @@ export struct ReminderPane {
               .margin({ top: 4 })
           }
           Row() {
-            Text('立即重新排提醒')
+            Text(t('rm_resync_now'))
               .fontSize(13)
               .fontColor(this.syncing
                 ? $r('app.color.ch_text_hint')

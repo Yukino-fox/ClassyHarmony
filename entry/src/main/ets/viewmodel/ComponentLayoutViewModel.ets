@@ -42,7 +42,7 @@ import {
   Subject,
   RulesetLogicalMode
 } from 'common_shared';
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import {
   COMPONENT_CLOCK,
   COMPONENT_COUNTDOWN,
@@ -112,17 +112,17 @@ export interface AddableComponent {
 }
 
 const ADDABLE: AddableComponent[] = [
-  { guid: COMPONENT_DATE, name: '日期' },
-  { guid: COMPONENT_CLOCK, name: '时钟' },
-  { guid: COMPONENT_TEXT, name: '文本' },
-  { guid: COMPONENT_COUNTDOWN, name: '倒计时' },
-  { guid: COMPONENT_SCHEDULE, name: '课程表' },
-  { guid: COMPONENT_WEATHER, name: '天气简报' },
-  { guid: COMPONENT_SEPARATOR, name: '分割线' },
-  { guid: COMPONENT_GROUP, name: '分组容器' },
-  { guid: COMPONENT_STACK, name: '堆叠容器' },
-  { guid: COMPONENT_ROLLING, name: '滚动容器' },
-  { guid: COMPONENT_SLIDE, name: '轮播容器' }
+  { guid: COMPONENT_DATE, name: t('clvm_date') },
+  { guid: COMPONENT_CLOCK, name: t('clvm_clock') },
+  { guid: COMPONENT_TEXT, name: t('clvm_text') },
+  { guid: COMPONENT_COUNTDOWN, name: t('clvm_countdown') },
+  { guid: COMPONENT_SCHEDULE, name: t('clvm_schedule') },
+  { guid: COMPONENT_WEATHER, name: t('clvm_weather') },
+  { guid: COMPONENT_SEPARATOR, name: t('clvm_separator') },
+  { guid: COMPONENT_GROUP, name: t('clvm_group') },
+  { guid: COMPONENT_STACK, name: t('clvm_stack') },
+  { guid: COMPONENT_ROLLING, name: t('clvm_rolling') },
+  { guid: COMPONENT_SLIDE, name: t('clvm_slide') }
 ];
 
 /** 可添加的组件类型，供界面取用。返回副本，界面改了不会影响下一个人。 */
@@ -342,7 +342,7 @@ export class ComponentLayoutViewModel {
     try {
       this.repository.save(this.schemeName, this.draft);
     } catch (err) {
-      this.say('保存失败：写入信息面板目录时出错');
+      this.say(t('clvm_save_failed'));
       return false;
     }
     this.baseline = text;
@@ -385,7 +385,7 @@ export class ComponentLayoutViewModel {
     }
     this.loaded = false;
     this.load(name);
-    this.say(`已切换到「${name}」`);
+    this.say(tf('clvm_switched', name));
     return true;
   }
 
@@ -401,7 +401,7 @@ export class ComponentLayoutViewModel {
     }
     this.schemeName = name;
     this.rebuild();
-    this.say(`已复制到「${name}」，保存后生效`);
+    this.say(tf('clvm_duplicated', name));
     return true;
   }
 
@@ -413,11 +413,11 @@ export class ComponentLayoutViewModel {
     try {
       this.repository.remove(name);
     } catch (err) {
-      this.say('删除失败：文件删不掉');
+      this.say(t('clvm_delete_failed'));
       return false;
     }
     this.refreshSchemeNames();
-    this.say(`已删除「${name}」`);
+    this.say(tf('clvm_deleted', name));
     return true;
   }
 
@@ -474,10 +474,10 @@ export class ComponentLayoutViewModel {
     }
     const component: ComponentSettings = ComponentCatalog.create(guid);
     if (!ComponentLayoutMutations.addComponent(this.draft, target, component)) {
-      this.say('加不进去：目标不是容器');
+      this.say(t('clvm_add_not_container'));
       return false;
     }
-    this.settle(`已添加${ComponentCatalog.displayNameOf(component)}`);
+    this.settle(tf('clvm_added', ComponentCatalog.displayNameOf(component)));
     return true;
   }
 
@@ -559,7 +559,7 @@ export class ComponentLayoutViewModel {
       }
       ComponentCatalog.setChildrenOf(holder, list);
     }
-    this.settle(`已换成${ComponentCatalog.displayNameOf(fresh)}`);
+    this.settle(tf('clvm_replaced', ComponentCatalog.displayNameOf(fresh)));
     return true;
   }
 
@@ -746,7 +746,7 @@ export class ComponentLayoutViewModel {
       host.hidingRules = undefined;
     }
     this.writeHost(host, ComponentLocation.of(lineIndex, []), true);
-    this.settle(value ? `第 ${lineIndex + 1} 行已打开按规则隐藏` : `第 ${lineIndex + 1} 行已取消`);
+    this.settle(value ? tf('clvm_line_rules_on', `${lineIndex + 1}`) : tf('clvm_line_rules_off', `${lineIndex + 1}`));
   }
 
   /**

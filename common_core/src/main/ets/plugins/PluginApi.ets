@@ -27,7 +27,7 @@
  * 为了这些手填值，写清单的人不该因为少打两个数字而装不上。
  */
 
-import { t } from '../i18n/I18n';
+import { t, tf } from '../i18n/I18n';
 /** 本实现认的扩展 API 版本。清单里写的必须是同主版本且不低于下限。 */
 export const PLUGIN_API_VERSION: string = '1.0.0';
 
@@ -193,19 +193,18 @@ export function checkPluginApiVersion(apiVersion: string): ApiCompatibility {
   }
   const parsed: SemVer | undefined = SemVer.tryParse(apiVersion);
   if (parsed === undefined) {
-    out.reason = `apiVersion「${apiVersion}」不是能认的版本号。写成 1.0 或 1.0.0 这样的形式。`;
+    out.reason = tf('plugin_api_version_bad', apiVersion);
     return out;
   }
   out.parsedMajor = parsed.major;
   const current: SemVer = SemVer.tryParse(PLUGIN_API_VERSION) as SemVer;
   const floor: SemVer = SemVer.tryParse(PLUGIN_API_MIN_VERSION) as SemVer;
   if (parsed.major !== current.major) {
-    out.reason = `扩展要的是 API ${parsed.major}.x，当前应用是 ${current.major}.x。` +
-      `跨主版本的字段含义可能不同，硬读会把设置写成另一种意思，所以不加载。`;
+    out.reason = tf('plugin_api_major_mismatch', `${parsed.major}`, `${current.major}`);
     return out;
   }
   if (SemVer.compare(parsed, floor) < 0) {
-    out.reason = `扩展要的是 API ${parsed.toString()}，当前应用最低支持 ${floor.toString()}。`;
+    out.reason = tf('plugin_api_below_floor', parsed.toString(), floor.toString());
     return out;
   }
   out.supported = true;

@@ -38,7 +38,7 @@ import { common, wantAgent, WantAgent } from '@kit.AbilityKit';
 import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import {
   KEEP_ALIVE_MODE_MULTI_DEVICE,
   KeepAlivePlan,
@@ -105,7 +105,7 @@ export class BackgroundTaskService {
     if (!this.isEnabled()) {
       return t('bt_off');
     }
-    return this.status.length === 0 ? '未启动' : this.status;
+    return this.status.length === 0 ? t('bt_not_started') : this.status;
   }
 
   /** 拨开关：写盘，然后立刻按新状态申请或释放。 */
@@ -174,7 +174,7 @@ export class BackgroundTaskService {
       return;
     }
     if (this.running && this.activeMode === plan.mode) {
-      this.status = `运行中（${this.modeLabel(plan.mode)}）`;
+      this.status = tf('bt_running_in', this.modeLabel(plan.mode));
       return;
     }
     if (this.running) {
@@ -191,13 +191,13 @@ export class BackgroundTaskService {
       await backgroundTaskManager.startBackgroundRunning(this.context, mode, agent);
       this.running = true;
       this.activeMode = plan.mode;
-      this.status = `运行中（${this.modeLabel(plan.mode)}）`;
+      this.status = tf('bt_running_in', this.modeLabel(plan.mode));
       hilog.info(DOMAIN, TAG, 'continuous task started: %{public}s', plan.mode);
     } catch (err) {
       const be: BusinessError = err as BusinessError;
       this.running = false;
       this.activeMode = '';
-      this.status = `申请失败：${keepAliveErrorText(be.code)}`;
+      this.status = tf('bt_request_failed', keepAliveErrorText(be.code));
       hilog.warn(DOMAIN, TAG, 'startBackgroundRunning failed: code=%{public}d', be.code);
     }
   }
@@ -242,7 +242,7 @@ export class BackgroundTaskService {
   }
 
   private modeLabel(mode: string): string {
-    return mode === KEEP_ALIVE_MODE_MULTI_DEVICE ? '多设备互联' : '任务保持';
+    return mode === KEEP_ALIVE_MODE_MULTI_DEVICE ? t('bt_mode_multi') : t('bt_mode_task');
   }
 }
 

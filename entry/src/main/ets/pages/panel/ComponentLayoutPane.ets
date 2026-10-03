@@ -24,7 +24,7 @@
  * 先问。
  */
 
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import { ComponentLocation } from 'common_core';
 import { UiFeedback } from '../../common/UiFeedback';
 import { EditorCard, EditorChip, EditorEmptyHint } from '../../components/EditorWidgets';
@@ -38,7 +38,7 @@ import { ComponentLineView } from './ComponentTreeView';
 import { PanelPreview } from '../../panel/PanelPreview';
 
 /** 复制方案时推荐的名字。 */
-const COPY_SUFFIX: string = ' 副本';
+const COPY_SUFFIX: string = t('cl_copy_suffix');
 
 @ComponentV2
 export struct ComponentLayoutPane {
@@ -69,9 +69,9 @@ export struct ComponentLayoutPane {
       // 用户回到这一页会发现刚排的面板没了，而且没有任何提示。
       UiFeedback.confirmDiscardOrSave(
         this.getUIContext(),
-        '切换方案',
-        `切到「${name}」会丢掉当前方案里未保存的改动。`,
-        '丢掉并切换',
+        t('cl_switch_scheme'),
+        tf('cl_switch_warn', name),
+        t('cl_switch_confirm'),
         () => { this.doSwitch(name); },
         () => {
           if (this.vm.save()) {
@@ -93,9 +93,9 @@ export struct ComponentLayoutPane {
   private askDuplicate(): void {
     UiFeedback.confirm(
       this.getUIContext(),
-      '复制当前方案',
+      t('cl_duplicate_title'),
       t('cl_duplicate_hint'),
-      '复制',
+      t('cl_duplicate'),
       () => {
         this.vm.duplicateScheme(`${this.vm.schemeName}${COPY_SUFFIX}`);
       }
@@ -105,9 +105,9 @@ export struct ComponentLayoutPane {
   private askRemove(name: string): void {
     UiFeedback.confirm(
       this.getUIContext(),
-      `删除「${name}」`,
-      '这个方案的文件会被删掉，删掉就找不回来了。',
-      '删除',
+      tf('cl_delete_scheme', name),
+      t('cl_delete_scheme_warn'),
+      t('common_delete'),
       () => {
         this.vm.removeScheme(name);
       }
@@ -137,7 +137,7 @@ export struct ComponentLayoutPane {
       })
       if (this.showPreview) {
         EditorChip({
-          text: this.vm.liveClock ? '时钟：走' : '时钟：停',
+          text: this.vm.liveClock ? t('cl_clock_running') : t('cl_clock_paused'),
           onTap: () => { this.vm.setLiveClock(!this.vm.liveClock); }
         })
       }
@@ -160,7 +160,7 @@ export struct ComponentLayoutPane {
   @Builder
   private schemeCard() {
     EditorCard({
-      title: '方案',
+      title: t('cl_scheme'),
       hint: t('cl_scheme_hint')
     })
     Row() {
@@ -172,12 +172,12 @@ export struct ComponentLayoutPane {
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
       EditorChip({
-        text: this.switching ? '收起' : '切换',
+        text: this.switching ? t('cl_collapse') : t('cl_switch'),
         tone: 1,
         onTap: () => { this.switching = !this.switching; }
       })
       EditorChip({
-        text: '复制',
+        text: t('cl_duplicate'),
         onTap: () => { this.askDuplicate(); }
       })
     }
@@ -198,12 +198,12 @@ export struct ComponentLayoutPane {
                 : $r('app.color.ch_text_primary'))
               .layoutWeight(1)
             if (name === this.vm.schemeName) {
-              Text('当前')
+              Text(t('cl_current'))
                 .fontSize(11)
                 .fontColor($r('app.color.ch_text_hint'))
                 .margin({ right: 8 })
             } else {
-              Text('删除')
+              Text(t('common_delete'))
                 .fontSize(12)
                 .fontColor($r('app.color.ch_accent'))
                 .margin({ right: 8 })
@@ -232,7 +232,7 @@ export struct ComponentLayoutPane {
         .fontColor($r('app.color.ch_text_primary'))
         .width(32)
         .onClick(() => { this.onExit(); })
-      Text('信息面板')
+      Text(t('cl_info_panel'))
         .fontSize(17)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('app.color.ch_text_primary'))
@@ -264,23 +264,23 @@ export struct ComponentLayoutPane {
           .fontSize(12)
           .fontColor($r('app.color.ch_accent'))
           .layoutWeight(1)
-        Text('重新读取')
+        Text(t('cl_reload'))
           .fontSize(13)
           .fontColor($r('app.color.ch_text_secondary'))
           .margin({ right: 16 })
           .onClick(() => {
             UiFeedback.confirm(
               this.getUIContext(),
-              '重新读取布局',
+              t('cl_reload_title'),
               t('cl_reload_confirm'),
-              '重新读取',
+              t('cl_reload'),
               () => {
                 this.editing = undefined;
                 this.vm.reload();
               }
             );
           })
-        Text('保存')
+        Text(t('cl_save'))
           .fontSize(13)
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.ch_accent'))

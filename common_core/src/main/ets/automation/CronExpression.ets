@@ -33,6 +33,7 @@
  */
 
 import { DateTimeValue } from 'common_shared';
+import { t, tf } from '../i18n/I18n';
 
 /** 某一段能取的值域。 */
 class FieldRange {
@@ -142,8 +143,7 @@ export class CronExpression {
 
     const parts: string[] = expression.trim().split(/\s+/).filter((each: string) => each.length > 0);
     if (parts.length !== 5 && parts.length !== 6) {
-      out.reason = `字段数应为 5 或 6（分别是「分 时 日 月 周」或「秒 分 时 日 月 周」），` +
-        `实际 ${parts.length} 段`;
+      out.reason = tf('cron_field_count', `${parts.length}`);
       return out;
     }
     out.hasSeconds = parts.length === 6;
@@ -159,7 +159,7 @@ export class CronExpression {
 
     for (let i: number = 0; i < 6; i++) {
       if (!CronExpression.parseField(specs[i], ranges[i], fields[i])) {
-        out.reason = `第 ${i + 1} 段「${specs[i]}」无法解析`;
+        out.reason = tf('cron_field_bad', `${i + 1}`, specs[i]);
         return out;
       }
     }

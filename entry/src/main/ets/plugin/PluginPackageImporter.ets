@@ -31,7 +31,7 @@
 import { common } from '@kit.AbilityKit';
 import { fileIo as fs } from '@kit.CoreFileKit';
 import zlib from '@ohos.zlib';
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import {
   DesktopPluginMeta,
   ExtensionManifest,
@@ -112,13 +112,13 @@ export class PluginPackageImporter {
   /** 转换完给用户看的一句话。 */
   private static summaryOf(meta: DesktopPluginMeta, manifest: ExtensionManifest): string {
     const name: string = manifest.name.length > 0 ? manifest.name : meta.id;
-    let out: string = `已导入「${name}」的元信息。`;
+    let out: string = tf('ppi_imported_meta', name);
     if (meta.id.trim() !== manifest.id) {
-      out += `（原 id ${meta.id.trim()} 改成了 ${manifest.id}）`;
+      out += tf('ppi_id_renamed', meta.id.trim(), manifest.id);
     }
     out += t('imp_dotnet_note');
     if (meta.unreadableFields.length > 0) {
-      out += `有 ${meta.unreadableFields.length} 个字段本端读不出来。`;
+      out += tf('ppi_unreadable', `${meta.unreadableFields.length}`);
     }
     return out;
   }
@@ -155,7 +155,7 @@ export class PluginPackageImporter {
  * 的选择框里只有两种能用的文件，差别是用户不必先知道自己挑错了。
  */
 export async function pickPluginFile(context: common.UIAbilityContext): Promise<TransferOutcome> {
-  return ProfileTransfer.pickOpenUri(context, ['扩展包或清单|.cipx;.json']);
+  return ProfileTransfer.pickOpenUri(context, [t('ppi_open_filter')]);
 }
 
 /**

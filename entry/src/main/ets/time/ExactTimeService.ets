@@ -55,7 +55,7 @@ import { common } from '@kit.AbilityKit';
 import { systemDateTime } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { DateTimeValue } from 'common_shared';
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import { ExactClock, SyncOutcome, planDailyAutoAdjust } from 'common_core';
 
 import { AppClock } from '../common/AppClock';
@@ -109,7 +109,7 @@ export class ExactTimeService implements AppClock {
   private lastSyncAt: number = 0;
   /** 一次同步正在进行（防止定时器与手动触发叠在一起）。 */
   private syncing: boolean = false;
-  private syncStatus: string = '时间尚未同步。';
+  private syncStatus: string = t('ts_not_synced');
 
   constructor(context: common.Context) {
     this.prefs = new AppPreferences(context);
@@ -207,17 +207,17 @@ export class ExactTimeService implements AppClock {
     }
     this.syncing = true;
     this.lastSyncAt = Date.now();
-    this.syncStatus = '正在同步时间……';
+    this.syncStatus = t('ts_syncing');
     try {
       const result: NtpQueryResult = await queryNtp(this.server);
       if (!result.ok || result.response === undefined) {
-        this.syncStatus = `同步时间失败：${result.detail}`;
+        this.syncStatus = tf('ts_sync_failed', result.detail);
         hilog.warn(DOMAIN, TAG, 'ntp query failed: %{public}s', result.detail);
         return;
       }
       this.applyResult(result);
     } catch (err) {
-      this.syncStatus = `同步时间失败：${err}`;
+      this.syncStatus = tf('ts_sync_failed', `${err}`);
       hilog.error(DOMAIN, TAG, 'sync threw: %{public}s', `${err}`);
     } finally {
       this.syncing = false;
@@ -242,10 +242,10 @@ export class ExactTimeService implements AppClock {
     if (outcome.accepted) {
       const offset: number = outcome.offsetMillis;
       this.syncStatus = outcome.offsetMillis >= 0
-        ? `本机时间慢 ${formatMillis(offset)}，已补偿。`
-        : `本机时间快 ${formatMillis(-offset)}，已补偿。`;
+        ? tf('ts_behind_fixed', formatMillis(offset))
+        : tf('ts_ahead_fixed', formatMillis(-offset));
     } else {
-      this.syncStatus = `未采用本次结果：${this.core.statusText()}`;
+      this.syncStatus = tf('ts_rejected', this.core.statusText());
     }
     hilog.info(DOMAIN, TAG, 'sync: accepted=%{public}d offset=%{public}d delay=%{public}d',
       outcome.accepted ? 1 : 0, outcome.offsetMillis, outcome.delayMillis);
@@ -404,7 +404,7 @@ export class ExactTimeService implements AppClock {
    */
   statusText(): string {
     if (this.core.isFrozen()) {
-      return `${this.core.statusText()}（上次同步：${this.syncStatus}）`;
+      return tf('ts_status_last_sync', this.core.statusText(), this.syncStatus);
     }
     return this.syncStatus;
   }
@@ -452,7 +452,7 @@ function clampOffset(value: number): number {
  */
 function formatMillis(millis: number): string {
   if (Math.abs(millis) >= 60000) {
-    return `${(millis / 60000).toFixed(1)} 分钟`;
+    return tf('ts_minutes', (millis / 60000).toFixed(1));
   }
-  return `${(millis / 1000).toFixed(1)} 秒`;
+  return tf('ts_seconds', (millis / 1000).toFixed(1));
 }

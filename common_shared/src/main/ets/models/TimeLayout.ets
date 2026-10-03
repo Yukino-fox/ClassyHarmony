@@ -14,6 +14,7 @@ import { JsonValue } from '../json/JsonValue';
 import { KeyedMap } from '../collections/KeyedMap';
 import { ModelCodec } from './ModelCodec';
 import { TIME_TYPE_CLASS, TimeLayoutItem } from './TimeLayoutItem';
+import { t } from '../i18n/I18n';
 
 export class TimeLayout {
   /** 是否为叠加时间表。 */
@@ -22,7 +23,7 @@ export class TimeLayout {
   /** 叠加来源；非叠加时为 null。 */
   overlaySourceId: Guid | undefined = undefined;
 
-  name: string = '新时间表';
+  name: string = t('sh_default_layout');
 
   /** 时间点列表。 */
   layouts: TimeLayoutItem[] = [];
@@ -125,7 +126,7 @@ export class TimeLayout {
     const out: TimeLayout = new TimeLayout();
     out.isOverlay = ModelCodec.bool(node, 'IsOverlay', false);
     out.overlaySourceId = ModelCodec.readNullableGuid(node, 'OverlaySourceId');
-    out.name = ModelCodec.string(node, 'Name', '新时间表');
+    out.name = ModelCodec.string(node, 'Name', t('sh_default_layout'));
     out.layouts = ModelCodec.readArray(node, 'Layouts', (item: JsonNode) => {
       return TimeLayoutItem.fromJson(JsonValue.asObject(item) ?? new JsonObject());
     });

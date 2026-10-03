@@ -29,6 +29,7 @@ import { WeatherInfo, ValueUnitPair } from 'common_shared';
 import { WeatherPayload } from '../components/ComponentPayloads';
 import { minutesToApproxTime } from './WeatherLogic';
 import { weatherTextByCode } from './WeatherCodes';
+import { t, tf } from '../i18n/I18n';
 
 /** 一条要显示的预警。 */
 export class WeatherAlertBrief {
@@ -119,7 +120,7 @@ export function buildWeatherBrief(payload: WeatherPayload,
 
 function mainTextOf(kind: number, info: WeatherInfo): string {
   if (kind === WEATHER_MAIN_KIND_HUMIDITY) {
-    return `湿度 ${pairText(info.current.humidity)}`;
+    return tf('weather_humidity', pairText(info.current.humidity));
   }
   if (kind === WEATHER_MAIN_KIND_WIND) {
     // 桌面版画一个按风向旋转的箭头 + 风速。没有箭头，就把风向文字放前面 ——
@@ -135,10 +136,10 @@ function mainTextOf(kind: number, info: WeatherInfo): string {
     return `AQI ${info.aqi.aqi}`;
   }
   if (kind === WEATHER_MAIN_KIND_PRESSURE) {
-    return `气压 ${pairText(info.current.pressure)}`;
+    return tf('weather_pressure', pairText(info.current.pressure));
   }
   if (kind === WEATHER_MAIN_KIND_FEELS_LIKE) {
-    return `体感 ${pairText(info.current.feelsLike)}`;
+    return tf('weather_feels_like', pairText(info.current.feelsLike));
   }
   // 默认走「天气 + 温度」。未知的 kind 值（用户手改文件塞进来的）也落这里，
   // 与桌面版「所有 kind 都不等时没有任何 Border 可见」不同 —— 本端至少显示

@@ -19,7 +19,7 @@
  */
 
 import { DateTimeValue, Profile } from 'common_shared';
-import { EngineSettings, WidgetBuilder, WidgetDimension, WidgetModel } from 'common_core';
+import { EngineSettings, WidgetBuilder, WidgetDimension, WidgetModel, t, tf } from 'common_core';
 import { ProfileRepository } from '../data/ProfileRepository';
 import { defaultEngineSettings } from '../common/AppSettings';
 
@@ -46,8 +46,8 @@ export class WidgetModelFactory {
       profile = repository.load();
     } catch (err) {
       model.isEmpty = true;
-      model.emptyHint = '课表读不出来';
-      model.dateText = `${now.month}月${now.day}日`;
+      model.emptyHint = t('wg_profile_unreadable');
+      model.dateText = tf('wg_date_fmt', `${now.month}`, `${now.day}`);
       return model;
     }
 

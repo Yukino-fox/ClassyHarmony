@@ -139,26 +139,26 @@ function testWeatherCodes(): void {
   checkEqual('最后一条是未知', WEATHER_CODE_TABLE[39].text, 'weather_code_99');
 
   // 抽查几处容易抄错的。
-  checkEqual('1 是多云', weatherTextByCode('1'), 'weather_code_1');
-  checkEqual('2 是阴', weatherTextByCode('2'), 'weather_code_2');
-  checkEqual('5 带冰雹', weatherTextByCode('5'), 'weather_code_5');
-  checkEqual('6 是雨夹雪', weatherTextByCode('6'), 'weather_code_6');
-  checkEqual('12 是特大暴雨', weatherTextByCode('12'), 'weather_code_12');
-  checkEqual('18 是雾', weatherTextByCode('18'), 'weather_code_18');
-  checkEqual('19 是冻雨', weatherTextByCode('19'), 'weather_code_19');
-  checkEqual('20 是沙尘暴', weatherTextByCode('20'), 'weather_code_20');
-  checkEqual('21 是中雨区间', weatherTextByCode('21'), 'weather_code_21');
-  checkEqual('28 是暴雪区间', weatherTextByCode('28'), 'weather_code_28');
-  checkEqual('29 是浮尘', weatherTextByCode('29'), 'weather_code_29');
-  checkEqual('32 是飑', weatherTextByCode('32'), 'weather_code_32');
-  checkEqual('34 是弱高吹雪', weatherTextByCode('34'), 'weather_code_34');
-  checkEqual('35 是轻雾', weatherTextByCode('35'), 'weather_code_35');
-  checkEqual('53 是霾', weatherTextByCode('53'), 'weather_code_53');
-  checkEqual('301 是雨', weatherTextByCode('301'), 'weather_code_301');
-  checkEqual('302 是雪', weatherTextByCode('302'), 'weather_code_302');
+  checkEqual('1 是多云', weatherTextByCode('1'), "多云");
+  checkEqual('2 是阴', weatherTextByCode('2'), "阴");
+  checkEqual('5 带冰雹', weatherTextByCode('5'), "雷阵雨并伴有冰雹");
+  checkEqual('6 是雨夹雪', weatherTextByCode('6'), "雨夹雪");
+  checkEqual('12 是特大暴雨', weatherTextByCode('12'), "特大暴雨");
+  checkEqual('18 是雾', weatherTextByCode('18'), "雾");
+  checkEqual('19 是冻雨', weatherTextByCode('19'), "冻雨");
+  checkEqual('20 是沙尘暴', weatherTextByCode('20'), "沙尘暴");
+  checkEqual('21 是中雨区间', weatherTextByCode('21'), "小雨-中雨");
+  checkEqual('28 是暴雪区间', weatherTextByCode('28'), "大雪-暴雪");
+  checkEqual('29 是浮尘', weatherTextByCode('29'), "浮尘");
+  checkEqual('32 是飑', weatherTextByCode('32'), "飑");
+  checkEqual('34 是弱高吹雪', weatherTextByCode('34'), "弱高吹雪");
+  checkEqual('35 是轻雾', weatherTextByCode('35'), "轻雾");
+  checkEqual('53 是霾', weatherTextByCode('53'), "霾");
+  checkEqual('301 是雨', weatherTextByCode('301'), "雨");
+  checkEqual('302 是雪', weatherTextByCode('302'), "雪");
 
   // 表内 99 命中与未命中给的是同一个文案，但「99」本身是命中。
-  checkEqual('99 命中未知', weatherTextByCode('99'), 'weather_code_99');
+  checkEqual('99 命中未知', weatherTextByCode('99'), "未知");
   checkEqual('不存在的代码给未知', weatherTextByCode('999'), WEATHER_TEXT_UNKNOWN);
   // 不做前导零归一化：桌面版是拿 int 的 ToString 去比，'01' 永远查不到。
   checkEqual('01 查不到', weatherTextByCode('01'), WEATHER_TEXT_UNKNOWN);
@@ -727,7 +727,7 @@ function testBrief(): void {
 
   const payload: WeatherPayload = new WeatherPayload();
   const brief: WeatherBrief = buildWeatherBrief(payload, info);
-  checkEqual('默认主信息：晴 + 温度', brief.mainText, 'weather_code_0 25°C');
+  checkEqual('默认主信息：晴 + 温度', brief.mainText, '晴 25°C');
   checkNum('默认主信息种类', brief.mainKind, WEATHER_MAIN_KIND_CONDITION);
   checkNum('AQI 档位带上', brief.aqiLevel, 1);
   checkNum('预警带出', brief.alerts.length, 1);
@@ -749,7 +749,7 @@ function testBrief(): void {
   checkEqual('体感', buildWeatherBrief(payload, info).mainText, '体感 26°C');
   // 陌生 kind 落回天气 + 温度。
   payload.mainWeatherInfoKind = 99;
-  checkEqual('陌生 kind 回落', buildWeatherBrief(payload, info).mainText, 'weather_code_0 25°C');
+  checkEqual('陌生 kind 回落', buildWeatherBrief(payload, info).mainText, '晴 25°C');
   payload.mainWeatherInfoKind = WEATHER_MAIN_KIND_CONDITION;
 
   // 开关。
@@ -791,7 +791,7 @@ function testBrief(): void {
   // 数值为空时不显示光秃秃的单位。
   const blank: WeatherInfo = WeatherInfo.parse(JsonReader.parse(FIXTURE));
   blank.current.temperature.value = '';
-  checkEqual('温度值为空时只留天气文字', buildWeatherBrief(payload, blank).mainText.trim(), 'weather_code_0');
+  checkEqual('温度值为空时只留天气文字', buildWeatherBrief(payload, blank).mainText.trim(), "晴");
 }
 
 // --------------------------------------------------------------- 快照

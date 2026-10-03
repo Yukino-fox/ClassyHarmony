@@ -22,7 +22,7 @@
  * 只写「确定删除吗」的话用户点完之后才发现课没了。
  */
 
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import { ClassPlanGroupRow, ClassSlotRow, SubjectRow, TimeLayoutRow, TimePointRow } from 'common_core';
 import { UiFeedback } from '../common/UiFeedback';
 
@@ -286,7 +286,7 @@ export struct EditorEmptyHint {
  */
 @ComponentV2
 export struct EditorDeleteButton {
-  @Param text: string = '删除';
+  @Param text: string = t('ew_delete');
   @Param message: string = '';
   @Event onConfirm: () => void = () => {};
 
@@ -317,25 +317,25 @@ export struct SubjectRowHeader {
   build() {
     Column() {
       Row() {
-        Text(this.row.name.length > 0 ? this.row.name : '（未命名科目）')
+        Text(this.row.name.length > 0 ? this.row.name : t('ew_unnamed_subject'))
           .fontSize(14)
           .fontColor($r('app.color.ch_text_primary'))
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .layoutWeight(1)
         if (this.row.isOutDoor) {
-          Text('室外')
+          Text(t('ew_outdoor'))
             .fontSize(11)
             .fontColor($r('app.color.ch_next'))
             .margin({ right: 8 })
         }
         if (this.row.usedByClassesTotal > 0) {
-          Text(`${this.row.usedByClassesTotal} 处`)
+          Text(tf('ew_used_places', `${this.row.usedByClassesTotal}`))
             .fontSize(11)
             .fontColor($r('app.color.ch_text_hint'))
             .margin({ right: 8 })
         }
-        Text(this.isExpanded ? '收起' : '展开')
+        Text(this.isExpanded ? t('ew_collapse') : t('ew_expand'))
           .fontSize(12)
           .fontColor($r('app.color.ch_accent'))
           .onClick(() => {
@@ -352,11 +352,11 @@ export struct SubjectRowHeader {
           EditorChip({ text: t('ew_move_down'), onTap: () => { this.onMoveDown(); } })
           Blank()
           EditorDeleteButton({
-            text: '删除',
+            text: t('ew_delete'),
             message: this.row.usedByClassesTotal > 0
-              ? `「${this.row.name}」正被 ${this.row.usedByClassesTotal} 节课引用。` +
+              ? tf('ew_subject_in_use', this.row.name, `${this.row.usedByClassesTotal}`) +
                 t('ew_delete_periods_hint')
-              : `「${this.row.name}」没有被任何课次引用。`,
+              : tf('ew_subject_unused', this.row.name),
             onConfirm: () => { this.onDelete(); }
           })
         }
@@ -392,7 +392,7 @@ export struct TimePointRowSummary {
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .layoutWeight(1)
       } else if (this.row.defaultSubjectName.length > 0) {
-        Text(`默认 ${this.row.defaultSubjectName}`)
+        Text(tf('ew_default_prefix', this.row.defaultSubjectName))
           .fontSize(12)
           .fontColor($r('app.color.ch_text_hint'))
           .maxLines(1)
@@ -421,7 +421,7 @@ export struct ClassSlotRowView {
         .fontColor($r('app.color.ch_text_secondary'))
         .width(64)
 
-      Text(this.row.isEmpty ? '（空）' : this.row.subjectName)
+      Text(this.row.isEmpty ? t('ew_slot_empty') : this.row.subjectName)
         .fontSize(14)
         .fontColor(this.row.isEmpty ? $r('app.color.ch_text_hint') : $r('app.color.ch_text_primary'))
         .maxLines(1)
@@ -470,13 +470,13 @@ export struct ClassPlanGroupRowView {
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
           if (this.row.isDefault) {
-            Text('默认')
+            Text(t('ew_default'))
               .fontSize(11)
               .fontColor($r('app.color.ch_text_hint'))
               .margin({ left: 6 })
           }
           if (this.row.isGlobal) {
-            Text('全局')
+            Text(t('ew_global'))
               .fontSize(11)
               .fontColor($r('app.color.ch_text_hint'))
               .margin({ left: 6 })
@@ -484,7 +484,7 @@ export struct ClassPlanGroupRowView {
         }
         .width('100%')
 
-        Text(`${this.row.planCount} 张课表`)
+        Text(tf('ew_plan_count', `${this.row.planCount}`))
           .fontSize(11)
           .fontColor($r('app.color.ch_text_hint'))
           .margin({ top: 2 })
@@ -493,12 +493,12 @@ export struct ClassPlanGroupRowView {
       .layoutWeight(1)
 
       if (this.row.isSelected) {
-        Text('当前')
+        Text(t('ew_current'))
           .fontSize(11)
           .fontColor($r('app.color.ch_accent'))
           .margin({ right: 8 })
       } else {
-        Text('设为当前')
+        Text(t('ew_set_current'))
           .fontSize(12)
           .fontColor($r('app.color.ch_accent'))
           .margin({ right: 8 })
@@ -510,15 +510,15 @@ export struct ClassPlanGroupRowView {
       // 默认群与全局群不可解散也不可删除：删掉它们改的是选课结果而不只是
       // 少一个列表项，所以按钮整个不出现，而不是出现了一个点了没反应
       if (this.row.canDisband) {
-        EditorChip({ text: '解散', onTap: () => { this.onDisband(); } })
+        EditorChip({ text: t('ew_disband'), onTap: () => { this.onDisband(); } })
           .margin({ right: 6 })
       }
       if (this.row.canDelete) {
         EditorDeleteButton({
-          text: '删除',
+          text: t('ew_delete'),
           message: this.row.planCount > 0
-            ? `「${this.row.name}」里有 ${this.row.planCount} 张课表，删除课表群会一并删除它们。`
-            : `「${this.row.name}」是空的。`,
+            ? tf('ew_group_has_plans', this.row.name, `${this.row.planCount}`)
+            : tf('ew_group_empty', this.row.name),
           onConfirm: () => { this.onDelete(); }
         })
       }
@@ -543,11 +543,11 @@ export struct TimeLayoutRowHeader {
         .fontColor($r('app.color.ch_text_primary'))
         .maxLines(1)
         .layoutWeight(1)
-      Text(`${this.row.classCount} 节 · ${this.row.rowCount} 行`)
+      Text(tf('ew_class_row_count', `${this.row.classCount}`, `${this.row.rowCount}`))
         .fontSize(11)
         .fontColor($r('app.color.ch_text_hint'))
         .margin({ right: 8 })
-      Text(this.isExpanded ? '收起' : '展开')
+      Text(this.isExpanded ? t('ew_collapse') : t('ew_expand'))
         .fontSize(12)
         .fontColor($r('app.color.ch_accent'))
         .onClick(() => {

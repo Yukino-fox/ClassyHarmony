@@ -32,6 +32,7 @@ import {
   scheduleSettingsProblem
 } from './PluginSchedule';
 import { PluginScheduleKind } from './PluginManifest';
+import { t, tf } from '../i18n/I18n';
 
 /** 一个声明式触发器这一帧的判定。 */
 export class PluginTriggerVerdict {
@@ -83,7 +84,7 @@ export function judgePluginTrigger(settings: JsonNode | undefined, now: DateTime
     out.cronText = schedule.cronExpression;
     if (!cron.valid) {
       out.reason = PLUGIN_REASON_BAD_SETTINGS;
-      out.detail = `cron 表达式解不出来：${cron.reason}`;
+      out.detail = tf('cron_invalid', cron.reason);
       return out;
     }
     out.fired = cron.matches(now);

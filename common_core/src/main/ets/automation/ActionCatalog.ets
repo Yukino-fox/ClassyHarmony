@@ -117,12 +117,8 @@ function entry(id: string, name: string, glyph: string, kind: ActionSettingsKind
   return out;
 }
 
-const OS_RUN_REASON: string =
-  '鸿蒙应用不能拉起任意进程，也不能执行命令行 —— 这一条在鸿蒙上没有对应物。';
-const APP_RESTART_REASON: string =
-  '重启要走 startAbility + terminateSelf，而进程被杀时系统不保证回调，' +
-  '新起的进程也拿不到原来的状态。桌面版靠 Environment.Exit + Process.Start，' +
-  '鸿蒙上没有这套。';
+const OS_RUN_REASON: string = t('action_run_unsupported');
+const APP_RESTART_REASON: string = t('action_restart_unsupported');
 
 const REGISTRY: ActionInfo[] = [
   entry(ActionIds.APP_QUIT, t('action_app_quit'), '', ActionSettingsKind.None, false),

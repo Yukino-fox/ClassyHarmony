@@ -1599,6 +1599,1670 @@
     {
       "name": "settings_compensate_daily",
       "value": "+{0} s per day"
+    },
+    {
+      "name": "pane_color_swatch",
+      "value": "Swatch"
+    },
+    {
+      "name": "pane_pick",
+      "value": "Pick"
+    },
+    {
+      "name": "pane_show_seconds",
+      "value": "Show seconds"
+    },
+    {
+      "name": "pane_flash_colon",
+      "value": "Blink the colon"
+    },
+    {
+      "name": "pane_text_label",
+      "value": "Text"
+    },
+    {
+      "name": "pane_font_size",
+      "value": "Font size"
+    },
+    {
+      "name": "pane_follow_panel_fg",
+      "value": "Off: follow the panel foreground color"
+    },
+    {
+      "name": "pane_color_label",
+      "value": "Color"
+    },
+    {
+      "name": "pane_name_label",
+      "value": "Name"
+    },
+    {
+      "name": "pane_target_date",
+      "value": "Target date"
+    },
+    {
+      "name": "pane_start_date",
+      "value": "Start date"
+    },
+    {
+      "name": "pane_connector_label",
+      "value": "Connector"
+    },
+    {
+      "name": "pane_compact_mode",
+      "value": "Compact mode"
+    },
+    {
+      "name": "pane_show_progress",
+      "value": "Show progress bar"
+    },
+    {
+      "name": "pane_progress_reverse",
+      "value": "Invert progress bar"
+    },
+    {
+      "name": "pane_format_label",
+      "value": "Format"
+    },
+    {
+      "name": "pane_countdown_format_example",
+      "value": "%D days"
+    },
+    {
+      "name": "pane_countdown_days_note",
+      "value": "{0} days (computed from the date range; no need to type it)"
+    },
+    {
+      "name": "pane_show_main_weather",
+      "value": "Show main weather info"
+    },
+    {
+      "name": "pane_extra_at_moment",
+      "value": "Show extra info next to moments"
+    },
+    {
+      "name": "pane_countdown_seconds",
+      "value": "Countdown seconds"
+    },
+    {
+      "name": "pane_current_lesson_only",
+      "value": "Show only the current lesson"
+    },
+    {
+      "name": "pane_placeholder_when_empty",
+      "value": "Show placeholder text when the schedule is empty"
+    },
+    {
+      "name": "pane_finished_text",
+      "value": "Text when finished"
+    },
+    {
+      "name": "pane_show_tomorrow",
+      "value": "Also show tomorrow's lessons"
+    },
+    {
+      "name": "pane_line_spacing",
+      "value": "Line spacing multiplier"
+    },
+    {
+      "name": "pane_line_spacing_hint",
+      "value": "1 is the normal spacing"
+    },
+    {
+      "name": "pane_speed",
+      "value": "Speed"
+    },
+    {
+      "name": "pane_allow_pause",
+      "value": "Allow pausing"
+    },
+    {
+      "name": "pane_pause_duration",
+      "value": "Pause duration"
+    },
+    {
+      "name": "pane_dwell_seconds",
+      "value": "Dwell seconds"
+    },
+    {
+      "name": "pane_animated_switch",
+      "value": "Animated switching"
+    },
+    {
+      "name": "pane_unknown_component_hint",
+      "value": "Component id {0} is not recognized; its settings are kept as-is."
+    },
+    {
+      "name": "pane_line_row",
+      "value": "Row {0}"
+    },
+    {
+      "name": "pane_component_title",
+      "value": "Component"
+    },
+    {
+      "name": "ruleset_state_none",
+      "value": "No Class"
+    },
+    {
+      "name": "ruleset_state_on_class",
+      "value": "In Class"
+    },
+    {
+      "name": "ruleset_state_prepare",
+      "value": "Getting Ready (never matches)"
+    },
+    {
+      "name": "ruleset_state_breaking",
+      "value": "Break"
+    },
+    {
+      "name": "ruleset_state_unknown",
+      "value": "Unknown state ({0})"
+    },
+    {
+      "name": "ruleset_not_chosen",
+      "value": "No rule chosen yet"
+    },
+    {
+      "name": "ruleset_unknown_rule",
+      "value": "This platform does not know this rule; treated as false"
+    },
+    {
+      "name": "ruleset_handler_threw",
+      "value": "Evaluation threw an error; treated as false"
+    },
+    {
+      "name": "ruleset_true",
+      "value": "Holds"
+    },
+    {
+      "name": "ruleset_false",
+      "value": "Does not hold"
+    },
+    {
+      "name": "ruleset_no_ruleset",
+      "value": "No rules configured yet"
+    },
+    {
+      "name": "ruleset_summary_time_state",
+      "value": "Time state: {0}"
+    },
+    {
+      "name": "ruleset_summary_subject",
+      "value": "Subject: {0}"
+    },
+    {
+      "name": "ruleset_summary_subject_none",
+      "value": "Subject: none chosen"
+    },
+    {
+      "name": "ruleset_summary_empty",
+      "value": "(empty)"
+    },
+    {
+      "name": "ruleset_summary_text",
+      "value": "Text: {0}"
+    },
+    {
+      "name": "ruleset_summary_regex",
+      "value": " (regex)"
+    },
+    {
+      "name": "ruleset_summary_sun",
+      "value": "{0} {1} min"
+    },
+    {
+      "name": "ruleset_after_sunset",
+      "value": "After sunset"
+    },
+    {
+      "name": "ruleset_before_sunrise",
+      "value": "Before sunrise"
+    },
+    {
+      "name": "ruleset_summary_weather",
+      "value": "Weather type {0}"
+    },
+    {
+      "name": "ruleset_fuzzy",
+      "value": " (fuzzy)"
+    },
+    {
+      "name": "ruleset_will_hide",
+      "value": "It will be hidden now"
+    },
+    {
+      "name": "ruleset_wont_hide",
+      "value": "It will not be hidden"
+    },
+    {
+      "name": "ruleset_reevaluate",
+      "value": "Re-evaluate"
+    },
+    {
+      "name": "ruleset_result_hint_count",
+      "value": "The result was computed when this page opened; {0} groups took part. Re-evaluate after the schedule changes."
+    },
+    {
+      "name": "ruleset_how_groups",
+      "value": "How groups combine"
+    },
+    {
+      "name": "ruleset_invert_all",
+      "value": "Invert the whole thing"
+    },
+    {
+      "name": "ruleset_group_n",
+      "value": "Group {0}"
+    },
+    {
+      "name": "ruleset_delete_group",
+      "value": "Delete group"
+    },
+    {
+      "name": "ruleset_how_rules",
+      "value": "How rules in a group combine"
+    },
+    {
+      "name": "ruleset_all_hold",
+      "value": "All hold"
+    },
+    {
+      "name": "ruleset_delete",
+      "value": "Delete"
+    },
+    {
+      "name": "ruleset_replace_with",
+      "value": "Replace with…"
+    },
+    {
+      "name": "ruleset_choice_unavailable",
+      "value": "{0} (unavailable on this platform)"
+    },
+    {
+      "name": "ruleset_field_time_state",
+      "value": "Time state"
+    },
+    {
+      "name": "ruleset_pick",
+      "value": "Pick…"
+    },
+    {
+      "name": "ruleset_field_subject",
+      "value": "Subject"
+    },
+    {
+      "name": "ruleset_no_subject",
+      "value": "(no subject chosen)"
+    },
+    {
+      "name": "ruleset_none_picked",
+      "value": "None chosen"
+    },
+    {
+      "name": "ruleset_match_text",
+      "value": "Match text"
+    },
+    {
+      "name": "ruleset_match_text_hint",
+      "value": "String to match"
+    },
+    {
+      "name": "ruleset_regex_toggle",
+      "value": "Interpret as regex"
+    },
+    {
+      "name": "cp_rot_week",
+      "value": "Every week"
+    },
+    {
+      "name": "cp_rot_odd",
+      "value": "Odd weeks"
+    },
+    {
+      "name": "cp_rot_even",
+      "value": "Even weeks"
+    },
+    {
+      "name": "cp_rot_3w",
+      "value": "Every 3 weeks"
+    },
+    {
+      "name": "cp_rot_4w",
+      "value": "Every 4 weeks"
+    },
+    {
+      "name": "cp_separator",
+      "value": "Separator"
+    },
+    {
+      "name": "cp_break",
+      "value": "Break"
+    },
+    {
+      "name": "cp_slot_empty",
+      "value": "(empty)"
+    },
+    {
+      "name": "cp_clear_class",
+      "value": "(clear this lesson)"
+    },
+    {
+      "name": "cp_skip_today",
+      "value": "This lesson is off today"
+    },
+    {
+      "name": "cp_take_today",
+      "value": "This lesson is on today"
+    },
+    {
+      "name": "cp_unmark_adjust",
+      "value": "Clear the adjusted flag"
+    },
+    {
+      "name": "cp_mark_adjust",
+      "value": "Mark as adjusted"
+    },
+    {
+      "name": "cp_default_name",
+      "value": "New Schedule"
+    },
+    {
+      "name": "cp_title",
+      "value": "Schedules"
+    },
+    {
+      "name": "cp_new_schedule",
+      "value": "New Schedule"
+    },
+    {
+      "name": "cp_overlay_badge",
+      "value": "Overlay"
+    },
+    {
+      "name": "cp_active_today",
+      "value": "Active today"
+    },
+    {
+      "name": "cp_plan_progress",
+      "value": "{0} {1} · {2}/{3} planned"
+    },
+    {
+      "name": "cp_collapse",
+      "value": "Collapse"
+    },
+    {
+      "name": "cp_expand",
+      "value": "Expand"
+    },
+    {
+      "name": "cp_name",
+      "value": "Name"
+    },
+    {
+      "name": "cp_name_placeholder",
+      "value": "Schedule name"
+    },
+    {
+      "name": "cp_time_layout",
+      "value": "Time layout"
+    },
+    {
+      "name": "cp_change",
+      "value": "Change"
+    },
+    {
+      "name": "cp_weekday",
+      "value": "Weekday"
+    },
+    {
+      "name": "cp_rotation",
+      "value": "Rotation"
+    },
+    {
+      "name": "cp_assign_lessons",
+      "value": "Lessons"
+    },
+    {
+      "name": "cp_build_overlay",
+      "value": "Build an overlay from this one"
+    },
+    {
+      "name": "cp_delete_plan",
+      "value": "Delete schedule"
+    },
+    {
+      "name": "cp_overlay_suffix",
+      "value": " · overlay"
+    },
+    {
+      "name": "common_cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "common_save",
+      "value": "Save"
+    },
+    {
+      "name": "common_ok",
+      "value": "OK"
+    },
+    {
+      "name": "common_delete",
+      "value": "Delete"
+    },
+    {
+      "name": "eh_title",
+      "value": "Edit Schedule"
+    },
+    {
+      "name": "eh_loading",
+      "value": "Loading schedules…"
+    },
+    {
+      "name": "eh_profile_name",
+      "value": "Profile name"
+    },
+    {
+      "name": "eh_unnamed_profile",
+      "value": "(unnamed profile)"
+    },
+    {
+      "name": "eh_count_subjects",
+      "value": "{0} subjects"
+    },
+    {
+      "name": "eh_count_layouts",
+      "value": "{0} time layouts"
+    },
+    {
+      "name": "eh_count_plans",
+      "value": "{0} schedules"
+    },
+    {
+      "name": "eh_count_groups",
+      "value": "{0} schedule groups"
+    },
+    {
+      "name": "eh_entry_subjects",
+      "value": "Subjects"
+    },
+    {
+      "name": "eh_entry_subjects_hint",
+      "value": "Course name, short name, teacher"
+    },
+    {
+      "name": "eh_entry_layouts",
+      "value": "Time layouts"
+    },
+    {
+      "name": "eh_entry_layouts_hint",
+      "value": "How many classes a day and how long each lasts"
+    },
+    {
+      "name": "eh_entry_plans",
+      "value": "Schedules"
+    },
+    {
+      "name": "eh_entry_plans_hint",
+      "value": "Which subject is taught on which weekday"
+    },
+    {
+      "name": "eh_entry_groups",
+      "value": "Schedule groups"
+    },
+    {
+      "name": "eh_entry_groups_hint",
+      "value": "Switch groups by odd/even weeks or by term"
+    },
+    {
+      "name": "eh_entry_reminder",
+      "value": "Pre-class reminders"
+    },
+    {
+      "name": "eh_entry_reminder_hint",
+      "value": "On/off, minutes ahead, merged or one by one"
+    },
+    {
+      "name": "eh_profile_file",
+      "value": "Profile file"
+    },
+    {
+      "name": "eh_import_file",
+      "value": "Import schedule file"
+    },
+    {
+      "name": "eh_import_confirm",
+      "value": "This replaces the entire current draft. Save afterwards to write it into the profile."
+    },
+    {
+      "name": "eh_export_file",
+      "value": "Export schedule file"
+    },
+    {
+      "name": "eh_pick_file",
+      "value": "Choose file"
+    },
+    {
+      "name": "ew_delete",
+      "value": "Delete"
+    },
+    {
+      "name": "ew_unnamed_subject",
+      "value": "(unnamed subject)"
+    },
+    {
+      "name": "ew_outdoor",
+      "value": "Outdoor"
+    },
+    {
+      "name": "ew_used_places",
+      "value": "{0} uses"
+    },
+    {
+      "name": "ew_collapse",
+      "value": "Collapse"
+    },
+    {
+      "name": "ew_expand",
+      "value": "Expand"
+    },
+    {
+      "name": "ew_subject_in_use",
+      "value": "\"{0}\" is used by {1} lessons."
+    },
+    {
+      "name": "ew_subject_unused",
+      "value": "\"{0}\" is not used by any lesson."
+    },
+    {
+      "name": "ew_default_prefix",
+      "value": "Default: {0}"
+    },
+    {
+      "name": "ew_slot_empty",
+      "value": "(empty)"
+    },
+    {
+      "name": "ew_default",
+      "value": "Default"
+    },
+    {
+      "name": "ew_global",
+      "value": "Global"
+    },
+    {
+      "name": "ew_plan_count",
+      "value": "{0} schedules"
+    },
+    {
+      "name": "ew_current",
+      "value": "Current"
+    },
+    {
+      "name": "ew_set_current",
+      "value": "Make current"
+    },
+    {
+      "name": "ew_disband",
+      "value": "Disband"
+    },
+    {
+      "name": "ew_group_has_plans",
+      "value": "\"{0}\" contains {1} schedules; deleting the group deletes them too."
+    },
+    {
+      "name": "ew_group_empty",
+      "value": "\"{0}\" is empty."
+    },
+    {
+      "name": "ew_class_row_count",
+      "value": "{0} lessons · {1} rows"
+    },
+    {
+      "name": "rm_on_time",
+      "value": "On the dot"
+    },
+    {
+      "name": "rm_advance_min",
+      "value": "{0} min"
+    },
+    {
+      "name": "rm_sync_failed",
+      "value": "Sync failed, please try again later"
+    },
+    {
+      "name": "rm_syncing",
+      "value": "Syncing…"
+    },
+    {
+      "name": "rm_sync_partial",
+      "value": "{0} ({1} not scheduled)"
+    },
+    {
+      "name": "rm_dropped_count",
+      "value": "{0} reminders were not scheduled"
+    },
+    {
+      "name": "rm_shape_specific",
+      "value": "one by one"
+    },
+    {
+      "name": "rm_shape_merged",
+      "value": "merged by period"
+    },
+    {
+      "name": "rm_mode_auto",
+      "value": "Auto"
+    },
+    {
+      "name": "rm_planned",
+      "value": "Scheduled {0} reminders, {1}"
+    },
+    {
+      "name": "rm_quota_more",
+      "value": ", quota exceeded; {0} more not scheduled"
+    },
+    {
+      "name": "rm_title",
+      "value": "Pre-Class Reminders"
+    },
+    {
+      "name": "rm_enable",
+      "value": "Enable pre-class reminders"
+    },
+    {
+      "name": "rm_advance_outdoor",
+      "value": "Advance (Outdoor)"
+    },
+    {
+      "name": "rm_advance_outdoor_hint",
+      "value": "Playground classes need time to walk there"
+    },
+    {
+      "name": "rm_shape",
+      "value": "Reminder shape"
+    },
+    {
+      "name": "rm_shape_desc",
+      "value": "One-by-one reminders name the class; merged ones only say “time for class”, but there are far fewer of them. When the count exceeds the system limit they switch to merged automatically."
+    },
+    {
+      "name": "rm_resync_now",
+      "value": "Re-schedule reminders now"
+    },
+    {
+      "name": "temp_overlay_title",
+      "value": "Overlay Schedules"
+    },
+    {
+      "name": "temp_overlay_from",
+      "value": "Overlay of {0}"
+    },
+    {
+      "name": "temp_cancel_overlay_msg",
+      "value": "\"{0}\" will be removed from its overlay relationship. The schedule itself is kept and can be enabled as a normal schedule."
+    },
+    {
+      "name": "temp_plan_title",
+      "value": "Temporary Schedule"
+    },
+    {
+      "name": "temp_current_plan",
+      "value": "Current: {0} (since {1})"
+    },
+    {
+      "name": "temp_use_plan_title",
+      "value": "Temporarily use \"{0}\""
+    },
+    {
+      "name": "temp_group_title",
+      "value": "Temporary Schedule Group"
+    },
+    {
+      "name": "temp_current_group",
+      "value": "Current: {0} (until {1}, {2})"
+    },
+    {
+      "name": "temp_group_plan_count",
+      "value": "{0} plans"
+    },
+    {
+      "name": "temp_use_group_title",
+      "value": "Temporarily use \"{0}\""
+    },
+    {
+      "name": "temp_expiry_suffix",
+      "value": "{0} · until"
+    },
+    {
+      "name": "temp_active_notice",
+      "value": "Temporarily active: {0} (since {1})"
+    },
+    {
+      "name": "temp_book_change",
+      "value": "Edit"
+    },
+    {
+      "name": "temp_book_delete",
+      "value": "Delete"
+    },
+    {
+      "name": "temp_book_remove_msg",
+      "value": "{0} returns to normal selection. This booking will be removed from the profile."
+    },
+    {
+      "name": "temp_status_plan_missing",
+      "value": "{0} — the schedule was deleted; this booking will not take effect"
+    },
+    {
+      "name": "temp_status_expired",
+      "value": "{0} — expired"
+    },
+    {
+      "name": "temp_status_active",
+      "value": "{0} — active that day"
+    },
+    {
+      "name": "temp_status_inactive",
+      "value": "{0} — will not take effect"
+    },
+    {
+      "name": "temp_picking_today",
+      "value": "{1}, {0} (today)"
+    },
+    {
+      "name": "temp_picking_tomorrow",
+      "value": "{1}, {0} (tomorrow)"
+    },
+    {
+      "name": "temp_picking_plain",
+      "value": "{1}, {0}"
+    },
+    {
+      "name": "tl_title",
+      "value": "Time Layout"
+    },
+    {
+      "name": "tl_new_layout",
+      "value": "New Time Layout"
+    },
+    {
+      "name": "tl_default_name",
+      "value": "New Time Layout"
+    },
+    {
+      "name": "tl_name",
+      "value": "Name"
+    },
+    {
+      "name": "tl_name_placeholder",
+      "value": "Time layout name"
+    },
+    {
+      "name": "tl_used_by",
+      "value": "Used by: {0}"
+    },
+    {
+      "name": "tl_resync_by_period",
+      "value": "Re-sort by period"
+    },
+    {
+      "name": "tl_delete_layout",
+      "value": "Delete time layout"
+    },
+    {
+      "name": "tl_delete_in_use",
+      "value": "{0} schedules are bound to this time layout. Deleting it unbinds them and they stop taking part in selection."
+    },
+    {
+      "name": "tl_edit_time",
+      "value": "Edit time"
+    },
+    {
+      "name": "tl_delete_point_class",
+      "value": "lesson {0}. Deleting also removes it from every schedule using this layout:"
+    },
+    {
+      "name": "tl_delete_point",
+      "value": "Delete this period."
+    },
+    {
+      "name": "tl_unset",
+      "value": "Not set"
+    },
+    {
+      "name": "tl_applied_to",
+      "value": "Applied to {0} schedules"
+    },
+    {
+      "name": "tl_start",
+      "value": "Start"
+    },
+    {
+      "name": "tl_duration",
+      "value": "Duration"
+    },
+    {
+      "name": "tl_duration_placeholder",
+      "value": "45 min"
+    },
+    {
+      "name": "tl_bad_start",
+      "value": "Bad start time format, e.g. 08:00"
+    },
+    {
+      "name": "tl_bad_duration",
+      "value": "Bad duration format, e.g. 45 min"
+    },
+    {
+      "name": "tl_time_clash",
+      "value": "Overlaps with {0}"
+    },
+    {
+      "name": "common_pick",
+      "value": "Pick…"
+    },
+    {
+      "name": "cl_copy_suffix",
+      "value": " copy"
+    },
+    {
+      "name": "cl_switch_scheme",
+      "value": "Switch Scheme"
+    },
+    {
+      "name": "cl_switch_warn",
+      "value": "Switching to \"{0}\" discards unsaved changes in the current scheme."
+    },
+    {
+      "name": "cl_switch_confirm",
+      "value": "Discard & switch"
+    },
+    {
+      "name": "cl_duplicate_title",
+      "value": "Duplicate Current Scheme"
+    },
+    {
+      "name": "cl_duplicate",
+      "value": "Duplicate"
+    },
+    {
+      "name": "cl_delete_scheme",
+      "value": "Delete \"{0}\""
+    },
+    {
+      "name": "cl_delete_scheme_warn",
+      "value": "This scheme's file will be deleted; once deleted it cannot be recovered."
+    },
+    {
+      "name": "cl_clock_running",
+      "value": "Clock: running"
+    },
+    {
+      "name": "cl_clock_paused",
+      "value": "Clock: paused"
+    },
+    {
+      "name": "cl_scheme",
+      "value": "Scheme"
+    },
+    {
+      "name": "cl_collapse",
+      "value": "Collapse"
+    },
+    {
+      "name": "cl_switch",
+      "value": "Switch"
+    },
+    {
+      "name": "cl_current",
+      "value": "Current"
+    },
+    {
+      "name": "cl_info_panel",
+      "value": "Info Panel"
+    },
+    {
+      "name": "cl_reload",
+      "value": "Reload"
+    },
+    {
+      "name": "cl_reload_title",
+      "value": "Reload Layout"
+    },
+    {
+      "name": "cl_save",
+      "value": "Save"
+    },
+    {
+      "name": "clvm_date",
+      "value": "Date"
+    },
+    {
+      "name": "clvm_clock",
+      "value": "Clock"
+    },
+    {
+      "name": "clvm_text",
+      "value": "Text"
+    },
+    {
+      "name": "clvm_countdown",
+      "value": "Countdown"
+    },
+    {
+      "name": "clvm_schedule",
+      "value": "Schedule"
+    },
+    {
+      "name": "clvm_weather",
+      "value": "Weather Brief"
+    },
+    {
+      "name": "clvm_separator",
+      "value": "Separator"
+    },
+    {
+      "name": "clvm_group",
+      "value": "Group Container"
+    },
+    {
+      "name": "clvm_stack",
+      "value": "Stack Container"
+    },
+    {
+      "name": "clvm_rolling",
+      "value": "Rolling Container"
+    },
+    {
+      "name": "clvm_slide",
+      "value": "Slide Container"
+    },
+    {
+      "name": "clvm_save_failed",
+      "value": "Save failed: could not write into the info panel directory"
+    },
+    {
+      "name": "clvm_switched",
+      "value": "Switched to \"{0}\""
+    },
+    {
+      "name": "clvm_duplicated",
+      "value": "Duplicated as \"{0}\"; takes effect after saving"
+    },
+    {
+      "name": "clvm_delete_failed",
+      "value": "Delete failed: the file could not be removed"
+    },
+    {
+      "name": "clvm_deleted",
+      "value": "Deleted \"{0}\""
+    },
+    {
+      "name": "clvm_add_not_container",
+      "value": "Cannot add: the target is not a container"
+    },
+    {
+      "name": "clvm_added",
+      "value": "Added {0}"
+    },
+    {
+      "name": "clvm_replaced",
+      "value": "Replaced with {0}"
+    },
+    {
+      "name": "clvm_line_rules_on",
+      "value": "Row {0} now hides by rules"
+    },
+    {
+      "name": "clvm_line_rules_off",
+      "value": "Row {0} turned off"
+    },
+    {
+      "name": "ct_settings",
+      "value": "Settings"
+    },
+    {
+      "name": "ct_unknown_no_settings",
+      "value": "Unrecognized component; no settings"
+    },
+    {
+      "name": "ct_add_child",
+      "value": "Add child component"
+    },
+    {
+      "name": "ct_replace",
+      "value": "Replace"
+    },
+    {
+      "name": "ct_delete",
+      "value": "Delete"
+    },
+    {
+      "name": "ct_container_tag",
+      "value": "Container"
+    },
+    {
+      "name": "ct_rule_hidden_tag",
+      "value": "Hidden by a rule right now"
+    },
+    {
+      "name": "ct_collapse",
+      "value": "Collapse"
+    },
+    {
+      "name": "ct_actions",
+      "value": "Actions"
+    },
+    {
+      "name": "ct_add_into",
+      "value": "Add into \"{0}\""
+    },
+    {
+      "name": "ct_replace_with",
+      "value": "Replace \"{0}\" with"
+    },
+    {
+      "name": "ct_line_empty",
+      "value": "Empty row"
+    },
+    {
+      "name": "ct_line_children",
+      "value": "{0} components"
+    },
+    {
+      "name": "ct_line_children_unknown",
+      "value": "{0} components, {1} unrecognized"
+    },
+    {
+      "name": "ct_visible",
+      "value": "Show"
+    },
+    {
+      "name": "ct_add_component",
+      "value": "Add component"
+    },
+    {
+      "name": "ct_collapse_rules",
+      "value": "Collapse rules"
+    },
+    {
+      "name": "ct_rules_hiding",
+      "value": "Rules (hiding now)"
+    },
+    {
+      "name": "ct_line_rules_title",
+      "value": "Hide rules for row {0}"
+    },
+    {
+      "name": "ct_add_to_line",
+      "value": "Add to row {0}"
+    },
+    {
+      "name": "exec_unknown_action",
+      "value": "Unknown action id: {0}"
+    },
+    {
+      "name": "exec_plugin_noop",
+      "value": "This extension action did nothing (the manifest does not say what to do)."
+    },
+    {
+      "name": "exec_plugin_setting_no_key",
+      "value": "The extension's settings action has no setting key."
+    },
+    {
+      "name": "exec_plugin_bad_value",
+      "value": "Cannot interpret \"{0}\" as a value for settings key {1}."
+    },
+    {
+      "name": "exec_sleep_parse_failed",
+      "value": "Failed to parse the Sleep settings"
+    },
+    {
+      "name": "exec_sleep_bad_duration",
+      "value": "Sleep duration must be greater than 0"
+    },
+    {
+      "name": "exec_settings_parse_failed",
+      "value": "Failed to parse the ModifyAppSettings settings"
+    },
+    {
+      "name": "exec_unknown_setting_mode",
+      "value": "Unknown settings modification mode: {0}"
+    },
+    {
+      "name": "exec_notification_parse_failed",
+      "value": "Failed to parse the Notification settings"
+    },
+    {
+      "name": "exec_weather_notification_parse_failed",
+      "value": "Failed to parse the WeatherNotification settings"
+    },
+    {
+      "name": "exec_unknown_weather_kind",
+      "value": "Unknown weather alert kind: {0}"
+    },
+    {
+      "name": "wf_day_today",
+      "value": "Today"
+    },
+    {
+      "name": "wf_day_tomorrow",
+      "value": "Tomorrow"
+    },
+    {
+      "name": "wf_day_day_after",
+      "value": "Day after tomorrow"
+    },
+    {
+      "name": "wf_weather_range",
+      "value": "{0} to {1}"
+    },
+    {
+      "name": "ix_open_editor_failed",
+      "value": "Cannot open the editor"
+    },
+    {
+      "name": "ix_open_panel_failed",
+      "value": "Cannot open the info panel"
+    },
+    {
+      "name": "ix_open_settings_failed",
+      "value": "Cannot open settings"
+    },
+    {
+      "name": "ix_tab_schedule",
+      "value": "Schedule"
+    },
+    {
+      "name": "ix_tab_panel",
+      "value": "Panel"
+    },
+    {
+      "name": "ix_tab_settings",
+      "value": "Settings"
+    },
+    {
+      "name": "ix_tab_edit",
+      "value": "Edit"
+    },
+    {
+      "name": "ix_import_hint",
+      "value": "Imported schedule files show up here"
+    },
+    {
+      "name": "ix_this_week",
+      "value": "This week"
+    },
+    {
+      "name": "ix_preparing",
+      "value": "Preparing…"
+    },
+    {
+      "name": "ix_loading",
+      "value": "Loading schedules…"
+    },
+    {
+      "name": "wf_loading",
+      "value": "Loading..."
+    },
+    {
+      "name": "wf_invalid_workflow",
+      "value": "Invalid workflow"
+    },
+    {
+      "name": "wf_name_placeholder",
+      "value": "Workflow name"
+    },
+    {
+      "name": "wf_triggers",
+      "value": "Triggers"
+    },
+    {
+      "name": "wf_conditions",
+      "value": "Conditions"
+    },
+    {
+      "name": "wf_actions",
+      "value": "Actions"
+    },
+    {
+      "name": "wf_delete",
+      "value": "Delete"
+    },
+    {
+      "name": "wf_revertible",
+      "value": "Revertible"
+    },
+    {
+      "name": "wf_no_settings",
+      "value": "No settings"
+    },
+    {
+      "name": "sub_default_name",
+      "value": "New Subject"
+    },
+    {
+      "name": "sub_title",
+      "value": "Subjects"
+    },
+    {
+      "name": "sub_add",
+      "value": "Add subject"
+    },
+    {
+      "name": "sub_name",
+      "value": "Name"
+    },
+    {
+      "name": "sub_name_hint",
+      "value": "Subject name"
+    },
+    {
+      "name": "sub_initial",
+      "value": "Short name"
+    },
+    {
+      "name": "sub_teacher",
+      "value": "Teacher"
+    },
+    {
+      "name": "sub_optional",
+      "value": "Optional"
+    },
+    {
+      "name": "sub_outdoor",
+      "value": "Outdoor class"
+    },
+    {
+      "name": "sub_outdoor_hint",
+      "value": "Shown on the schedule"
+    },
+    {
+      "name": "sub_used_by",
+      "value": "Referenced by {0} schedules, {1} lessons in total."
+    },
+    {
+      "name": "cgp_default_name",
+      "value": "New Schedule Group"
+    },
+    {
+      "name": "cgp_title",
+      "value": "Schedule Groups"
+    },
+    {
+      "name": "cgp_disband_title",
+      "value": "Disband Schedule Group"
+    },
+    {
+      "name": "cgp_disband_msg",
+      "value": "The group is removed; its {0} schedules are kept and fall back to the default group."
+    },
+    {
+      "name": "cgp_disband",
+      "value": "Disband"
+    },
+    {
+      "name": "cgp_group_name",
+      "value": "Group name"
+    },
+    {
+      "name": "cgp_rename",
+      "value": "Rename"
+    },
+    {
+      "name": "cgp_new_group",
+      "value": "New schedule group"
+    },
+    {
+      "name": "ed_unknown_page",
+      "value": "Unknown page: {0}"
+    },
+    {
+      "name": "ed_leave_ask",
+      "value": "How should these changes be handled before going back?"
+    },
+    {
+      "name": "ed_discard_back",
+      "value": "Discard changes and go back"
+    },
+    {
+      "name": "ed_preparing",
+      "value": "Preparing…"
+    },
+    {
+      "name": "ed_reload",
+      "value": "Reload"
+    },
+    {
+      "name": "ed_reload_title",
+      "value": "Reload Profile"
+    },
+    {
+      "name": "au_loading",
+      "value": "Loading..."
+    },
+    {
+      "name": "au_title",
+      "value": "Automation"
+    },
+    {
+      "name": "au_scheme_prefix",
+      "value": "Scheme: "
+    },
+    {
+      "name": "au_trigger_count",
+      "value": "{0} triggers"
+    },
+    {
+      "name": "au_action_count",
+      "value": "{0} actions"
+    },
+    {
+      "name": "au_edit",
+      "value": "Edit"
+    },
+    {
+      "name": "au_new_workflow",
+      "value": "New Workflow"
+    },
+    {
+      "name": "ppi_imported_meta",
+      "value": "Imported the metadata of \"{0}\"."
+    },
+    {
+      "name": "ppi_id_renamed",
+      "value": " (original id {0} changed to {1})"
+    },
+    {
+      "name": "ppi_unreadable",
+      "value": "{0} fields could not be read on this platform."
+    },
+    {
+      "name": "ppi_open_filter",
+      "value": "Extension package or manifest|.cipx;.json"
+    },
+    {
+      "name": "bt_not_started",
+      "value": "Not started"
+    },
+    {
+      "name": "bt_running_in",
+      "value": "Running ({0})"
+    },
+    {
+      "name": "bt_request_failed",
+      "value": "Request failed: {0}"
+    },
+    {
+      "name": "bt_mode_multi",
+      "value": "Multi-device link"
+    },
+    {
+      "name": "bt_mode_task",
+      "value": "Task keeping"
+    },
+    {
+      "name": "ps_manifest_missing",
+      "value": "Manifest file cannot be found: {0}"
+    },
+    {
+      "name": "ps_manifest_unreadable",
+      "value": "Manifest file cannot be read: {0}"
+    },
+    {
+      "name": "ps_manifest_corrupt",
+      "value": "The manifest is corrupt; rolled back to the last readable one ({0})."
+    },
+    {
+      "name": "ps_manifest_both_fail",
+      "value": "Neither the manifest nor its backup can be read: {0}"
+    },
+    {
+      "name": "pf_save_suffix_choice",
+      "value": "Files|{0}"
+    },
+    {
+      "name": "ddo_bad_session_id",
+      "value": "Invalid session id (letters, digits and underscores only, at most 128 characters)"
+    },
+    {
+      "name": "ddo_join_failed",
+      "value": "Failed to join the session: {0}"
+    },
+    {
+      "name": "ddo_sync_unavailable",
+      "value": "Sync unavailable: {0}"
+    },
+    {
+      "name": "ddo_off",
+      "value": "Off"
+    },
+    {
+      "name": "ddo_session_line",
+      "value": "Session {0}"
+    },
+    {
+      "name": "ddo_peers_online",
+      "value": "{0} peers online"
+    },
+    {
+      "name": "ddo_no_peers",
+      "value": "No peers online"
+    },
+    {
+      "name": "ddo_last_from",
+      "value": "Last seen from \"{0}\""
+    },
+    {
+      "name": "ddo_unknown_device",
+      "value": "Unknown device"
+    },
+    {
+      "name": "ddo_default_model",
+      "value": "HarmonyOS device"
+    },
+    {
+      "name": "pq_no_profile",
+      "value": "Cannot read the schedule profile"
+    },
+    {
+      "name": "pq_build_failed",
+      "value": "Failed to build the state"
+    },
+    {
+      "name": "pl_leave_ask",
+      "value": "How should these changes to the info panel be handled before going back?"
+    },
+    {
+      "name": "pl_hidden_rows",
+      "value": "{0} more rows are hidden; you can turn them on in the row list above."
+    },
+    {
+      "name": "pl_rule_hidden_rows",
+      "value": "{0} more rows are hidden by rules (diagonal marker)."
+    },
+    {
+      "name": "plrow_installed",
+      "value": "{0} entries installed"
+    },
+    {
+      "name": "plrow_declared_components",
+      "value": "Components {0}"
+    },
+    {
+      "name": "plrow_declared_triggers",
+      "value": "Triggers {0}"
+    },
+    {
+      "name": "plrow_declared_actions",
+      "value": "Actions {0}"
+    },
+    {
+      "name": "plrow_declared_providers",
+      "value": "Notifications {0}"
+    },
+    {
+      "name": "plrow_declared_themes",
+      "value": "Themes {0}"
+    },
+    {
+      "name": "plrow_declared_none",
+      "value": "Nothing declared"
+    },
+    {
+      "name": "rm_channel_desc",
+      "value": "Reminders before class"
+    },
+    {
+      "name": "rs_profile_unreadable",
+      "value": "The schedule could not be read; no reminders were changed"
+    },
+    {
+      "name": "rs_notify_revoked",
+      "value": "Notification permission was turned off during the sync"
+    },
+    {
+      "name": "sp_unavailable_no_fallback",
+      "value": "Unavailable: {0} is not implemented on this device and there is no fallback engine."
+    },
+    {
+      "name": "sp_unavailable",
+      "value": "Unavailable: {0} is not available on this device."
+    },
+    {
+      "name": "sp_current",
+      "value": "Current: {0}"
+    },
+    {
+      "name": "sp_current_fallback",
+      "value": "Current: {0} (the selected {1} is unavailable on this device, so it fell back)"
+    },
+    {
+      "name": "sp_tts_timeout",
+      "value": "Speech timed out"
+    },
+    {
+      "name": "ts_not_synced",
+      "value": "Time has not been synced yet."
+    },
+    {
+      "name": "ts_syncing",
+      "value": "Syncing time…"
+    },
+    {
+      "name": "ts_sync_failed",
+      "value": "Time sync failed: {0}"
+    },
+    {
+      "name": "ts_behind_fixed",
+      "value": "This device was {0} behind; compensated."
+    },
+    {
+      "name": "ts_ahead_fixed",
+      "value": "This device was {0} ahead; compensated."
+    },
+    {
+      "name": "ts_rejected",
+      "value": "Result not applied: {0}"
+    },
+    {
+      "name": "ts_status_last_sync",
+      "value": "{0} (last sync: {1})"
+    },
+    {
+      "name": "ts_minutes",
+      "value": "{0} min"
+    },
+    {
+      "name": "ts_seconds",
+      "value": "{0} s"
+    },
+    {
+      "name": "ntp_empty_server",
+      "value": "Server address is empty"
+    },
+    {
+      "name": "ntp_bad_response",
+      "value": "Invalid response: {0}"
+    },
+    {
+      "name": "au_workflow_n",
+      "value": "Workflow {0}"
+    },
+    {
+      "name": "ctv_no_classes_hint",
+      "value": "Add a schedule and today’s classes show up here."
+    },
+    {
+      "name": "ctv_until_break",
+      "value": "Until break"
+    },
+    {
+      "name": "ctv_break",
+      "value": "Break"
+    },
+    {
+      "name": "ctv_not_started_yet",
+      "value": "Class has not started yet"
+    },
+    {
+      "name": "ctv_countdown_fmt",
+      "value": "{0} {1}m {2}s"
+    },
+    {
+      "name": "ctv_no_subject",
+      "value": "(none)"
+    },
+    {
+      "name": "common_profile_load_failed",
+      "value": "Failed to read the profile: {0}"
+    },
+    {
+      "name": "common_save_failed",
+      "value": "Save failed: {0}"
+    },
+    {
+      "name": "common_export_failed",
+      "value": "Export failed: {0}"
+    },
+    {
+      "name": "common_import_failed",
+      "value": "Import failed: {0}"
+    },
+    {
+      "name": "ws_last_refresh_failed",
+      "value": "Last refresh failed: {0}"
+    },
+    {
+      "name": "ws_updated_at",
+      "value": "Updated at {0}"
+    },
+    {
+      "name": "ws_updated_at_degraded",
+      "value": "Updated at {0} (location precision reduced to {1})"
+    },
+    {
+      "name": "ws_city_failed",
+      "value": "Could not resolve the city"
+    },
+    {
+      "name": "ws_fetch_failed",
+      "value": "Could not fetch the weather"
+    },
+    {
+      "name": "wg_changed_badge",
+      "value": "Chg"
+    },
+    {
+      "name": "wg_profile_unreadable",
+      "value": "The schedule could not be read"
+    },
+    {
+      "name": "wg_date_fmt",
+      "value": "{0}/{1}"
     }
   ]
 }

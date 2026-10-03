@@ -22,6 +22,7 @@
  */
 
 import { UIContext } from '@kit.ArkUI';
+import { t } from 'common_core';
 
 export class UiFeedback {
   /**
@@ -57,7 +58,7 @@ export class UiFeedback {
         title: title,
         message: message,
         buttons: [
-          { value: '取消', action: () => {} },
+          { value: t('common_cancel'), action: () => {} },
           {
             value: okText,
             fontColor: $r('app.color.ch_accent'),
@@ -99,9 +100,9 @@ export class UiFeedback {
               onDiscard();
             }
           },
-          { value: '取消', action: () => {} },
+          { value: t('common_cancel'), action: () => {} },
           {
-            value: '保存',
+            value: t('common_save'),
             fontColor: $r('app.color.ch_accent'),
             action: () => {
               onSave();

@@ -22,7 +22,7 @@
  */
 
 import { ClassPlan, DateTimeValue, Profile, Subject, TimeLayout, TimeLayoutItem, TimeSpanValue, TimeState } from 'common_shared';
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import { EngineSettings, LessonsEngine, LessonsSnapshot, ScheduleGrid, ScheduleGridBuilder } from 'common_core';
 import { AppClock } from '../common/AppClock';
 import { ProfileRepository } from '../data/ProfileRepository';
@@ -112,7 +112,7 @@ export class ClassTableViewModel {
       this.isReady = true;
     } catch (err) {
       const message: string = err instanceof Error ? err.message : String(err);
-      this.errorText = `档案读取失败：${message}`;
+      this.errorText = tf('common_profile_load_failed', message);
       this.isReady = false;
     }
   }
@@ -201,7 +201,7 @@ function buildBanner(snapshot: LessonsSnapshot): LessonBanner {
   const banner: LessonBanner = new LessonBanner();
   if (!snapshot.isClassPlanLoaded) {
     banner.title = t('ctv_no_schedule');
-    banner.subtitle = '添加课表后这里会显示今天的课程';
+    banner.subtitle = t('ctv_no_classes_hint');
     return banner;
   }
 
@@ -209,14 +209,14 @@ function buildBanner(snapshot: LessonsSnapshot): LessonBanner {
     banner.tone = BannerTone.OnClass;
     banner.title = subjectName(snapshot.currentSubject);
     banner.subtitle = isRealTimePoint(snapshot, snapshot.nextBreakingTimeLayoutItem)
-      ? countdown('距下课', snapshot.onBreakingTimeLeftTime)
+      ? countdown(t('ctv_until_break'), snapshot.onBreakingTimeLeftTime)
       : t('ctv_no_break_after');
     return banner;
   }
 
   if (snapshot.state === TimeState.Breaking) {
     banner.tone = BannerTone.Breaking;
-    banner.title = '课间';
+    banner.title = t('ctv_break');
     banner.subtitle = isRealTimePoint(snapshot, snapshot.nextClassTimeLayoutItem)
       ? countdown(t('ctv_until_next_class'), snapshot.onClassLeftTime)
       : t('ctv_no_more_class');
@@ -225,7 +225,7 @@ function buildBanner(snapshot: LessonsSnapshot): LessonBanner {
 
   banner.tone = BannerTone.Idle;
   if (isRealTimePoint(snapshot, snapshot.nextClassTimeLayoutItem)) {
-    banner.title = '还没开始上课';
+    banner.title = t('ctv_not_started_yet');
     banner.subtitle = countdown(t('ctv_until_next_class'), snapshot.onClassLeftTime);
   } else {
     banner.title = t('ctv_after_school');
@@ -257,7 +257,7 @@ function isRealTimePoint(snapshot: LessonsSnapshot, item: TimeLayoutItem): boole
 function countdown(prefix: string, left: TimeSpanValue): string {
   const minutes: number = Math.floor(left.toSeconds() / 60);
   const seconds: number = left.toSeconds() % 60;
-  return `${prefix} ${minutes} 分 ${pad2(seconds)} 秒`;
+  return tf('ctv_countdown_fmt', prefix, `${minutes}`, pad2(seconds));
 }
 
 function pad2(value: number): string {
@@ -265,5 +265,5 @@ function pad2(value: number): string {
 }
 
 function subjectName(subject: Subject): string {
-  return subject.name.length === 0 ? '（无）' : subject.name;
+  return subject.name.length === 0 ? t('ctv_no_subject') : subject.name;
 }

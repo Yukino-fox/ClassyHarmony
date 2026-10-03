@@ -52,18 +52,39 @@ mkdir -p "$WORK/src"
 
 # HarmonyOS 的 kit 在 Node 里不存在，而 I18n.t 要 import '@kit.AbilityKit' 去
 # 应用上下文（真机上用它 getStringByNameSync 查字符串资源）。这里给一个桩：
-# 按资源名原样返回，于是 t() 在台子上恒等于 key —— 与「资源查不到」时的语义
-# 一致，各 driver 里 `t('x') === 'x'` 的断言照旧成立，也不会因缺模块在 import
+# 把三个模块的 base（中文）string.json 合成一份查表，于是 t() 在台子上返回的
+# 与真机上完全一致 —— driver 里断言中文文案照旧成立，而不是断言 key。
+# 查不到的名字原样返回（与「资源缺失」时的语义一致），也不会因缺模块在 import
 # 阶段就炸（I18n 被天气/面板/插件等几乎全部 driver 间接引到）。
+# 三份资源无同名键（写桩时校验过），合并不需要覆盖策略。
 # '@kit.AbilityKit' 没有斜杠，Node 当作无 scope 包名解析成
 # node_modules/@kit.AbilityKit(.js)；带斜杠的那份一并放上，免得解析方式变化。
 mkdir -p "$WORK/node_modules/@kit"
+python3 - "$ROOT" "$WORK" <<'PY_BUNDLE'
+import json, io, sys, os
+root, work = sys.argv[1], sys.argv[2]
+out = {}
+for mod in ("common_shared", "common_core", "entry"):
+    p = os.path.join(root, mod, "src/main/resources/base/element/string.json")
+    for item in json.load(io.open(p, encoding="utf-8"))["string"]:
+        name = item["name"]
+        if name in out and out[name] != item["value"]:
+            sys.exit("string key 冲突且值不同：" + name)
+        out[name] = item["value"]
+blob = json.dumps(out, ensure_ascii=False)
+for dst in (os.path.join(work, "node_modules/strings.json"),
+            os.path.join(work, "node_modules/@kit/strings.json")):
+    io.open(dst, "w", encoding="utf-8").write(blob)
+PY_BUNDLE
 cat > "$WORK/node_modules/@kit.AbilityKit.js" <<'STUB_ABILITY_KIT'
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const STRINGS = require("./strings.json");
 const appContext = {
   resourceManager: {
-    getStringByNameSync: function (name) { return name; }
+    getStringByNameSync: function (name) {
+      return Object.prototype.hasOwnProperty.call(STRINGS, name) ? STRINGS[name] : name;
+    }
   }
 };
 exports.common = {
@@ -74,6 +95,14 @@ exports.application = {
 };
 STUB_ABILITY_KIT
 cp "$WORK/node_modules/@kit.AbilityKit.js" "$WORK/node_modules/@kit/AbilityKit.js"
+# CoreFileKit 同理：AutomationSettings / ProfileRepository 会 import 它，
+# 台子上不跑文件 IO，给个空壳让 tsc 能解析模块即可。
+cat > "$WORK/node_modules/@kit.CoreFileKit.js" <<'STUB_CORE_FILE_KIT'
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.fileIo = {};
+STUB_CORE_FILE_KIT
+cp "$WORK/node_modules/@kit.CoreFileKit.js" "$WORK/node_modules/@kit/CoreFileKit.js"
 
 # ArkTS 源码后缀为 .ets，tsc 不识别；内容本身是合法 TS，故改后缀即可。
 # 保留目录结构，使源码内的相对 import 原样可用。

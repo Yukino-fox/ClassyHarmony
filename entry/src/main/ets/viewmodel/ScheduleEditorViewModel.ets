@@ -35,7 +35,7 @@
  */
 
 import { DateTimeValue, Guid, Profile, TempClassPlanGroupType } from 'common_shared';
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import {
   ClassPlanGroupRow,
   ClassPlanResolver,
@@ -158,7 +158,7 @@ export class ScheduleEditorViewModel {
       this.rebuild();
     } catch (err) {
       const message: string = err instanceof Error ? err.message : String(err);
-      this.errorText = `档案读取失败：${message}`;
+      this.errorText = tf('common_profile_load_failed', message);
       this.isReady = false;
     }
   }
@@ -188,7 +188,7 @@ export class ScheduleEditorViewModel {
       return true;
     } catch (err) {
       const message: string = err instanceof Error ? err.message : String(err);
-      this.errorText = `保存失败：${message}`;
+      this.errorText = tf('common_save_failed', message);
       return false;
     }
   }
@@ -570,7 +570,7 @@ export class ScheduleEditorViewModel {
       return true;
     } catch (err) {
       const message: string = err instanceof Error ? err.message : String(err);
-      this.errorText = `导出失败：${message}`;
+      this.errorText = tf('common_export_failed', message);
       return false;
     }
   }
@@ -596,7 +596,7 @@ export class ScheduleEditorViewModel {
       return true;
     } catch (err) {
       const message: string = err instanceof Error ? err.message : String(err);
-      this.errorText = `导入失败：${message}`;
+      this.errorText = tf('common_import_failed', message);
       return false;
     }
   }

@@ -12,7 +12,7 @@ import { JsonNode, JsonObject, JsonReader, JsonWriter, JsonArray } from 'common_
 import { Profile } from 'common_shared';
 import { Workflow } from 'common_shared';
 import { ActionSet, ActionSetStatus } from 'common_shared';
-import { AutomationDefaults } from 'common_core';
+import { AutomationDefaults, t, tf } from 'common_core';
 import { WorkflowMutations } from 'common_core';
 import { AutomationSettings } from '../automation/AutomationSettings';
 import { ProfileRepository } from '../data/ProfileRepository';
@@ -162,7 +162,7 @@ export class AutomationViewModel {
     if (wf.triggers.length > 0) {
       return wf.triggers[0].id;
     }
-    return `工作流 ${index + 1}`;
+    return tf('au_workflow_n', `${index + 1}`);
   }
 
   /** 创建默认方案（首次使用时调用） */

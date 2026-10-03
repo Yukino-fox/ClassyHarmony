@@ -23,7 +23,7 @@
  * 「每周都不匹配」——界面上什么都不显示，而用户看不出是哪错了。
  */
 
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import {
   ClassPlanRow,
   ClassSlotRow,
@@ -48,7 +48,7 @@ const WEEKDAY_LABELS: string[] =
   [t('week_sunday'), t('week_monday'), t('week_tuesday'), t('week_wednesday'), t('week_thursday'), t('week_friday'), t('week_saturday')];
 
 /** 单双周分母的可选项。0 之外只给常见的 1/2/3/4。 */
-const ROTATION_TOTALS: string[] = ['每周', '单周', '双周', '每 3 周', '每 4 周'];
+const ROTATION_TOTALS: string[] = [t('cp_rot_week'), t('cp_rot_odd'), t('cp_rot_even'), t('cp_rot_3w'), t('cp_rot_4w')];
 
 /**
  * 一行：左边是行摘要（节次 + 时刻），右边是挂着的科目。
@@ -77,12 +77,12 @@ struct PlanSlotLine {
         .maxLines(1)
 
       if (!this.isClass()) {
-        Text(this.edit.isSeparator ? '分割线' : '课间')
+        Text(this.edit.isSeparator ? t('cp_separator') : t('cp_break'))
           .fontSize(12)
           .fontColor($r('app.color.ch_text_hint'))
           .layoutWeight(1)
       } else {
-        Text(this.slot.isEmpty ? '（空）' : this.slot.subjectName)
+        Text(this.slot.isEmpty ? t('cp_slot_empty') : this.slot.subjectName)
           .fontSize(14)
           .fontColor(this.slot.isEmpty
             ? $r('app.color.ch_text_hint')
@@ -122,16 +122,16 @@ struct PlanSlotLine {
   @Builder
   private menu() {
     Menu() {
-      MenuItem({ content: '（清空这节课）' }).onChange(() => {
+      MenuItem({ content: t('cp_clear_class') }).onChange(() => {
         this.vm.setClassSubject(this.planGuid, this.edit.classSlot, '');
       })
       MenuItem({
-        content: this.slot.isEnabled ? '这节课今天不上' : '这节课今天上'
+        content: this.slot.isEnabled ? t('cp_skip_today') : t('cp_take_today')
       }).onChange(() => {
         this.vm.setClassEnabled(this.planGuid, this.edit.classSlot, !this.slot.isEnabled);
       })
       MenuItem({
-        content: this.slot.isChangedClass ? '取消调课标记' : '标记为调课'
+        content: this.slot.isChangedClass ? t('cp_unmark_adjust') : t('cp_mark_adjust')
       }).onChange(() => {
         this.vm.setClassChanged(this.planGuid, this.edit.classSlot, !this.slot.isChangedClass);
       })
@@ -163,13 +163,13 @@ export struct ClassPlanPane {
       return;
     }
     const first: string = this.vm.timeLayouts[0].guid;
-    this.expanded = this.vm.addClassPlan(first, '新课表');
+    this.expanded = this.vm.addClassPlan(first, t('cp_default_name'));
   }
 
   build() {
     NavDestination() {
       Column() {
-        EditorHeader({ title: '课表', stack: this.stack })
+        EditorHeader({ title: t('cp_title'), stack: this.stack })
 
         Scroll() {
           Column() {
@@ -189,7 +189,7 @@ export struct ClassPlanPane {
               Divider().color($r('app.color.ch_outline'))
             }, (row: ClassPlanRow) => row.guid)
 
-            EditorChip({ text: '新建课表', onTap: () => { this.newPlan(); } })
+            EditorChip({ text: t('cp_new_schedule'), onTap: () => { this.newPlan(); } })
               .margin({ top: 16 })
           }
           .width('100%')
@@ -216,7 +216,7 @@ export struct ClassPlanPane {
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
           if (row.isOverlay) {
-            Text('叠加')
+            Text(t('cp_overlay_badge'))
               .fontSize(11)
               .fontColor($r('app.color.ch_next'))
               .margin({ left: 6 })
@@ -228,7 +228,7 @@ export struct ClassPlanPane {
               .margin({ left: 6 })
           }
           if (row.isActiveOnBaseDate) {
-            Text('今天生效')
+            Text(t('cp_active_today'))
               .fontSize(11)
               .fontColor($r('app.color.ch_accent'))
               .margin({ left: 6 })
@@ -236,7 +236,7 @@ export struct ClassPlanPane {
         }
         .width('100%')
 
-        Text(`${row.weekDayText} ${row.weekRotationText} · 已排 ${row.filledCount}/${row.classCount} 节`)
+        Text(tf('cp_plan_progress', row.weekDayText, row.weekRotationText, `${row.filledCount}`, `${row.classCount}`))
           .fontSize(11)
           .fontColor($r('app.color.ch_text_hint'))
           .margin({ top: 2 })
@@ -246,7 +246,7 @@ export struct ClassPlanPane {
       .alignItems(HorizontalAlign.Start)
       .layoutWeight(1)
 
-      Text(this.expanded === row.guid ? '收起' : '展开')
+      Text(this.expanded === row.guid ? t('cp_collapse') : t('cp_expand'))
         .fontSize(12)
         .fontColor($r('app.color.ch_accent'))
         .onClick(() => { this.toggle(row.guid); })
@@ -260,15 +260,15 @@ export struct ClassPlanPane {
   private detail(vm: ScheduleEditorViewModel, row: ClassPlanRow) {
     Column() {
       EditorTextField({
-        label: '名称',
+        label: t('cp_name'),
         value: row.name,
-        placeholder: '课表名',
+        placeholder: t('cp_name_placeholder'),
         onCommit: (text: string) => { vm.renameClassPlan(row.guid, text); }
       })
 
       // ---- 绑定时间表 ----
       Row() {
-        Text('时间表')
+        Text(t('cp_time_layout'))
           .fontSize(13)
           .fontColor($r('app.color.ch_text_secondary'))
           .width(76)
@@ -279,7 +279,7 @@ export struct ClassPlanPane {
             : $r('app.color.ch_accent'))
           .layoutWeight(1)
           .maxLines(1)
-        Text('更换')
+        Text(t('cp_change'))
           .fontSize(12)
           .fontColor($r('app.color.ch_accent'))
       }
@@ -298,7 +298,7 @@ export struct ClassPlanPane {
 
       // ---- 轮转规则 ----
       Row() {
-        Text('周几')
+        Text(t('cp_weekday'))
           .fontSize(13)
           .fontColor($r('app.color.ch_text_secondary'))
           .width(76)
@@ -309,7 +309,7 @@ export struct ClassPlanPane {
       .padding({ top: 4, bottom: 4 })
 
       Row() {
-        Text('轮转')
+        Text(t('cp_rotation'))
           .fontSize(13)
           .fontColor($r('app.color.ch_text_secondary'))
           .width(76)
@@ -329,7 +329,7 @@ export struct ClassPlanPane {
       // ---- 排课 ----
       Divider().color($r('app.color.ch_outline')).margin({ top: 8, bottom: 4 })
 
-      Text('排课')
+      Text(t('cp_assign_lessons'))
         .fontSize(13)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('app.color.ch_text_primary'))
@@ -356,15 +356,15 @@ export struct ClassPlanPane {
       Divider().color($r('app.color.ch_outline')).margin({ top: 8, bottom: 4 })
       Row() {
         EditorChip({
-          text: '按这张建叠加表',
+          text: t('cp_build_overlay'),
           onTap: () => {
-            vm.createOverlay(row.guid, `${row.name}·叠加`);
+            vm.createOverlay(row.guid, `${row.name}${t('cp_overlay_suffix')}`);
           }
         })
           .margin({ right: 8 })
         Blank()
         EditorDeleteButton({
-          text: '删除课表',
+          text: t('cp_delete_plan'),
           message: `「${row.name}」会被删除。${
             row.isOverlay ? t('cp_overlay_children_affected') : ''}`,
           onConfirm: () => { vm.removeClassPlan(row.guid); }

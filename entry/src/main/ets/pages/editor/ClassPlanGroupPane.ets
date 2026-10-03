@@ -18,7 +18,7 @@
  * 一个丢一批课表）。所以两个按钮分开摆，不做成「删除 / 解散」的下拉。
  */
 
-import { t } from 'common_core';
+import { t, tf } from 'common_core';
 import { ClassPlanGroupRow } from 'common_core';
 import { ScheduleEditorViewModel } from '../../viewmodel/ScheduleEditorViewModel';
 import { UiFeedback } from '../../common/UiFeedback';
@@ -38,13 +38,13 @@ export struct ClassPlanGroupPane {
   @Local expanded: string = '';
 
   private newGroup(): void {
-    this.expanded = this.vm.addClassPlanGroup('新课表群');
+    this.expanded = this.vm.addClassPlanGroup(t('cgp_default_name'));
   }
 
   build() {
     NavDestination() {
       Column() {
-        EditorHeader({ title: '课表群', stack: this.stack })
+        EditorHeader({ title: t('cgp_title'), stack: this.stack })
 
         Scroll() {
           Column() {
@@ -67,10 +67,10 @@ export struct ClassPlanGroupPane {
                   onDisband: () => {
                     UiFeedback.confirm(
                       this.getUIContext(),
-                      '解散课表群',
-                      `群会被删掉，里面 ${row.planCount} 张课表留着，落到默认群。` +
+                      t('cgp_disband_title'),
+                      tf('cgp_disband_msg', `${row.planCount}`) +
                         t('cgp_delete_hint'),
-                      '解散',
+                      t('cgp_disband'),
                       () => { this.vm.disbandClassPlanGroup(row.guid); }
                     );
                   }
@@ -78,15 +78,15 @@ export struct ClassPlanGroupPane {
 
                 if (this.expanded === row.guid) {
                   EditorTextField({
-                    label: '群名',
+                    label: t('cgp_group_name'),
                     value: row.name,
-                    placeholder: '群名',
+                    placeholder: t('cgp_group_name'),
                     onCommit: (text: string) => { this.vm.renameClassPlanGroup(row.guid, text); }
                   })
                 } else {
                   Row() {
                     EditorChip({
-                      text: '改名',
+                      text: t('cgp_rename'),
                       onTap: () => {
                         this.expanded = this.expanded === row.guid ? '' : row.guid;
                       }
@@ -103,7 +103,7 @@ export struct ClassPlanGroupPane {
               Divider().color($r('app.color.ch_outline'))
             }, (row: ClassPlanGroupRow) => row.guid)
 
-            EditorChip({ text: '新建课表群', onTap: () => { this.newGroup(); } })
+            EditorChip({ text: t('cgp_new_group'), onTap: () => { this.newGroup(); } })
               .margin({ top: 16 })
           }
           .width('100%')

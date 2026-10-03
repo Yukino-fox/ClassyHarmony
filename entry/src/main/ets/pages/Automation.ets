@@ -4,6 +4,7 @@
 import { AutomationViewModel } from '../viewmodel/AutomationViewModel';
 import { AutomationSettings } from '../automation/AutomationSettings';
 import { ProfileRepository } from '../data/ProfileRepository';
+import { t, tf } from 'common_core';
 import { Workflow } from 'common_shared';
 import { CONTENT_MAX_WIDTH } from '../components/ContentWidth';
 
@@ -25,7 +26,7 @@ export struct Automation {
   build() {
     Column() {
       if (this.loading) {
-        Text('加载中...')
+        Text(t('au_loading'))
           .fontSize(16)
           .margin({ top: 24 })
       } else {
@@ -33,7 +34,7 @@ export struct Automation {
           Column() {
             // 顶部：总开关
             Row() {
-              Text('自动化')
+              Text(t('au_title'))
                 .fontSize(24)
                 .fontWeight(FontWeight.Bold)
                 .margin({ left: 16, top: 12, bottom: 12 })
@@ -49,7 +50,7 @@ export struct Automation {
 
             // 方案显示
             Row() {
-              Text('方案：')
+              Text(t('au_scheme_prefix'))
                 .fontSize(16)
                 .margin({ left: 16 })
               Text(this.vm!.currentScheme)
@@ -80,13 +81,13 @@ export struct Automation {
                         .maxLines(1)
                         .textOverflow({ overflow: TextOverflow.Ellipsis })
                       Row() {
-                        Text(`${wf.triggers.length} 个触发器`)
+                        Text(tf('au_trigger_count', `${wf.triggers.length}`))
                           .fontSize(12)
                           .fontColor($r('app.color.ch_text_hint'))
                         Text(' · ')
                           .fontSize(12)
                           .fontColor($r('app.color.ch_text_hint'))
-                        Text(`${wf.actionSet.actions.length} 个行动`)
+                        Text(tf('au_action_count', `${wf.actionSet.actions.length}`))
                           .fontSize(12)
                           .fontColor($r('app.color.ch_text_hint'))
                       }
@@ -95,7 +96,7 @@ export struct Automation {
 
                     Blank()
 
-                    Text('编辑')
+                    Text(t('au_edit'))
                       .fontSize(14)
                       .fontColor($r('app.color.ch_accent'))
                       .margin({ right: 16 })
@@ -113,7 +114,7 @@ export struct Automation {
             .layoutWeight(1)
 
             // 底部新建按钮
-            Button('新建工作流', { type: ButtonType.Capsule })
+            Button(t('au_new_workflow'), { type: ButtonType.Capsule })
               .width('90%')
               .height(44)
               .margin({ bottom: 24 })
@@ -124,7 +125,7 @@ export struct Automation {
           }
           .backgroundColor($r('app.color.ch_surface_weak'))
         }
-        .title('自动化')
+        .title(t('au_title'))
         .hideTitleBar(false)
         .mode(NavigationMode.Stack)
       }
