@@ -11,12 +11,13 @@
 [![GitHub Repo Languages](https://img.shields.io/github/languages/top/Yukino-fox/ClassyHarmony?style=flat-square)](https://github.com/Yukino-fox/ClassyHarmony)
 [![License](https://img.shields.io/badge/license-GPL--3.0-3fb950?style=flat-square)](https://www.gnu.org/licenses/gpl-3.0.html)
 
+</div>
 
 >[!IMPORTANT]
 >
 >本项目基于[ClassIsland](https://github.com/ClassIsland/ClassIsland)，亦可称为是classisland的鸿蒙移植版。
 
-
+<div align="center">
 
 ClassIsland 是一款适用于班级多媒体屏幕的跨平台课表信息显示工具，可以在 Windows PC、Mac 及 Linux 设备屏幕上显示各种信息。<br/>
 本应用的名字灵感源于 iOS 灵动岛（Dynamic Island）功能。
