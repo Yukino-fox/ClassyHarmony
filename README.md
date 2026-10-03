@@ -11,19 +11,24 @@
 [![GitHub Repo Languages](https://img.shields.io/github/languages/top/Yukino-fox/ClassyHarmony?style=flat-square)](https://github.com/Yukino-fox/ClassyHarmony)
 [![License](https://img.shields.io/badge/license-GPL--3.0-3fb950?style=flat-square)](https://www.gnu.org/licenses/gpl-3.0.html)
 
+
+>[!IMPORTANT]
+>
+>本项目基于[ClassIsland](https://github.com/ClassIsland/ClassIsland)，亦可称为是classisland的鸿蒙移植版。
+
+
+
 ClassIsland 是一款适用于班级多媒体屏幕的跨平台课表信息显示工具，可以在 Windows PC、Mac 及 Linux 设备屏幕上显示各种信息。<br/>
 本应用的名字灵感源于 iOS 灵动岛（Dynamic Island）功能。
 
-**ClassyHarmony 是它的鸿蒙原生重写** —— ArkTS + ArkUI，零代码复用，
-但档案 JSON 与桌面版逐字节互通：手机上排好的课表丢回桌面版照样能读。
+**ClassyHarmony 是它的鸿蒙原生重写。** 
 
-#### [🌐 上游官网](https://classisland.tech/) | [📚 上游文档](https://docs.classisland.tech) | [🚀 上游下载](https://classisland.tech/download) | [💻 本仓库](https://github.com/Yukino-fox/ClassyHarmony)
+#### [🌐 上游官网](https://classisland.tech/) | [📚 上游文档](https://docs.classisland.tech) | [🚀 上游下载](https://classisland.tech/download) 
 
 </div>
 
 > [!NOTE]
-> 本项目**不上架**，只在自己的设备上装 debug 包调试。
-> 外显名沿用 `ClassIsland`（桌面图标与应用列表里的名字），
+> 外显名沿用 `ClassIsland`，
 > 工程标识与 bundle 才是 `ClassyHarmony` / `com.yukinofox.classyharmony` —— 两者刻意不合并，
 > 详见 [`docs/branding.md`](docs/branding.md)。
 
@@ -88,25 +93,6 @@ ClassIsland 是一款适用于班级多媒体屏幕的跨平台课表信息显�
 > 自签 p7b 过不了设备侧的 CMS 校验。实测结论与完整步骤见
 > **[`docs/signing.md`](docs/signing.md)**。
 
-```bash
-# 1. 把 DevEco 自动签名生成的材料接进 build-profile.json5
-bash tools/apply-signing.sh
-
-# 2. 构建签名包
-export DEVECO_SDK_HOME=/mnt/data/devecostudio-26.0.0.621/sdk
-hvigorw --mode module -p product=default -p module=entry@default \
-        -p buildMode=debug assembleHap --no-daemon
-
-# 3. 连设备并安装（无线调试）
-hdc tconn <手机IP>:<端口>
-hdc install -r entry/build/default/outputs/default/entry-default-signed.hap
-
-# 4. 拉起来
-hdc shell aa start -a EntryAbility -b com.yukinofox.classyharmony
-```
-
-在模拟器上验证 UI 时用 `bash tools/run-on-emulator.sh` —— 脚本会临时把
-`compatibleSdkVersion` 降到模拟器镜像支持的 API 24 编一版，**装完自动还原**。
 
 ## 获取帮助＆加入社区
 
@@ -116,7 +102,8 @@ hdc shell aa start -a EntryAbility -b com.yukinofox.classyharmony
   [docs.classisland.tech](https://docs.classisland.tech)
 - 确认是本工程的 Bug 或有新功能想法，请
   [提交 Issue](https://github.com/Yukino-fox/ClassyHarmony/issues)
-- 上游本体的问题请到 [ClassIsland/ClassIsland](https://github.com/ClassIsland/ClassIsland/issues) 反馈
+- 上游本体的问题请到 [ClassIsland/ClassIsland](https://github.com/ClassIsland/ClassIsland/issues) 反馈， ~~虽然说我也不知道上游会出现什么问题就是了~~
+-
 
 ## 开发
 
@@ -156,8 +143,6 @@ entry/          HAP  应用壳与平台接线
 bash tools/nodetest/run.sh
 ```
 
-**为什么不上设备测**：ArkTS 侧要走 Local Test（`ohosTest`），但工程含 HAR 模块，
-没有华为侧 p7b 材料时连任务图都建不起来；本机模拟器是 API 24，也装不下目标 26 的包。
 
 **怎么做的**：脚本把 `common_shared` / `common_core` 的**真实源码**拷进临时工作区，
 用 `tsc` 剥掉类型后在 Node 里跑 —— 这些文件只用 TypeScript 层语法
@@ -207,7 +192,6 @@ bash tools/nodetest/run.sh
 | P12 | 声明式插件系统（core 校验 / 存储 / `.cipx` 迁移 / 设置页 UI） |
 | i18n | 全工程 UI 文案 `t()` / `tf()` 化，中英双语资源 |
 
-本地只有一个 `master` 分支，没有 CI。
 
 ### 文档
 
